@@ -1,0 +1,6 @@
+# GetStatistics —— 获取导航统计信息
+
+# request: 空 
+
+---
+NavigationStatistics statistics
