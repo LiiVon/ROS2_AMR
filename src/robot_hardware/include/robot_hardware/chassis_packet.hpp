@@ -14,8 +14,8 @@ namespace robot_hardware
     // 底盘运动指令
     struct ChassisCommand
     {
-        double linear_x_maps = 0.0;  // 机器人在x方向的线速度（单位：米/秒）
-        double linear_y_maps = 0.0;  // 机器人在y方向的线速度（单位：米/秒）
+        double linear_x_mps = 0.0;  // 机器人在x方向的线速度（单位：米/秒）
+        double linear_y_mps = 0.0;  // 机器人在y方向的线速度（单位：米/秒）
         double angular_z_rads = 0.0; // 机器人绕z轴的角速度（单位：弧度/秒）
     };
 
@@ -26,8 +26,8 @@ namespace robot_hardware
         double y_m = 0.0;     // 机器人在世界坐标系下的y坐标（单位：米）
         double yaw_rad = 0.0; // 机器人在世界坐标系下的航向角（单位：弧度）
 
-        double linear_x_maps = 0.0;  // 机器人在x方向的线速度（单位：米/秒）
-        double linear_y_maps = 0.0;  // 机器人在y方向的线速度（单位：米/秒）
+        double linear_x_mps = 0.0;  // 机器人在x方向的线速度（单位：米/秒）
+        double linear_y_mps = 0.0;  // 机器人在y方向的线速度（单位：米/秒）
         double angular_z_rads = 0.0; // 机器人绕z轴的角速度（单位：弧度/秒）
 
         std::optional<double> battery_voltage; // 电池电压（单位：伏特），可选字段
@@ -73,7 +73,7 @@ namespace robot_hardware
     };
 
     // 将帧类型和数据内容组装成二进制数据帧
-    std::vector<uint8_t> EncodeMickBinaryFrame(uint8_t type, const std::vector<uint8_t> &data);
+    std::vector<uint8_t> EncodeMickBinaryFrame(const uint8_t type, const std::vector<uint8_t> &data);
 
     // 将底盘速度指令转换成 Mick 协议所需要的二进制数据
     std::vector<uint8_t> EncodeMickSpeedCommand(const ChassisCommand &command);
@@ -85,21 +85,59 @@ namespace robot_hardware
     std::optional<ChassisPacket> DecodeMickBinaryPacket(const MickBinaryFrame &frame);
 
     // ======================== 文本数据流解析器 =========================
-    class ChassisPacketStreamParser
+    class ChassisPacketStream
     {
     public:
-        explicit ChassisPacketStreamParser(std::size_t max_buffer_size = 4096);
-        void AppendData(const std::string &data);
-        void AppendData(const char *data, std::size_t size);
+        explicit ChassisPacketStream(std::size_t max_buffer_size = 4096);
 
+        // 向解析器中追加数据
+        void Append(const std::string &data);
+        void Append(const char *data, std::size_t size);
+
+        // 取出完整数据包
         std::vector<ChassisPacket> DrainPackets();
 
         bool Overflowed() const;
 
         std::size_t InvalidLineCount() const;
 
+        // 清除溢出标记、清除无效行计数，清空整个解析器状态
         void ClearOverflow();
         void ClearInvalidLineCount();
         void Clear();
+    private:
+        std::size_t max_buffer_size_;
+        std::string buffer_;
+        bool overflowed_ = false;
+        std::size_t invalid_line_count_ = 0;
+    };
+
+
+    // ======================== 二进制数据流解析器 =========================
+    class MickBinaryPacketStream
+    {
+    public:
+        explicit MickBinaryPacketStream(std::size_t max_buffer_size = 4096);
+
+        // 向解析器中追加数据
+        void Append(const uint8_t *data, std::size_t size);
+        void Append(const std::vector<uint8_t> &data);
+
+        // 取出完整数据包
+        std::vector<ChassisPacket> DrainPackets();
+
+        bool Overflowed() const;
+
+        std::size_t InvalidFrameCount() const;
+
+        // 清除溢出标记、清除无效帧计数，清空整个解析器状态
+        void ClearOverflow();
+        void ClearInvalidFrameCount();
+        void Clear();
+    private:
+        std::size_t max_buffer_size_;
+        std::vector<uint8_t> buffer_;
+        bool overflowed_ = false;
+        std::size_t invalid_frame_count_ = 0;
     };
 }
