@@ -17,7 +17,11 @@ namespace robot_hardware
         // 辅助函数：仅供当前 cpp 文件内部使用
         // ============================================================
 
-        // 移除文本行末尾的 '\r'，兼容 Windows 的 "\r\n" 换行
+        // Windows	\r\n  回车 + 换行
+        // Linux	\n    换行
+        // 去掉字符串末尾的 \r， 避免 Windows 和 Linux 换行符不同，导致后续协议解析出错。
+        // CMD 1.0 2.0\r   直接去除了 \r
+        // CMD 1.0 2.0\r\n   std::getline() 会去掉 \n，剩下 \r，然后再去除 \r
         std::string TrimCarriageReturn(std::string line)
         {
             if (!line.empty() && line.back() == '\r')
@@ -28,23 +32,29 @@ namespace robot_hardware
             return line;
         }
 
-        // 将有符号 16 位整数按大端序写入两个字节
-        void AppendInt16(std::vector<uint8_t>& out, int16_t value)
+        // 把一个有符号的 16 位整数（int16_t）拆成两个字节，并按照大端序放进字节数组中
+        // int16_t value = 1000;  对应两个字节 0x03 0xE8
+        // 规定都按照 大端序，这样不同平台的字节序就不会影响数据的传输和解析。
+        void AppendInt16(std::vector<uint8_t> &out, int16_t value)
         {
             const uint16_t bits = static_cast<uint16_t>(value);
 
+            // 先右移8位，高8位变成低8位，然后取低8位，得到高字节
             out.push_back(
                 static_cast<uint8_t>((bits >> 8) & 0xFFU));
 
+            // 直接取低8位，得到低字节
             out.push_back(
                 static_cast<uint8_t>(bits & 0xFFU));
         }
 
         // 从指定偏移读取两个字节，按大端序解释为无符号 16 位整数
         uint16_t ReadUInt16(
-            const std::vector<uint8_t>& data,
+            const std::vector<uint8_t> &data,
             std::size_t offset)
         {
+            // data.at(0) 访问第一个字节，也就是高字节，高字节左移8位
+            // data.at(1) 访问第二个字节，也就是低字节，直接取低字节
             return static_cast<uint16_t>(
                 (static_cast<uint16_t>(data.at(offset)) << 8) |
                 static_cast<uint16_t>(data.at(offset + 1U)));
@@ -52,19 +62,19 @@ namespace robot_hardware
 
         // 从指定偏移读取两个字节，按大端序解释为有符号 16 位整数
         int16_t ReadInt16(
-            const std::vector<uint8_t>& data,
+            const std::vector<uint8_t> &data,
             std::size_t offset)
         {
             const uint16_t bits = ReadUInt16(data, offset);
 
-            // 先转换为可容纳整个范围的有符号整数，
-            // 再还原 16 位补码表示的负数。
+            // 小于 int16_t 的最大值，说明是正数或0，直接转换为 int16_t 即可。
             if (bits <= static_cast<uint16_t>(
                             std::numeric_limits<int16_t>::max()))
             {
                 return static_cast<int16_t>(bits);
             }
 
+            // 大于 int16_t 的最大值，说明是负数，按补码规则还原为负数。
             const int32_t signed_value =
                 static_cast<int32_t>(bits) - 0x10000;
 
@@ -90,9 +100,10 @@ namespace robot_hardware
         // 字段不存在时返回 true，且不修改 optional。
         // 字段存在但格式错误、不是有限数或后面还有多余字段时返回 false。
         bool ReadOptionalFiniteDouble(
-            std::istringstream& iss,
-            std::optional<double>& value)
+            std::istringstream &iss,
+            std::optional<double> &value)
         {
+            // 跳过输入流开头的空格、制表符、换行符等空白字符
             iss >> std::ws;
 
             // 没有剩余内容：可选字段确实不存在
@@ -121,14 +132,14 @@ namespace robot_hardware
         }
 
         // 检查多个速度、位置和角度字段是否全部为有限数
-        bool IsFiniteOdometry(const ChassisOdometryPacket& odometry)
+        bool IsFiniteOdometry(const ChassisOdometryPacket &odometry)
         {
             return std::isfinite(odometry.x_m) &&
                    std::isfinite(odometry.y_m) &&
                    std::isfinite(odometry.yaw_rad) &&
                    std::isfinite(odometry.linear_x_mps) &&
                    std::isfinite(odometry.linear_y_mps) &&
-                   std::isfinite(odometry.angular_z_rads);
+                   std::isfinite(odometry.angular_z_radps);
         }
     }
 
@@ -137,25 +148,49 @@ namespace robot_hardware
     // ================================================================
 
     // 将底盘速度指令编码为：
-    // CMD linear_x_mps linear_y_mps angular_z_rads\n
-    std::string EncodeCommand(const ChassisCommand& command)
+    // 内部数据结构  ---> 文本协议
+    // CMD linear_x_mps linear_y_mps angular_z_radps\n
+    std::string EncodeCommand(const ChassisCommand &command)
     {
+        // 检查速度是否为有限数
+        if (!std::isfinite(command.linear_x_mps) ||
+            !std::isfinite(command.linear_y_mps) ||
+            !std::isfinite(command.angular_z_radps))
+        {
+            throw std::invalid_argument(
+                "Cannot encode non-finite chassis command");
+        }
+
         std::ostringstream oss;
 
         oss << std::fixed << std::setprecision(4)
             << "CMD "
             << command.linear_x_mps << ' '
             << command.linear_y_mps << ' '
-            << command.angular_z_rads << '\n';
+            << command.angular_z_radps << '\n';
 
         return oss.str();
     }
 
     // 将里程计数据编码为文本
+    // 内部数据结构  ---> 文本协议
     // ODOM x y yaw vx vy wz [battery]\n
     std::string EncodeOdometry(
-        const ChassisOdometryPacket& odometry)
+        const ChassisOdometryPacket &odometry)
     {
+        if (!IsFiniteOdometry(odometry))
+        {
+            throw std::invalid_argument(
+                "Cannot encode non-finite odometry");
+        }
+
+        if (odometry.battery_voltage.has_value() &&
+            !std::isfinite(*odometry.battery_voltage))
+        {
+            throw std::invalid_argument(
+                "Invalid battery voltage");
+        }
+
         std::ostringstream oss;
 
         oss << std::fixed << std::setprecision(4)
@@ -165,7 +200,7 @@ namespace robot_hardware
             << odometry.yaw_rad << ' '
             << odometry.linear_x_mps << ' '
             << odometry.linear_y_mps << ' '
-            << odometry.angular_z_rads;
+            << odometry.angular_z_radps;
 
         if (odometry.battery_voltage.has_value())
         {
@@ -178,18 +213,37 @@ namespace robot_hardware
     }
 
     // 将底盘状态编码为文本
+    // 内部数据结构  ---> 文本协议
     // STATE status [battery]\n
-    std::string EncodeState(const ChassisStatePacket& state)
+    std::string EncodeState(const ChassisStatePacket &state)
     {
+        // 检查状态描述是否合法
+        if (state.status.empty() ||
+            state.status.find_first_of(" \t\r\n\v\f") != std::string::npos)
+        {
+            throw std::invalid_argument(
+                "Invalid chassis status");
+        }
+
+        // 检查电池电压是否为有限数
+        if (state.battery_voltage.has_value() &&
+            !std::isfinite(*state.battery_voltage))
+        {
+            throw std::invalid_argument(
+                "Invalid battery voltage");
+        }
+
+        // 构建文本数据
         std::ostringstream oss;
 
-        oss << std::fixed << std::setprecision(4)
-            << "STATE "
-            << state.status;
+        oss << "STATE " << state.status;
 
+        // 如果存在电池电压，则追加电压数据
         if (state.battery_voltage.has_value())
         {
-            oss << ' ' << *state.battery_voltage;
+            oss << ' '
+                << std::fixed << std::setprecision(4)
+                << *state.battery_voltage;
         }
 
         oss << '\n';
@@ -203,8 +257,9 @@ namespace robot_hardware
 
     // 解码速度指令。
     // 当前协议要求 CMD 后必须有三个速度参数。
+    // 文本协议  ---> 内部数据结构
     std::optional<ChassisCommand> DecodeCommand(
-        const std::string& text)
+        const std::string &text)
     {
         const std::string line = TrimCarriageReturn(text);
         std::istringstream iss(line);
@@ -213,18 +268,19 @@ namespace robot_hardware
         std::string trailing;
         ChassisCommand command;
 
-        if (!(iss >> tag
-                  >> command.linear_x_mps
-                  >> command.linear_y_mps
-                  >> command.angular_z_rads) ||
-            tag != "CMD")
+        if (!(iss >> tag >> command.linear_x_mps >> command.linear_y_mps >> command.angular_z_radps))
+        {
+            return std::nullopt;
+        }
+
+        if (tag != "CMD")
         {
             return std::nullopt;
         }
 
         if (!std::isfinite(command.linear_x_mps) ||
             !std::isfinite(command.linear_y_mps) ||
-            !std::isfinite(command.angular_z_rads))
+            !std::isfinite(command.angular_z_radps))
         {
             return std::nullopt;
         }
@@ -240,8 +296,9 @@ namespace robot_hardware
 
     // 解码统一的数据包。
     // 根据首字段判断是 ODOM 还是 STATE。
+    // 文本协议  ---> 内部数据结构
     std::optional<ChassisPacket> DecodePacket(
-        const std::string& text)
+        const std::string &text)
     {
         const std::string line = TrimCarriageReturn(text);
         std::istringstream iss(line);
@@ -260,12 +317,7 @@ namespace robot_hardware
         {
             ChassisOdometryPacket odometry;
 
-            if (!(iss >> odometry.x_m
-                      >> odometry.y_m
-                      >> odometry.yaw_rad
-                      >> odometry.linear_x_mps
-                      >> odometry.linear_y_mps
-                      >> odometry.angular_z_rads))
+            if (!(iss >> odometry.x_m >> odometry.y_m >> odometry.yaw_rad >> odometry.linear_x_mps >> odometry.linear_y_mps >> odometry.angular_z_radps))
             {
                 return std::nullopt;
             }
@@ -327,9 +379,10 @@ namespace robot_hardware
     // AE EA | LENGTH | TYPE | DATA | CHECKSUM | EF FE
     //
     // LENGTH = TYPE 的 1 字节 + CHECKSUM 的 1 字节 + DATA 长度
+    // 内部数据结构----> Mick二进制数据
     std::vector<uint8_t> EncodeMickBinaryFrame(
         const uint8_t type,
-        const std::vector<uint8_t>& data)
+        const std::vector<uint8_t> &data)
     {
         // LENGTH 只有 1 字节，最大为 255。
         // LENGTH = data.size() + 2，因此载荷最多 253 字节。
@@ -342,21 +395,21 @@ namespace robot_hardware
         std::vector<uint8_t> frame;
         frame.reserve(data.size() + 7U);
 
-        // 帧头
+        // 帧头 AE EA
         frame.push_back(0xAE);
         frame.push_back(0xEA);
 
-        // 长度字段
+        // 长度字段 LENGTH
         frame.push_back(
             static_cast<uint8_t>(data.size() + 2U));
 
-        // 数据类型
+        // 数据类型 TYPE
         frame.push_back(type);
 
-        // 数据载荷
+        // 数据载荷 DATA
         frame.insert(frame.end(), data.begin(), data.end());
 
-        // 校验和：从 LENGTH 开始，累加至载荷最后一个字节
+        // 校验和：从 LENGTH 开始，累加至载荷最后一个字节  CHECKSUM
         uint8_t checksum = 0;
 
         for (std::size_t i = 2; i < frame.size(); ++i)
@@ -367,7 +420,7 @@ namespace robot_hardware
 
         frame.push_back(checksum);
 
-        // 帧尾
+        // 帧尾 EF FE
         frame.push_back(0xEF);
         frame.push_back(0xFE);
 
@@ -378,8 +431,9 @@ namespace robot_hardware
     //
     // 每个速度字段使用 2 字节有符号整数。
     // 两个线速度按 mm/s 编码，角速度按 mrad/s 编码。
+    // 内部数据结构----> Mick二进制数据
     std::vector<uint8_t> EncodeMickSpeedCommand(
-        const ChassisCommand& command)
+        const ChassisCommand &command)
     {
         std::vector<uint8_t> data;
         data.reserve(6);
@@ -394,7 +448,7 @@ namespace robot_hardware
 
         AppendInt16(
             data,
-            ClampToInt16(command.angular_z_rads * 1000.0));
+            ClampToInt16(command.angular_z_radps * 1000.0));
 
         // 0xF3：当前实现使用的速度命令类型
         return EncodeMickBinaryFrame(0xF3, data);
@@ -412,28 +466,17 @@ namespace robot_hardware
     // ================================================================
 
     // 将已经提取出 type 和 data 的二进制帧解码为 ChassisPacket。
-    // 本函数不负责帧头、帧尾和校验和检查；
-    // 这些工作由 MickBinaryPacketStream 完成。
+    // 本函数不负责帧头、帧尾和校验和检查, 这些工作由 MickBinaryPacketStream 完成。
+    // Mick二进制数据 ---> 内部数据结构
     std::optional<ChassisPacket> DecodeMickBinaryPacket(
-        const MickBinaryFrame& frame)
+        const MickBinaryFrame &frame)
     {
         // ------------------------------------------------------------
         // 0xA1：里程计数据
-        //
-        // 暂按原实现的 12 字节布局：
-        // 0..1   x
-        // 2..3   y
-        // 4..5   yaw
-        // 6..7   linear_x
-        // 8..9   angular_z
-        // 10..11 battery_voltage
-        //
-        // 当前布局没有独立的 linear_y 字段，因此设为 0。
-        // 必须以实际 Mick 协议文档核实这些字段。
         // ------------------------------------------------------------
         if (frame.type == 0xA1)
         {
-            if (frame.data.size() != 12U)
+            if (frame.data.size() != 14U)
             {
                 return std::nullopt;
             }
@@ -452,15 +495,14 @@ namespace robot_hardware
             odometry.linear_x_mps =
                 ReadInt16(frame.data, 6) / 1000.0;
 
-            // 原代码重复读取偏移 6，会错误地让两个线速度相同。
-            // 当前假定的 12 字节协议没有独立的 y 方向速度字段。
-            odometry.linear_y_mps = 0.0;
-
-            odometry.angular_z_rads =
+            odometry.linear_y_mps =
                 ReadInt16(frame.data, 8) / 1000.0;
 
+            odometry.angular_z_radps =
+                ReadInt16(frame.data, 10) / 1000.0;
+
             odometry.battery_voltage =
-                ReadUInt16(frame.data, 10) / 100.0;
+                ReadUInt16(frame.data, 12) / 100.0;
 
             ChassisPacket packet;
             packet.kind = ChassisPacketKind::kOdometry;
@@ -479,7 +521,8 @@ namespace robot_hardware
         if (frame.type == 0xA2)
         {
             // 合法载荷长度为 1 或 3。
-            // 0 字节代表缺失状态码，2 字节代表不完整的电压字段。
+            // 必须包含 1 字节状态码。
+            // 如果包含电池电压，则必须额外提供完整的 2 字节电压数据。
             if (frame.data.size() != 1U &&
                 frame.data.size() != 3U)
             {
@@ -512,17 +555,14 @@ namespace robot_hardware
     // 五、文本数据流解析器 ChassisPacketStream
     // ================================================================
 
-    ChassisPacketStream::ChassisPacketStream(
-        std::size_t max_buffer_size)
+    ChassisPacketStream::ChassisPacketStream(std::size_t max_buffer_size)
         : max_buffer_size_(max_buffer_size)
     {
     }
 
     // 追加一段文本数据。
     // 先检查容量，避免超大输入先触发大规模内存分配。
-    void ChassisPacketStream::Append(
-        const char* data,
-        std::size_t size)
+    void ChassisPacketStream::Append(const char *data, std::size_t size)
     {
         if (size == 0U)
         {
@@ -542,8 +582,7 @@ namespace robot_hardware
     }
 
     // 方便调用者直接追加 std::string
-    void ChassisPacketStream::Append(
-        const std::string& data)
+    void ChassisPacketStream::Append(const std::string &data)
     {
         Append(data.data(), data.size());
     }
@@ -626,12 +665,18 @@ namespace robot_hardware
 
     // 追加二进制字节。
     void MickBinaryPacketStream::Append(
-        const uint8_t* data,
+        const uint8_t *data,
         std::size_t size)
     {
         if (size == 0U)
         {
             return;
+        }
+
+        if (data == nullptr)
+        {
+            throw std::invalid_argument(
+                "Cannot append from a null pointer");
         }
 
         // 调用约定：size 非零时，data 必须指向有效内存。
@@ -651,7 +696,7 @@ namespace robot_hardware
 
     // 方便调用者直接追加字节向量
     void MickBinaryPacketStream::Append(
-        const std::vector<uint8_t>& data)
+        const std::vector<uint8_t> &data)
     {
         Append(data.data(), data.size());
     }
@@ -663,8 +708,7 @@ namespace robot_hardware
         std::vector<ChassisPacket> packets;
 
         constexpr std::array<uint8_t, 2> magic{
-            0xAE, 0xEA
-        };
+            0xAE, 0xEA};
 
         // 最短帧为：
         // 2 字节帧头 + 1 字节长度 + 2 字节长度内容 + 2 字节帧尾

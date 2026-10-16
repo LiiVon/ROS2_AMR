@@ -16,7 +16,7 @@ namespace robot_hardware
     {
         double linear_x_mps = 0.0;  // 机器人在x方向的线速度（单位：米/秒）
         double linear_y_mps = 0.0;  // 机器人在y方向的线速度（单位：米/秒）
-        double angular_z_rads = 0.0; // 机器人绕z轴的角速度（单位：弧度/秒）
+        double angular_z_radps = 0.0; // 机器人绕z轴的角速度（单位：弧度/秒）
     };
 
     // 底盘里程计数据
@@ -28,7 +28,7 @@ namespace robot_hardware
 
         double linear_x_mps = 0.0;  // 机器人在x方向的线速度（单位：米/秒）
         double linear_y_mps = 0.0;  // 机器人在y方向的线速度（单位：米/秒）
-        double angular_z_rads = 0.0; // 机器人绕z轴的角速度（单位：弧度/秒）
+        double angular_z_radps = 0.0; // 机器人绕z轴的角速度（单位：弧度/秒）
 
         std::optional<double> battery_voltage; // 电池电压（单位：伏特），可选字段
     };
