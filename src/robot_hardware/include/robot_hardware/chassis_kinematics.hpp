@@ -1,5 +1,5 @@
 // chassis_kinematics
-// 机器人底盘的运动学数据结构和计算函数
+// 运动学计算模块
 #pragma once
 
 #include <array>
@@ -21,6 +21,7 @@ namespace robot_hardware
     struct WheelSpeeds
     {
         // 四个轮子的转速（单位：转/分钟）
+        // [0,1,2,3] 分别对应 [左前轮, 右前轮, 左后轮, 右后轮]
         // revolutions per minute 的缩写，表示每分钟转数
         std::array<double, 4> rpm{0.0, 0.0, 0.0, 0.0};
     };
