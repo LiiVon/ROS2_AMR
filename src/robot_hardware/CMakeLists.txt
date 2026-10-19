@@ -30,10 +30,6 @@ target_include_directories(robot_hardware_backends PUBLIC
 # 向使用这个库的 target 传递 C++17 要求
 target_compile_features(robot_hardware_backends PUBLIC cxx_std_17)
 
-
-add_executable(test_kinematics test/test_kinematics.cpp)
-target_link_libraries(test_kinematics robot_hardware_backends)
-
 # 安装头文件
 install(
   DIRECTORY include/
