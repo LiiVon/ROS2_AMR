@@ -16,6 +16,9 @@ find_package(std_msgs REQUIRED)
 add_library(robot_hardware_backends SHARED
   src/chassis_packet.cpp
   src/chassis_kinematics.cpp
+  src/mock_backend.cpp
+  src/serial_backend.cpp
+  src/udp_backend.cpp
 )
 
 # 公共头文件路径
@@ -28,7 +31,7 @@ target_include_directories(robot_hardware_backends PUBLIC
 target_compile_features(robot_hardware_backends PUBLIC cxx_std_17)
 
 
-add_executable(test_kinematics src/test_kinematics.cpp)
+add_executable(test_kinematics test/test_kinematics.cpp)
 target_link_libraries(test_kinematics robot_hardware_backends)
 
 # 安装头文件
