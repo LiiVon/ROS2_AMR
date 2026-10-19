@@ -664,9 +664,7 @@ namespace robot_hardware
     }
 
     // 追加二进制字节。
-    void MickBinaryPacketStream::Append(
-        const uint8_t *data,
-        std::size_t size)
+    void MickBinaryPacketStream::Append(const char *data,std::size_t size)
     {
         if (size == 0U)
         {
@@ -688,15 +686,11 @@ namespace robot_hardware
             return;
         }
 
-        buffer_.insert(
-            buffer_.end(),
-            data,
-            data + size);
+        buffer_.insert(buffer_.end(),data,data + size);
     }
 
     // 方便调用者直接追加字节向量
-    void MickBinaryPacketStream::Append(
-        const std::vector<uint8_t> &data)
+    void MickBinaryPacketStream::Append(const std::string &data)
     {
         Append(data.data(), data.size());
     }
@@ -707,8 +701,7 @@ namespace robot_hardware
     {
         std::vector<ChassisPacket> packets;
 
-        constexpr std::array<uint8_t, 2> magic{
-            0xAE, 0xEA};
+        constexpr std::array<uint8_t, 2> magic{0xAE, 0xEA};
 
         // 最短帧为：
         // 2 字节帧头 + 1 字节长度 + 2 字节长度内容 + 2 字节帧尾

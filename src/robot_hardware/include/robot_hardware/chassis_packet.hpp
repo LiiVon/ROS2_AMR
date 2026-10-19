@@ -14,8 +14,8 @@ namespace robot_hardware
     // 底盘运动指令
     struct ChassisCommand
     {
-        double linear_x_mps = 0.0;  // 机器人在x方向的线速度（单位：米/秒）
-        double linear_y_mps = 0.0;  // 机器人在y方向的线速度（单位：米/秒）
+        double linear_x_mps = 0.0;    // 机器人在x方向的线速度（单位：米/秒）
+        double linear_y_mps = 0.0;    // 机器人在y方向的线速度（单位：米/秒）
         double angular_z_radps = 0.0; // 机器人绕z轴的角速度（单位：弧度/秒）
     };
 
@@ -26,8 +26,8 @@ namespace robot_hardware
         double y_m = 0.0;     // 机器人在世界坐标系下的y坐标（单位：米）
         double yaw_rad = 0.0; // 机器人在世界坐标系下的航向角（单位：弧度）
 
-        double linear_x_mps = 0.0;  // 机器人在x方向的线速度（单位：米/秒）
-        double linear_y_mps = 0.0;  // 机器人在y方向的线速度（单位：米/秒）
+        double linear_x_mps = 0.0;    // 机器人在x方向的线速度（单位：米/秒）
+        double linear_y_mps = 0.0;    // 机器人在y方向的线速度（单位：米/秒）
         double angular_z_radps = 0.0; // 机器人绕z轴的角速度（单位：弧度/秒）
 
         std::optional<double> battery_voltage; // 电池电压（单位：伏特），可选字段
@@ -105,13 +105,13 @@ namespace robot_hardware
         void ClearOverflow();
         void ClearInvalidLineCount();
         void Clear();
+
     private:
         std::size_t max_buffer_size_;
         std::string buffer_;
         bool overflowed_ = false;
         std::size_t invalid_line_count_ = 0;
     };
-
 
     // ======================== 二进制数据流解析器 =========================
     class MickBinaryPacketStream
@@ -120,8 +120,8 @@ namespace robot_hardware
         explicit MickBinaryPacketStream(std::size_t max_buffer_size = 4096);
 
         // 向解析器中追加数据
-        void Append(const uint8_t *data, std::size_t size);
-        void Append(const std::vector<uint8_t> &data);
+        void Append(const char *data, std::size_t size);
+        void Append(const std::string &data);
 
         // 取出完整数据包
         std::vector<ChassisPacket> DrainPackets();
@@ -134,6 +134,7 @@ namespace robot_hardware
         void ClearOverflow();
         void ClearInvalidFrameCount();
         void Clear();
+
     private:
         std::size_t max_buffer_size_;
         std::vector<uint8_t> buffer_;
