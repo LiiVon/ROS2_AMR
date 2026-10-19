@@ -1,0 +1,28 @@
+# CancelWorkflow.srv
+# 取消指定订单关联的任务
+# 或者请求取消当前正在执行的任务，并返回取消结果
+
+
+# 请求
+# 要取消的订单 ID
+string order_id
+
+# 是否请求取消当前正在执行的任务
+bool cancel_active
+---
+
+# 响应
+# 本次取消请求是否被整体判定为成功
+bool success
+
+# 处理结果或失败原因
+string message
+
+# 本次处理涉及的已取消任务 ID 列表
+string[] canceled_mission_ids
+
+# 是否已向当前活动任务发出取消请求
+bool active_cancel_requested
+
+# 处理完成后队列中的任务数量
+int32 queue_size

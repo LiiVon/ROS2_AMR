@@ -1,0 +1,33 @@
+# SubmitMilkRun.srv
+# 提交 Milk Run 循环取送任务
+
+# 本次 Milk Run 任务的运行 ID
+string run_id
+
+# 本次任务使用的周转箱 ID
+string tote_id
+
+# 本次任务需要依次访问的站点 ID 列表
+string[] station_ids
+
+# 任务优先级，数值含义以系统约定为准
+int32 priority
+
+# 系统空闲时，是否尝试立即启动任务
+bool start_if_idle
+---
+# 提交结果
+bool success
+string message
+
+# 创建或关联的订单履约记录 ID
+string fulfillment_id
+
+# 当前履约任务的状态
+string state
+
+# 本次任务关联或创建的机器人任务 ID 列表
+string[] mission_ids
+
+# 操作处理后的任务队列总数量
+int32 queue_size

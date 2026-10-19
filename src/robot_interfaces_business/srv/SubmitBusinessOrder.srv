@@ -1,0 +1,45 @@
+# SubmitBusinessOrder.srv
+# 提交业务订单，并将其路由到对应的业务场景和工作流
+
+# 业务订单 ID
+string business_order_id
+
+# 业务类型，例如拣货、配送等，具体取值看系统配置
+string business_type
+
+# 订单优先级，数值含义以系统约定为准
+int32 priority
+
+# 当前系统空闲时，是否立即启动该订单
+bool start_if_idle
+
+# 是否允许抢占当前正在执行的任务
+bool preempt_current
+---
+# 提交结果
+bool success
+string message
+
+# 返回的业务订单 ID
+string business_order_id
+
+# 返回的业务类型
+string business_type
+
+# 实际路由到的服务名称
+string routed_service
+
+# 实际路由到的业务场景 ID
+string routed_scenario_id
+
+# 实际路由到的工作流 ID
+string routed_workflow_id
+
+# 本次业务订单关联或创建的机器人任务 ID 列表
+string[] mission_ids
+
+# 本次操作后进入排队状态的任务数量
+int32 queued_count
+
+# 本次操作处理后的任务队列总数量
+int32 queue_size

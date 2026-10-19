@@ -1,0 +1,35 @@
+# ConfirmPick.srv
+# 确认某个订单或交付任务的拣货结果
+
+# 请求
+# 交付任务或履约单的唯一 ID
+string fulfillment_id
+
+# 执行拣货或确认操作的人员 ID
+string operator_id
+
+# 实际拣取的数量
+int32 picked_quantity
+
+# 备注，例如缺货、破损或其他异常
+string note
+---
+
+# 响应
+# 服务端是否成功处理本次确认请求
+bool success
+
+# 操作结果说明或错误信息
+string message
+
+# 返回本次确认对应的任务 ID
+string fulfillment_id
+
+# 任务当前状态，例如已拣货、部分完成等，具体取值看代码
+string state
+
+# 服务端记录或确认的拣货数量
+int32 picked_quantity
+
+# 尚未满足的数量，即缺拣数量
+int32 short_quantity
