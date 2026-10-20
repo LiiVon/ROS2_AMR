@@ -8,8 +8,6 @@ namespace robot_hardware
     {
     public:
         MockBackend() = default;
-        ~MockBackend() override = default;
-
         std::string Name() const override;
         bool Open(std::string *error) override;
         void Close() override;

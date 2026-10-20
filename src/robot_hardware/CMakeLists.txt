@@ -11,42 +11,58 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(robot_interfaces REQUIRED)
+find_package(robot_interfaces_core REQUIRED)
+find_package(hardware_interface REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 
 add_library(robot_hardware_backends SHARED
   src/chassis_packet.cpp
   src/chassis_kinematics.cpp
+  src/chassis_backend_factory.cpp
   src/mock_backend.cpp
   src/serial_backend.cpp
   src/udp_backend.cpp
+  src/chassis_system_adapter.cpp
 )
-
-# 公共头文件路径
 target_include_directories(robot_hardware_backends PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
+set_target_properties(robot_hardware_backends PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-# 向使用这个库的 target 传递 C++17 要求
-target_compile_features(robot_hardware_backends PUBLIC cxx_std_17)
+add_library(robot_chassis_hardware SHARED
+  src/chassis_hardware_interface.cpp)
+target_link_libraries(robot_chassis_hardware robot_hardware_backends)
+ament_target_dependencies(robot_chassis_hardware
+  hardware_interface pluginlib rclcpp rclcpp_lifecycle)
+pluginlib_export_plugin_description_file(hardware_interface robot_hardware_plugins.xml)
 
-# 安装头文件
+install(
+  TARGETS robot_hardware_backends robot_chassis_hardware
+  EXPORT export_robot_hardware_backends
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
 install(
   DIRECTORY include/
   DESTINATION include
 )
 
-# 安装库并导出 CMake target
 install(
-  TARGETS robot_hardware_backends
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+  FILES robot_hardware_plugins.xml
+  DESTINATION share/${PROJECT_NAME}
 )
 
-# 导出公共接口，供其他 ROS 2 package 使用
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_include_directories(include)
+ament_export_targets(export_robot_hardware_backends HAS_LIBRARY_TARGET)
+ament_export_dependencies(hardware_interface pluginlib)
 
 ament_package()

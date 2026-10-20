@@ -16,13 +16,6 @@ namespace robot_hardware
         {
             return std::make_unique<UdpBackend>(config);
         }
-        else if (backend == "mock")
-        {
-            return std::make_unique<MockBackend>(config);
-        }
-        else
-        {
-            throw std::invalid_argument("Unknown backend type: " + backend);
-        }
+        return std::make_unique<MockBackend>();
     }
 }
