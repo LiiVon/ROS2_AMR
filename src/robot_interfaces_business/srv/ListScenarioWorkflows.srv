@@ -1,24 +1,9 @@
-# ListScenarioWorkflows.srv
-# 查询指定场景下的工作流列表
-
-# 请求：业务场景 ID
 string scenario_id
 ---
-# 查询结果
 bool success
 string message
-
-# 返回的场景 ID 列表
 string[] scenario_ids
-
-# 返回的工作流 ID 列表
 string[] workflow_ids
-
-# 返回的工作流显示标签列表
 string[] labels
-
-# 每个工作流关联的任务 ID 列表，csv格式
 string[] task_ids_csv
-
-# 每个工作流的默认优先级列表
 int32[] default_priorities

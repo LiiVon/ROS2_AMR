@@ -1,39 +1,14 @@
-# SubmitVda5050Order.srv
-# 提交 VDA 5050 相关运输订单，并返回调度结果
-
-# 业务订单 ID
 string order_id
-
-# 订单序列号，用于标识或区分订单版本，具体规则以实现为准
 string serial_number
-
-# 取货节点 ID
 string pickup_node_id
-
-# 卸货节点 ID
 string dropoff_node_id
-
-# 订单优先级，数值含义以系统约定为准
 int32 priority
-
-# 系统空闲时，是否尝试立即启动订单
 bool start_if_idle
-
-# 是否允许尝试抢占当前正在执行的任务
 bool preempt_current
 ---
-# 提交结果
 bool success
 string message
-
-# 返回的业务订单 ID
 string order_id
-
-# 返回的订单序列号
 string serial_number
-
-# 创建或关联的机器人任务 ID
 string mission_id
-
-# 操作处理后的任务队列总数量
 int32 queue_size

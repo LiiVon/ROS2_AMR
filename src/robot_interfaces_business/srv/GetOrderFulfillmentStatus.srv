@@ -1,51 +1,16 @@
-# GetOrderFulfillmentStatus.srv
-# 根据 fulfillment_id 查询一笔订单履约任务的详细状态
-# 包括商品信息、拣货进度、站点信息，以及关联的机器人任务和确认记录
-
-# 请求
-# 订单履约任务的唯一标识
 string fulfillment_id
 ---
-
-# 响应
-# 查询是否成功
 bool success
-
-# 查询结果说明或失败原因
 string message
-
-# 返回的订单履约记录 ID
 string fulfillment_id
-
-# 订单类型，例如“拣货”、“送达”等
 string order_type
-
-# 商品 SKU（库存单位）的唯一标识
 string sku_id
-
-# 周转箱或料箱的 ID，用于标识承载商品的容器
 string tote_id
-
-# 当前履约状态，例如待拣货、拣货中、部分完成等
 string state
-
-# 拣货站点，例如机器人需要前往取货的工作站
 string pick_station
-
-# 放货或交付站点，例如机器人需要送达的工作站
 string dropoff_station
-
-# 订单要求完成的商品数量
 int32 requested_quantity
-
-# 当前已拣取的商品数量
 int32 picked_quantity
-
-# 尚未满足的商品数量，即缺拣数量
 int32 short_quantity
-
-# 与这笔履约记录关联的机器人任务 ID 列表
 string[] mission_ids
-
-# 与这笔履约记录关联的确认记录 ID 列表，例如拣货确认或交付确认
 string[] confirmation_ids

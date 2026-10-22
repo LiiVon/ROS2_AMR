@@ -1,52 +1,17 @@
-# ListScenarioTasks.srv
-# 根据 scenario_id 查询指定业务场景下配置的任务列表，
-# 以及每个任务对应的站点、资源、动作和优先级等信息。
-
-
-# 请求：业务场景 ID
 string scenario_id
 ---
-
-# 查询结果
 bool success
 string message
-
-# 任务所属的业务场景 ID 列表
 string[] scenario_ids
-
-# 任务 ID 列表
 string[] task_ids
-
-# 任务的显示标签列表
 string[] labels
-
-# 任务类型列表
 string[] task_types
-
-# 每个任务对应的取货站点 ID 列表
 string[] pickup_station_ids
-
-# 每个任务对应的放货站点 ID 列表
 string[] dropoff_station_ids
-
-# 每个任务对应的站点访问顺序列表
-# 使用 CSV 字符串表示，具体格式由项目约定
 string[] station_sequences_csv
-
-# 每个任务所需的机器人能力列表
 string[] required_capabilities
-
-# 每个任务关联的资源 ID 列表
 string[] resource_ids
-
-# 每个任务关联的资源类型列表
 string[] resource_types
-
-# 每个任务需要执行的动作列表
 string[] actions
-
-# 每个任务执行动作后是否保持等待状态
 bool[] hold_after_actions
-
-# 每个任务的默认优先级列表
 int32[] default_priorities

@@ -19,7 +19,7 @@ namespace robot_hardware
 
     std::string UdpBackend::Name() const
     {
-        return "UDP Backend";
+        return "udp";
     }
 
     bool UdpBackend::Open(std::string *error)

@@ -1,43 +1,13 @@
-# GetWorkflowStatus.srv
-# 根据 order_id 查询某个业务工作流的执行状态，
-# 包括总步骤数、已完成步骤数、排队中的步骤数、正在执行的机器人任务，以及工作流是否暂停
-
-# 请求
-# 要查询的业务订单 ID
 string order_id
 ---
-
-# 响应
-# 查询是否成功
 bool success
-
-# 查询结果说明或失败原因
 string message
-
-# 返回的业务订单 ID
 string order_id
-
-# 当前工作流的执行状态，例如“进行中”、“已完成”、“暂停”等
 string state
-
-# 当前工作流是否处于暂停状态
-bool paused
-
-# 当前工作流的总步骤数
 int32 total_steps
-
-# 当前工作流已完成的步骤数
 int32 finished_steps
-
-# 当前工作流中排队的步骤数
 int32 queued_steps
-
-# 正在执行的机器人任务 ID
 string running_mission_id
-
-# 排队中的机器人任务 ID 列表
 string[] queued_mission_ids
-
-# 已完成的机器人任务 ID 列表    
 string[] finished_mission_ids
-
+bool paused

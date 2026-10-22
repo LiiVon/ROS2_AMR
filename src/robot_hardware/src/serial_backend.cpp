@@ -95,7 +95,7 @@ namespace robot_hardware
     
     std::string SerialBackend::Name() const
     {
-        return "SerialBackend";
+        return "serial";
     }
 
     bool SerialBackend::Open(std::string *error)

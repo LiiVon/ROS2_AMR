@@ -1,13 +1,4 @@
-# SetChassisMode —— 请求底盘切换工作模式
-
-# request: 
-string mode  # 底盘工作模式名称
-
+string mode
 ---
-# response:
-
-# 是否成功切换
-bool success  
-
-# 详细的状态信息，例如“切换成功”、“切换失败：底盘未连接”等 
-string message   
+bool success
+string message

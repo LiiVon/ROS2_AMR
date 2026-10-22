@@ -1,0 +1,21 @@
+twist_mux:
+  ros__parameters:
+    use_stamped: false
+    topics:
+      nav2:
+        topic: /cmd_vel/nav2
+        timeout: 0.5
+        priority: 40
+      tracking:
+        topic: /cmd_vel/tracking
+        timeout: 0.5
+        priority: 60
+      teleop:
+        topic: /cmd_vel/teleop
+        timeout: 0.5
+        priority: 100
+    locks:
+      manual_takeover:
+        topic: /teleop/takeover_lock
+        timeout: 0.0
+        priority: 100

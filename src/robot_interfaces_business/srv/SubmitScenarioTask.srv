@@ -1,39 +1,14 @@
-# SubmitScenarioTask.srv
-# 提交指定业务场景下的任务，并返回任务调度结果
-
-# 业务场景 ID
 string scenario_id
-
-# 要提交的场景任务 ID
 string task_id
-
-# 关联的业务订单 ID
 string order_id
-
-# 任务优先级，数值含义以系统约定为准
 int32 priority
-
-# 系统空闲时，是否尝试立即启动任务
 bool start_if_idle
-
-# 是否允许尝试抢占当前正在执行的任务
 bool preempt_current
 ---
-# 提交结果
 bool success
 string message
-
-# 返回的业务场景 ID
 string scenario_id
-
-# 返回的场景任务 ID
 string task_id
-
-# 创建或关联的机器人任务 ID
 string mission_id
-
-# 分配执行该任务的机器人 ID
 string assigned_robot_id
-
-# 操作处理后的任务队列总数量
 int32 queue_size

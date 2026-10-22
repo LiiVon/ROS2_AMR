@@ -1,42 +1,15 @@
-# SubmitPickingWave.srv
-# 提交一批拣货任务，并返回履约记录和机器人任务信息
-
-# 拣货波次 ID，用于标识本次拣货批次
 string wave_id
-
-# 待拣取商品的 SKU ID
 string sku_id
-
-# 用于承载商品的周转箱 ID
 string tote_id
-
-# 拣货站点 ID
 string pick_station
-
-# 放货或交付站点 ID
 string dropoff_station
-
-# 本次需要拣取的商品数量
 int32 quantity
-
-# 任务优先级，数值含义以系统约定为准
 int32 priority
-
-# 系统空闲时，是否尝试立即启动任务
 bool start_if_idle
 ---
-# 提交结果
 bool success
 string message
-
-# 创建或关联的订单履约记录 ID
 string fulfillment_id
-
-# 当前履约任务的状态
 string state
-
-# 本次任务关联或创建的机器人任务 ID 列表
 string[] mission_ids
-
-# 操作处理后的任务队列总数量
 int32 queue_size

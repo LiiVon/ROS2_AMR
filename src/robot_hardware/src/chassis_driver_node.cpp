@@ -17,7 +17,7 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "robot_interfaces/msg/chassis_state.hpp"
+#include "robot_interfaces_core/msg/chassis_state.hpp"
 #include "robot_interfaces_core/srv/set_chassis_mode.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "std_srvs/srv/empty.hpp"
@@ -49,12 +49,14 @@ public:
     {
         // 声明相关参数
         // 控制接口模式：当前节点只支持速度指令
-        control_mode_ = declare_parameter<std::string>("control_mode", "velocity");
+        // 控制模式：旧版参数名为 mode（如 mode:=hardware），仅记录不阻断启动
+        control_mode_ = declare_parameter<std::string>("mode", "velocity");
         if (control_mode_ != "velocity")
         {
-            throw std::invalid_argument(
-                "Unsupported control_mode: " + control_mode_ +
-                ". Currently only 'velocity' is supported.");
+            RCLCPP_WARN(
+                get_logger(),
+                "control mode '%s' is recorded but only velocity control is implemented",
+                control_mode_.c_str());
         }
         // 机械底盘类型：用于确定采用的运动学模型
         chassis_type_ = declare_parameter<std::string>("chassis_type", "diff_drive");
@@ -111,24 +113,24 @@ public:
         system_state_ = chassis_adapter_->State();
         imu_source_ = declare_parameter<std::string>("imu_source", "auto");
         publish_synthetic_imu_ = ResolvePublishSyntheticImu();
-        cmd_sub_ = create_subscription<geometry_msgs::msg::Twist>(
+        cmd_subscription_ = create_subscription<geometry_msgs::msg::Twist>(
             "/cmd_vel", 10, [this](geometry_msgs::msg::Twist::SharedPtr msg)
             { HandleCommand(*msg); });
 
-        wheel_odom_pub_ = create_publisher<nav_msgs::msg::Odometry>(wheel_odom_topic_, 10);
-        odom_pub_ = create_publisher<nav_msgs::msg::Odometry>(odom_topic_, 10);
+        wheel_odom_publisher_ = create_publisher<nav_msgs::msg::Odometry>(wheel_odom_topic_, 10);
+        odom_publisher_ = create_publisher<nav_msgs::msg::Odometry>(odom_topic_, 10);
         if (publish_synthetic_imu_)
         {
-            imu_pub_ = create_publisher<sensor_msgs::msg::Imu>("/imu/data", 10);
+            imu_publisher_ = create_publisher<sensor_msgs::msg::Imu>("/imu/data", 10);
         }
-        state_pub_ = create_publisher<robot_interfaces::msg::ChassisState>("/chassis/state", 10);
+        state_publisher_ = create_publisher<robot_interfaces_core::msg::ChassisState>("/chassis/state", 10);
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-        clear_odom_srv_ = create_service<std_srvs::srv::Empty>(
-            "/clear_odometry", [this](const std::shared_ptr<std_srvs::srv::Empty::Request>,
+        clear_odom_service_ = create_service<std_srvs::srv::Empty>(
+            "/chassis/clear_odometry", [this](const std::shared_ptr<std_srvs::srv::Empty::Request>,
                                       std::shared_ptr<std_srvs::srv::Empty::Response>)
             { ResetOdometry(); });
-        set_mode_srv_ = create_service<robot_interfaces_core::srv::SetChassisMode>(
-            "/set_chassis_mode",
+        set_mode_service_ = create_service<robot_interfaces_core::srv::SetChassisMode>(
+            "/chassis/set_mode",
             [this](const std::shared_ptr<robot_interfaces_core::srv::SetChassisMode::Request> request,
                    std::shared_ptr<robot_interfaces_core::srv::SetChassisMode::Response> response)
             {
@@ -343,7 +345,7 @@ private:
         wheel_odom.twist.twist.linear.x = wheel_odom_command_.linear_x_mps;
         wheel_odom.twist.twist.linear.y = wheel_odom_command_.linear_y_mps;
         wheel_odom.twist.twist.angular.z = wheel_odom_command_.angular_z_radps;
-        wheel_odom_pub_->publish(wheel_odom);
+        wheel_odom_publisher_->publish(wheel_odom);
 
         nav_msgs::msg::Odometry odom;
         odom.header.stamp = stamp;
@@ -357,7 +359,7 @@ private:
         odom.twist.twist.angular.z = system_state_.angular_z_radps;
         if (publish_odom_)
         {
-            odom_pub_->publish(odom);
+            odom_publisher_->publish(odom);
         }
 
         if (publish_tf_)
@@ -374,7 +376,7 @@ private:
 
     void PublishImu(const rclcpp::Time &stamp)
     {
-        if (!imu_pub_)
+        if (!imu_publisher_)
         {
             return;
         }
@@ -396,13 +398,13 @@ private:
         previous_imu_linear_velocity_ = system_state_.linear_x_mps;
         previous_imu_stamp_ = stamp;
         has_previous_imu_sample_ = true;
-        imu_pub_->publish(imu);
+        imu_publisher_->publish(imu);
     }
 
     // 发布底盘状态消息，包括底盘后端类型、运动学模型、连接状态、电池电压、线速度、角速度，以及底盘状态信息
     void PublishState(const rclcpp::Time &stamp)
     {
-        robot_interfaces::msg::ChassisState state;
+        robot_interfaces_core::msg::ChassisState state;
         state.header.stamp = stamp;
         state.backend = backend_name_;
         state.kinematics_model = kinematics_model_;
@@ -416,10 +418,9 @@ private:
                                            std::to_string(system_state_.wheel_speeds.rpm[1]) + "," +
                                            std::to_string(system_state_.wheel_speeds.rpm[2]) + "," +
                                            std::to_string(system_state_.wheel_speeds.rpm[3])
-                                     : "backend_unavailable:control=" + control_mode_ +
-                                           ":kinematics=" + kinematics_model_;
+                                     : "backend_unavailable:" + control_mode_;
 
-        state_pub_->publish(state);
+        state_publisher_->publish(state);
     }
 
     void ResetOdometry()
@@ -463,14 +464,14 @@ private:
     rclcpp::Time previous_imu_stamp_;                                                     // 上一次发布IMU数据的时间戳
     double previous_imu_linear_velocity_ = 0.0;                                           // 上一次发布IMU数据时的线速度
     bool has_previous_imu_sample_ = false;                                                // 是否已经有过IMU数据样本，用于计算线加速度
-    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_sub_;                  // 订阅 cmd_vel 话题，用于接收上层发送的底盘运动指令
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr wheel_odom_pub_;                // 发布轮子里程计话题，用于发布轮子里程计计算出的位姿和速度
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;                      // 发布里程计话题，用于发布底盘系统状态计算出的位姿和速度
-    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;                         // 发布IMU话题，用于发布合成的IMU数据
-    rclcpp::Publisher<robot_interfaces::msg::ChassisState>::SharedPtr state_pub_;         // 发布底盘状态话题，用于发布底盘系统状态，包括连接状态、电池电压、速度等信息
+    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_subscription_;                  // 订阅 cmd_vel 话题，用于接收上层发送的底盘运动指令
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr wheel_odom_publisher_;                // 发布轮子里程计话题，用于发布轮子里程计计算出的位姿和速度
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_publisher_;                      // 发布里程计话题，用于发布底盘系统状态计算出的位姿和速度
+    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher_;                         // 发布IMU话题，用于发布合成的IMU数据
+    rclcpp::Publisher<robot_interfaces_core::msg::ChassisState>::SharedPtr state_publisher_;         // 发布底盘状态话题，用于发布底盘系统状态，包括连接状态、电池电压、速度等信息
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;                       // 用于发布TF坐标变换，将底盘的位姿信息广播给整个ROS2系统
-    rclcpp::Service<std_srvs::srv::Empty>::SharedPtr clear_odom_srv_;                     // 提供清除里程计服务，用于重置底盘的位姿和速度信息
-    rclcpp::Service<robot_interfaces_core::srv::SetChassisMode>::SharedPtr set_mode_srv_; // 提供设置底盘模式服务，用于切换底盘的运动学模型和控制模式
+    rclcpp::Service<std_srvs::srv::Empty>::SharedPtr clear_odom_service_;                     // 提供清除里程计服务，用于重置底盘的位姿和速度信息
+    rclcpp::Service<robot_interfaces_core::srv::SetChassisMode>::SharedPtr set_mode_service_; // 提供设置底盘模式服务，用于切换底盘的运动学模型和控制模式
     rclcpp::TimerBase::SharedPtr timer_;                                                  // 定时器，用于周期性调用 Tick() 函数，读取底盘状态、积分轮子里程计、发布里程计和IMU数据，以及发布底盘状态
 };
 

@@ -1,39 +1,14 @@
-# SubmitScenarioWorkflow.srv
-# 提交指定业务场景下的工作流，并返回任务调度结果
-
-# 业务场景 ID
 string scenario_id
-
-# 要提交的场景工作流 ID
 string workflow_id
-
-# 关联的业务订单 ID
 string order_id
-
-# 工作流优先级，数值含义以系统约定为准
 int32 priority
-
-# 系统空闲时，是否尝试立即启动工作流
 bool start_if_idle
-
-# 是否允许尝试抢占当前正在执行的任务
 bool preempt_current
 ---
-# 提交结果
 bool success
 string message
-
-# 返回的业务场景 ID
 string scenario_id
-
-# 返回的工作流 ID
 string workflow_id
-
-# 本次工作流关联或创建的机器人任务 ID 列表
 string[] mission_ids
-
-# 本次操作中进入排队状态的任务数量
 int32 queued_count
-
-# 操作处理后的任务队列总数量
 int32 queue_size

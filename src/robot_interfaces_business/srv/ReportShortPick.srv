@@ -1,28 +1,10 @@
-# ReportShortPick.srv
-# 上报指定履约任务的缺拣情况
-
-# 订单履约记录 ID
 string fulfillment_id
-
-# 执行或上报操作的人员 ID
 string operator_id
-
-# 缺少的商品数量
 int32 short_quantity
-
-# 缺拣原因，例如库存不足、商品损坏等
 string reason
 ---
-
-# 上报结果
 bool success
 string message
-
-# 返回的订单履约记录 ID
 string fulfillment_id
-
-# 上报处理后的履约状态
 string state
-
-# 系统记录的缺拣数量
 int32 short_quantity

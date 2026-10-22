@@ -4,7 +4,7 @@ namespace robot_hardware
 {
     std::string MockBackend::Name() const
     {
-        return "MockBackend";
+        return "mock";
     }
 
     bool MockBackend::Open(std::string *error)

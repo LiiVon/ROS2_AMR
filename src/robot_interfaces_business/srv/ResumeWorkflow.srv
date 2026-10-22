@@ -1,21 +1,8 @@
-# ResumeWorkflow.srv
-# 请求恢复指定订单对应的工作流
-
-# 需要恢复的业务订单 ID
 string order_id
-
-# 是否同时请求恢复当前活动任务
 bool resume_active
 ---
-# 操作结果
 bool success
 string message
-
-# 受本次恢复操作影响的机器人任务 ID 列表
 string[] affected_mission_ids
-
-# 是否已请求恢复当前活动任务
 bool active_resume_requested
-
-# 当前任务队列中的任务数量
 int32 queue_size

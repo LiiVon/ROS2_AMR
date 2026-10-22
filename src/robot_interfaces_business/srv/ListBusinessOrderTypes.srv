@@ -1,19 +1,7 @@
-# ListBusinessOrderTypes.srv
-# 查询当前系统支持的业务订单类型及其关联配置
-
 ---
-# 查询结果
 bool success
 string message
-
-# 支持的业务订单类型列表
 string[] business_types
-
-# 每种业务订单类型对应的场景 ID 列表
 string[] scenario_ids
-
-# 每种业务订单类型对应的工作流 ID 列表
 string[] workflow_ids
-
-# 每种业务订单类型对应的显示标签列表
 string[] labels

@@ -1,16 +1,13 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.20)
 project(robot_interfaces_core)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
-# find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
-# 把我们写的 .msg 交给 rosidl 生成 C++ 代码
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RobotState.msg"
   "msg/TaskStatus.msg"
@@ -20,6 +17,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetControlMode.srv"
   "srv/SetChassisMode.srv"
   "srv/GetStatistics.srv"
-  DEPENDENCIES std_msgs
+  DEPENDENCIES std_msgs geometry_msgs nav_msgs sensor_msgs
 )
+
+ament_export_dependencies(rosidl_default_runtime)
 ament_package()

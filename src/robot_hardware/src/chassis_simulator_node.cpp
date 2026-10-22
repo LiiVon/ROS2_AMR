@@ -148,7 +148,7 @@ private:
         {
             const std::string line = rx_buffer_.substr(0, newline);
             rx_buffer_.erase(0, newline + 1);
-            if (auto command = robot_hardware::ParseCommandLine(line))
+            if (auto command = robot_hardware::DecodeCommand(line))
             {
                 command_ = *command;
             }

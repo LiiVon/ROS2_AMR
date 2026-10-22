@@ -1,35 +1,12 @@
-# SubmitOrder.srv
-# 提交通用订单并返回接收结果及关联的机器人任务信息
-
-# 订单 ID
 string order_id
-
-# 订单类型，具体支持的类型由系统配置决定
 string order_type
-
-# 订单优先级，数值含义以系统约定为准
 int32 priority
-
-# 订单的附加业务数据，使用 JSON 字符串表示
 string payload_json
-
-# 订单标签列表，用于分类、筛选或附加标记
 string[] tags
 ---
-# 订单是否被系统接受
 bool accepted
-
-# 拒绝订单的原因；接受时可能为空
 string reject_reason
-
-# 主要关联的机器人任务 ID
 string mission_id
-
-# 本次订单关联或创建的机器人任务 ID 列表
 string[] mission_ids
-
-# 处理请求后的任务队列总数量
 int32 queue_size
-
-# 提交结果说明
 string message

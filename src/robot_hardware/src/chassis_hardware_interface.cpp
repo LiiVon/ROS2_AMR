@@ -351,3 +351,7 @@ namespace robot_hardware
         wheel_position_rad_[1] += wheel_velocity_radps_[1] * period_seconds;
     }
 }
+
+// 向 pluginlib 注册硬件插件。缺少该宏会导致 controller_manager 无法加载插件。
+PLUGINLIB_EXPORT_CLASS(
+    robot_hardware::ChassisHardwareInterface, hardware_interface::SystemInterface)

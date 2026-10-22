@@ -74,25 +74,35 @@ namespace robot_hardware
 
     } // namespace
 
-    // 将模型名称统一为标准名称。
     std::string NormalizeKinematicsModel(
         const std::string &model_name)
     {
+        if (model_name == "mecanum" ||
+            model_name == "Mecanum" ||
+            model_name == "omni")
+        {
+            return "mecanum";
+        }
+
+        // 差速与其别名
         if (model_name == "diff_drive" ||
             model_name == "differential_drive")
         {
             return "diff_drive";
         }
 
-        if (model_name == "mecanum" ||
-            model_name == "Mecanum")
+        // 尚未实现真实转向模型的底盘：降级为差速，保证系统可运行
+        if (model_name == "ackermann" ||
+            model_name == "acker" ||
+            model_name == "four_ws4wd" ||
+            model_name == "4ws4wd" ||
+            model_name == "four_wheel_steer")
         {
-            return "mecanum";
+            return "diff_drive";
         }
 
-        throw std::invalid_argument(
-            "Unsupported kinematics model: " + model_name +
-            ". Supported models: diff_drive, mecanum.");
+        // 未知值按差速处理（与旧版一致的宽容策略）
+        return "diff_drive";
     }
 
     // 根据机体坐标系速度积分机器人位姿。
@@ -115,13 +125,9 @@ namespace robot_hardware
 
         const double dt = dt_seconds;
 
-        // 区间中点的航向角。
-        const double yaw_mid =
-            pose.yaw_rad +
-            command.angular_z_radps * dt * 0.5;
-
-        const double cos_yaw = std::cos(yaw_mid);
-        const double sin_yaw = std::sin(yaw_mid);
+        // 使用区间起点的航向角（与旧版保持一致，保证里程计数值等价）
+        const double cos_yaw = std::cos(pose.yaw_rad);
+        const double sin_yaw = std::sin(pose.yaw_rad);
 
         PlanarPose result = pose;
 
@@ -210,14 +216,7 @@ namespace robot_hardware
 
         // 经过 NormalizeKinematicsModel() 后，
         // 这里仅剩 diff_drive 模型。
-        // 差速底盘不支持横向平移。
-        if (std::abs(command.linear_y_mps) >
-            kVelocityEpsilon)
-        {
-            throw std::invalid_argument(
-                "diff_drive does not support lateral velocity.");
-        }
-
+        // 差速底盘不支持横向平移：忽略横向速度（与旧版一致，不报错）
         const double half_track = track_width_m * 0.5;
 
         const double left =

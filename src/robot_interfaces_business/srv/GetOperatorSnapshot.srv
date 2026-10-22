@@ -1,114 +1,36 @@
-# GetOperatorSnapshot.srv
-# 获取操作员的快照信息，包括当前任务状态、队列信息、机器人状态等    
-
-# 请求
-# 希望返回的最近事件数量上限，例如请求最近 10 条事件。
 int32 event_limit
-
 ---
-
-# 响应
-# === 服务结果与当前任务状态 ===
 bool success
 string message
-
-# 当前任务状态
 string mission_state
-
-# 任务之前的状态
 string previous_mission_state
-
-# 当前活动任务的 ID
 string active_mission_id
-
-# 当前任务的补充说明
 string mission_message
-
-# 当前任务或系统状态是否允许恢复操作
 bool recoverable
-
-# 当前是否有活动任务
 bool mission_active
-
-# 当前任务或工作流是否处于暂停状态
 bool paused
-
-# === 任务队列与暂停的工作流 ===
-# 当前任务队列中的任务数量
 int32 queue_size
-
-# 队列中的任务 ID 列表
 string[] queued_mission_ids
-
-# 对应任务的优先级列表
 int32[] queued_priorities
-
-# 当前处于暂停状态的工作流订单 ID 列表
 string[] paused_workflow_order_ids
-
-# === 机器人集群 ===
-# 集群内机器人 ID 列表
 string[] fleet_robot_ids
-
-# 对应机器人是否启用
 bool[] fleet_enabled
-
-# 对应机器人的运行状态
 string[] fleet_states
-
-# 对应机器人的电池电压，通常单位为 V
 float64[] fleet_battery_voltage
-
-# 对应机器人当前所在站点 ID
 string[] fleet_current_station_ids
-
-# 对应机器人的能力信息，例如可执行的任务类型，具体格式看实现
 string[] fleet_capabilities
-
-# 远程任务 ID 列表
 string[] remote_task_ids
-
-# 对应远程任务的机器人 ID 列表
 string[] remote_task_robot_ids
-
-# 对应远程任务的状态列表
 string[] remote_task_states
-
-# === 设施与资源 ===
-# 场地资源 ID
 string[] facility_resource_ids
-
-# 对应资源的类型，例如充电桩、货架等
 string[] facility_resource_types
-
-# 资源关联的站点 ID
 string[] facility_station_ids
-
-# 对应资源当前是否可用
 bool[] facility_available
-
-# 对应资源的详细状态
 string[] facility_status
-
-# === 业务流程信息 ===
-# 业务类型，例如拣货、配送等
 string[] business_types
-
-# 业务场景 ID 列表
 string[] business_scenario_ids
-
-# 对应业务流程的 ID
 string[] business_workflow_ids
-
-# === 最近事件 ===
-# 事件发生时间或时间戳
 string[] recent_event_stamp
-
-# 对应事件关联的任务 ID
 string[] recent_event_mission_ids
-
-# 事件发生时记录的状态
 string[] recent_event_states
-
-# 事件的描述信息
 string[] recent_event_messages

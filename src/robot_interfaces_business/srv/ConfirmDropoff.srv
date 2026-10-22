@@ -1,26 +1,8 @@
-# ConfirmDropoff.srv
-# 确认订单的送达 由操作员或上层调度系统确认交付
-
-# 请求
-# 本次交付任务的唯一标识
 string fulfillment_id
-
-# 确认交付的操作员标识
 string operator_id
-
-# 交付备注
 string note
 ---
-
-# 响应
-# 本次确认操作是否成功
 bool success
-
-# 操作结果或失败原因
 string message
-
-# 本次处理对应的交付任务 ID
 string fulfillment_id
-
-# 服务端处理后的交付状态
 string state
