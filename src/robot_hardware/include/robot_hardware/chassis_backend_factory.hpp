@@ -1,5 +1,6 @@
 // chassis_backend_factory.hpp
-// 底盘后端工厂函数声明，提供创建不同类型底盘后端
+// 底盘后端工厂：根据指定类型创建对应的底盘通信后端。
+
 #pragma once
 
 #include <memory>
@@ -9,8 +10,12 @@
 
 namespace robot_hardware
 {
-    // 工厂函数，用于创建不同类型的底盘后端实例
-    std::unique_ptr<ChassisBackend> CreateChassisBackend(
-        const std::string &backend, const ChassisBackendConfig &config);
 
-}
+    // 创建底盘通信后端。
+    // 支持的类型：mock、serial、udp。
+    // 不支持的类型会抛出 std::invalid_argument。
+    std::unique_ptr<ChassisBackend> CreateChassisBackend(
+        const std::string &backend,
+        const ChassisBackendConfig &config);
+
+} // namespace robot_hardware

@@ -82,7 +82,7 @@ namespace robot_hardware
         }
 
         // 将有限浮点数四舍五入，并限制在 int16_t 范围内
-        int16_t ClampToInt16(double value)
+        int16_t EncodeInt16Checked(double value)
         {
             if (!std::isfinite(value))
             {
@@ -90,10 +90,13 @@ namespace robot_hardware
                     "Cannot encode a non-finite value as int16_t");
             }
 
-            const double clamped =
-                std::clamp(value, -32768.0, 32767.0);
+            if (value < -32768.0 || value > 32767.0)
+            {
+                throw std::out_of_range(
+                    "Value exceeds int16_t protocol range");
+            }
 
-            return static_cast<int16_t>(std::lround(clamped));
+            return static_cast<int16_t>(std::lround(value));
         }
 
         // 读取可选的有限浮点数。
@@ -440,15 +443,15 @@ namespace robot_hardware
 
         AppendInt16(
             data,
-            ClampToInt16(command.linear_x_mps * 1000.0));
+            EncodeInt16Checked(command.linear_x_mps * 1000.0));
 
         AppendInt16(
             data,
-            ClampToInt16(command.linear_y_mps * 1000.0));
+            EncodeInt16Checked(command.linear_y_mps * 1000.0));
 
         AppendInt16(
             data,
-            ClampToInt16(command.angular_z_radps * 1000.0));
+            EncodeInt16Checked(command.angular_z_radps * 1000.0));
 
         // 0xF3：当前实现使用的速度命令类型
         return EncodeMickBinaryFrame(0xF3, data);
@@ -569,7 +572,12 @@ namespace robot_hardware
             return;
         }
 
-        // 调用约定：size 非零时，data 必须指向有效内存。
+        if (data == nullptr)
+        {
+            throw std::invalid_argument(
+                "Cannot append from a null pointer");
+        }
+
         if (size > max_buffer_size_ ||
             buffer_.size() > max_buffer_size_ - size)
         {
@@ -580,7 +588,6 @@ namespace robot_hardware
 
         buffer_.append(data, size);
     }
-
     // 方便调用者直接追加 std::string
     void ChassisPacketStream::Append(const std::string &data)
     {
@@ -664,7 +671,7 @@ namespace robot_hardware
     }
 
     // 追加二进制字节。
-    void MickBinaryPacketStream::Append(const char *data,std::size_t size)
+    void MickBinaryPacketStream::Append(const char *data, std::size_t size)
     {
         if (size == 0U)
         {
@@ -686,7 +693,7 @@ namespace robot_hardware
             return;
         }
 
-        buffer_.insert(buffer_.end(),data,data + size);
+        buffer_.insert(buffer_.end(), data, data + size);
     }
 
     // 方便调用者直接追加字节向量
