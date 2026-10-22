@@ -5,6 +5,7 @@
 
 namespace robot_hardware
 {
+    // 工厂，遇到不同类型的底盘后端时，创建相应的实例
     std::unique_ptr<ChassisBackend> CreateChassisBackend(
         const std::string &backend, const ChassisBackendConfig &config)
     {

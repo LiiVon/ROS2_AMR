@@ -34,6 +34,7 @@ namespace robot_hardware
         }
     }
 
+    // 根据底盘运动学模型，归一化模型名称
     std::string NormalizeKinematicsModel(const std::string &model_name)
     {
         // 麦科姆轮、全向轮 都归为 mecanum，即y方向速度由轮子转速决定

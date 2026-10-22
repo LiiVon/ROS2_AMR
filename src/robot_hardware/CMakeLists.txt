@@ -44,12 +44,22 @@ ament_target_dependencies(robot_chassis_hardware
   hardware_interface pluginlib rclcpp rclcpp_lifecycle)
 pluginlib_export_plugin_description_file(hardware_interface robot_hardware_plugins.xml)
 
+add_executable(chassis_driver_node src/chassis_driver_node.cpp)
+target_link_libraries(chassis_driver_node robot_hardware_backends)
+ament_target_dependencies(chassis_driver_node
+  rclcpp geometry_msgs nav_msgs sensor_msgs std_srvs tf2_ros robot_interfaces robot_interfaces_core)
+
 install(
   TARGETS robot_hardware_backends robot_chassis_hardware
   EXPORT export_robot_hardware_backends
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+)
+
+install(
+  TARGETS chassis_driver_node
+  DESTINATION lib/${PROJECT_NAME}
 )
 install(
   DIRECTORY include/

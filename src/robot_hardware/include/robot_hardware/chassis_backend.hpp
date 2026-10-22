@@ -9,10 +9,11 @@
 
 namespace robot_hardware
 {
+    // 底盘后端配置结构体，包含串口和UDP的相关配置参数
     struct ChassisBackendConfig
     {
         std::string serial_device = "/dev/ttyUSB0"; // 串口设备路径
-        int serial_baudrate = 115200;               // 串口波特率
+        int serial_baud = 115200;               // 串口波特率
 
         std::string udp_host = "192.168.1.10"; // UDP 目标主机
         int udp_port = 9000;
@@ -20,6 +21,7 @@ namespace robot_hardware
         std::string protocol = "text"; // 协议类型，支持 "text" 或 "binary"
     };
 
+    // 底盘后端抽象接口类，定义了底盘通信的基本操作
     class ChassisBackend
     {
     public:

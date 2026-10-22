@@ -261,7 +261,7 @@ namespace robot_hardware
 
         backend_config_.serial_device = ParameterAsString(info_, "serial_device", "/dev/ttyUSB0");
         backend_config_.udp_host = ParameterAsString(info_, "udp_host", "192.168.1.10");
-        if (!load_integer_parameter("serial_baud", 115200, &backend_config_.serial_baudrate) ||
+        if (!load_integer_parameter("serial_baud", 115200, &backend_config_.serial_baud) ||
             !load_integer_parameter("udp_port", 9000, &backend_config_.udp_port))
         {
             return false;

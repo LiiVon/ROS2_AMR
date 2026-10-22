@@ -14,7 +14,7 @@ namespace robot_hardware
     namespace
     {
         // 自己的 baud rate → Linux termios baud rate
-        speed_t BaudRateToTermios(int baud_rate)
+        speed_t baudToTermios(int baud_rate)
         {
             switch (baud_rate)
             {
@@ -39,7 +39,7 @@ namespace robot_hardware
             }
         }
 
-        bool ConfigureSerialPort(const int fd, const int baudrate, std::string *error)
+        bool ConfigureSerialPort(const int fd, const int baud, std::string *error)
         {
             // Linux 保存串口配置的一张“配置表”， 创建一份串口配置
             termios tty{};
@@ -56,7 +56,7 @@ namespace robot_hardware
 
             // 把串口设置成“原始数据模式”，不进行任何处理
             cfmakeraw(&tty);
-            const speed_t speed = BaudRateToTermios(baudrate);
+            const speed_t speed = baudToTermios(baud);
 
             // 设置波特率 ,输入输出的波特率
             cfsetispeed(&tty, speed);
@@ -115,7 +115,7 @@ namespace robot_hardware
         }
 
         std::string config_error;
-        if (!ConfigureSerialPort(fd_, config_.serial_baudrate, &config_error))
+        if (!ConfigureSerialPort(fd_, config_.serial_baud, &config_error))
         {
             if (error)
             {

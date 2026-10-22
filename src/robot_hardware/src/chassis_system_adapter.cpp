@@ -61,7 +61,7 @@ namespace robot_hardware
     ChassisSystemAdapter::ChassisSystemAdapter(std::unique_ptr<ChassisBackend> backend, ChassisSystemAdapterConfig config)
         : backend_(std::move(backend)), config_(std::move(config))
     {
-        if (!backend)
+        if (!backend_)
         {
             throw std::invalid_argument("backend cannot be null");
         }
