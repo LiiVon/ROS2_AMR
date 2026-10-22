@@ -79,7 +79,14 @@ python3 tools/check_conventions.py            # 命名/行数规范
 python3 tools/check_conventions.py --strict   # 发布门禁（行数超限也算失败）
 ```
 
-当前基线：**533 个测试、0 失败、1 跳过**（跳过的为 Gazebo 运行时用例，需要 3D 显示）。
+当前基线：**534 个测试、0 失败、1 跳过**（跳过的为 Gazebo 运行时用例，需要 3D 显示）。
+命名规范检查已作为 `conventions` 用例接入 `colcon test`，无需单独执行也可被门禁覆盖。
+
+业务链路端到端冒烟（mock 底盘 + 任务中枢）：
+
+```bash
+tools/smoke_mission.sh          # 提交订单→暂停→恢复→操作员快照，末尾输出 SMOKE PASSED
+```
 
 ## 5. 接口约定
 

@@ -25,7 +25,7 @@ FORBIDDEN = [
     (re.compile(r"\btmp_\b"), "tmp_ 占位名"),
 ]
 
-SRC_EXT = {".cpp", ".hpp", ".h"}
+SRC_EXT = {".cpp", ".hpp", ".h", ".inc"}
 MAX_LINES = 1500
 
 

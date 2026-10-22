@@ -9,6 +9,11 @@ install(DIRECTORY launch config
 if(BUILD_TESTING)
   find_package(launch_testing_ament_cmake REQUIRED)
   add_launch_test(test/test_mock_bringup.launch.py TIMEOUT 30)
+
+  # 代码规范检查（需求文档 TR-10）：命名、禁用词、单文件行数
+  add_test(NAME conventions
+    COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/check_conventions.py
+            --root ${CMAKE_CURRENT_SOURCE_DIR}/.. --strict)
 endif()
 
 ament_package()
