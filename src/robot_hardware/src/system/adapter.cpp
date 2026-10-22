@@ -1,4 +1,4 @@
-#include "robot_hardware/chassis_system_adapter.hpp"
+#include "robot_hardware/system/adapter.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -6,10 +6,23 @@
 #include <stdexcept>
 #include <utility>
 
-namespace robot_hardware
+namespace robot_hardware::system
 {
+    using protocol::Command;
+    using protocol::Packet;
+    using protocol::PacketKind;
+    using protocol::PacketStream;
+    using protocol::BinaryPacketStream;
+    using transport::Backend;
+    using transport::BackendKind;
+    using kinematics::Pose2D;
+    using kinematics::WheelSpeeds;
+    using kinematics::IntegratePose;
+    using kinematics::EstimateWheelSpeeds;
+    using kinematics::NormalizeModel;
+
     // 配置校验
-    bool ValidateChassisSystemAdapterConfig(const ChassisSystemAdapterConfig &config, std::string *error)
+    bool ValidateConfig(const Config &config, std::string *error)
     {
         const auto fail = [error](const std::string &msg)
         {
@@ -58,7 +71,7 @@ namespace robot_hardware
         return true;
     }
 
-    ChassisSystemAdapter::ChassisSystemAdapter(std::unique_ptr<ChassisBackend> backend, ChassisSystemAdapterConfig config)
+    Adapter::Adapter(std::unique_ptr<Backend> backend, Config config)
         : backend_(std::move(backend)), config_(std::move(config))
     {
         if (!backend_)
@@ -66,51 +79,51 @@ namespace robot_hardware
             throw std::invalid_argument("backend cannot be null");
         }
         std::string error;
-        if (!ValidateChassisSystemAdapterConfig(config_, &error))
+        if (!ValidateConfig(config_, &error))
         {
-            throw std::invalid_argument("Invalid ChassisSystemAdapterConfig: " + error);
+            throw std::invalid_argument("Invalid Config: " + error);
         }
-        config_.kinematics_model = NormalizeKinematicsModel(config_.kinematics_model);
+        config_.kinematics_model = NormalizeModel(config_.kinematics_model);
         state_.backend_name = backend_->Name();
         state_.battery_voltage = config_.fallback_battery_voltage;
     }
 
-    std::string ChassisSystemAdapter::BackendName() const
+    std::string Adapter::BackendName() const
     {
         return backend_->Name();
     }
 
-    bool ChassisSystemAdapter::Open(std::string *error)
+    bool Adapter::Open(std::string *error)
     {
         const bool opened = backend_->Open(error);
-        RefreshOpenState();
-        if (opened && BackendName() == "mock")
+        RefreshBackendState();
+        if (opened && backend_->Kind() == BackendKind::kMock)
         {
             state_.connected = true;
         }
         return opened;
     }
 
-    void ChassisSystemAdapter::Close()
+    void Adapter::Close()
     {
         backend_->Close();
-        RefreshOpenState();
+        RefreshBackendState();
         state_.connected = false;
     }
 
-    bool ChassisSystemAdapter::IsOpen() const
+    bool Adapter::IsOpen() const
     {
         return backend_->IsOpen();
     }
 
-    void ChassisSystemAdapter::SetKinematicsModel(const std::string &model)
+    void Adapter::SetKinematicsModel(const std::string &model)
     {
-        config_.kinematics_model = NormalizeKinematicsModel(model);
+        config_.kinematics_model = NormalizeModel(model);
     }
 
-    bool ChassisSystemAdapter::Write(const ChassisCommand &command, std::string *error)
+    bool Adapter::Write(const Command &command, std::string *error)
     {
-        RefreshOpenState();
+        RefreshBackendState();
         if (!state_.backend_open)
         {
             if (error)
@@ -120,7 +133,7 @@ namespace robot_hardware
             return false;
         }
 
-        const ChassisCommand normalized = NormalizeCommand(command);
+        const Command normalized = NormalizeCommand(command);
         if (!backend_->WriteCommand(normalized, error))
         {
             return false;
@@ -129,9 +142,9 @@ namespace robot_hardware
         return true;
     }
 
-    bool ChassisSystemAdapter::Read(double period_seconds, ChassisSystemState *state, std::string *error)
+    bool Adapter::Read(double period_seconds, Snapshot *state, std::string *error)
     {
-        RefreshOpenState();
+        RefreshBackendState();
         if (!state_.backend_open)
         {
             if (state)
@@ -147,14 +160,14 @@ namespace robot_hardware
 
         bool ok = true;
 
-        if (BackendName() == "mock")
+        if (backend_->Kind() == BackendKind::kMock)
         {
-            IntegrateMock(period_seconds);
+            IntegrateMockMotion(period_seconds);
             state_.connected = true;
         }
         else
         {
-            ok = ReadBackendPackets(error);
+            ok = ReadBackend(error);
         }
 
         if (state)
@@ -164,21 +177,21 @@ namespace robot_hardware
         return ok && state_.connected;
     }
 
-    const ChassisSystemState &ChassisSystemAdapter::State() const
+    const Snapshot &Adapter::State() const
     {
         return state_;
     }
 
-    void ChassisSystemAdapter::ResetOdometry()
+    void Adapter::ResetOdometry()
     {
         state_.x_m = 0.0;
         state_.y_m = 0.0;
         state_.yaw_rad = 0.0;
     }
 
-    ChassisCommand ChassisSystemAdapter::NormalizeCommand(const ChassisCommand &command) const
+    Command Adapter::NormalizeCommand(const Command &command) const
     {
-        ChassisCommand normalized = command;
+        Command normalized = command;
         if (config_.kinematics_model != "mecanum")
         {
             normalized.linear_y_mps = 0.0;
@@ -186,10 +199,10 @@ namespace robot_hardware
         return normalized;
     }
 
-    void ChassisSystemAdapter::IntegrateMock(const double period_seconds)
+    void Adapter::IntegrateMockMotion(const double period_seconds)
     {
-        PlanarPose pose{state_.x_m, state_.y_m, state_.yaw_rad};
-        pose = IntegratePlanarMotion(pose, command_, std::max(0.0, period_seconds));
+        Pose2D pose{state_.x_m, state_.y_m, state_.yaw_rad};
+        pose = IntegratePose(pose, command_, std::max(0.0, period_seconds));
         state_.x_m = pose.x_m;
         state_.y_m = pose.y_m;
         state_.yaw_rad = pose.yaw_rad;
@@ -201,7 +214,7 @@ namespace robot_hardware
                                 config_.wheel_base_m, config_.track_width_m);
     }
 
-    bool ChassisSystemAdapter::ReadBackendPackets(std::string *error)
+    bool Adapter::ReadBackend(std::string *error)
     {
         if (error != nullptr)
         {
@@ -267,9 +280,9 @@ namespace robot_hardware
         return true;
     }
 
-    void ChassisSystemAdapter::ApplyPacket(const ChassisPacket &packet)
+    void Adapter::ApplyPacket(const Packet &packet)
     {
-        if (packet.kind == ChassisPacketKind::kOdometry)
+        if (packet.kind == PacketKind::kOdometry)
         {
             const auto &odom = packet.odometry;
             state_.x_m = odom.x_m;
@@ -278,7 +291,7 @@ namespace robot_hardware
             state_.linear_x_mps = odom.linear_x_mps;
             state_.linear_y_mps = 0.0;
             state_.angular_z_radps = odom.angular_z_radps;
-            ChassisCommand measured;
+            Command measured;
             measured.linear_x_mps = odom.linear_x_mps;
             measured.angular_z_radps = odom.angular_z_radps;
             state_.wheel_speeds =
@@ -305,7 +318,7 @@ namespace robot_hardware
         state_.connected = true;
     }
 
-    void ChassisSystemAdapter::RefreshOpenState()
+    void Adapter::RefreshBackendState()
     {
         state_.backend_name = backend_->Name();
         state_.backend_open = backend_->IsOpen();

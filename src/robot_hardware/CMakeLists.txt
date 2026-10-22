@@ -22,13 +22,13 @@ find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 
 add_library(robot_hardware_backends SHARED
-  src/chassis_packet.cpp
-  src/chassis_kinematics.cpp
-  src/chassis_backend_factory.cpp
-  src/mock_backend.cpp
-  src/serial_backend.cpp
-  src/udp_backend.cpp
-  src/chassis_system_adapter.cpp
+  src/protocol/packet.cpp
+  src/kinematics/kinematics.cpp
+  src/transport/backend_factory.cpp
+  src/transport/mock_backend.cpp
+  src/transport/serial_backend.cpp
+  src/transport/udp_backend.cpp
+  src/system/adapter.cpp
 )
 target_include_directories(robot_hardware_backends PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -37,21 +37,21 @@ target_include_directories(robot_hardware_backends PUBLIC
 set_target_properties(robot_hardware_backends PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(robot_chassis_hardware SHARED
-  src/chassis_hardware_interface.cpp)
+  src/ros/hardware_interface.cpp)
 target_link_libraries(robot_chassis_hardware robot_hardware_backends)
 ament_target_dependencies(robot_chassis_hardware robot_interfaces_core hardware_interface pluginlib rclcpp rclcpp_lifecycle)
 pluginlib_export_plugin_description_file(hardware_interface robot_hardware_plugins.xml)
 
-add_executable(chassis_driver_node src/chassis_driver_node.cpp)
+add_executable(chassis_driver_node src/nodes/chassis_driver_node.cpp)
 target_link_libraries(chassis_driver_node robot_hardware_backends)
 ament_target_dependencies(chassis_driver_node
   rclcpp geometry_msgs nav_msgs sensor_msgs std_srvs tf2_ros  robot_interfaces_core)
 
-add_executable(chassis_simulator_node src/chassis_simulator_node.cpp)
+add_executable(chassis_simulator_node src/nodes/chassis_simulator_node.cpp)
 target_link_libraries(chassis_simulator_node robot_hardware_backends)
 ament_target_dependencies(chassis_simulator_node rclcpp)
 
-add_executable(odom_path_recorder_node src/odom_path_recorder_node.cpp)
+add_executable(odom_path_recorder_node src/nodes/odom_path_recorder_node.cpp)
 ament_target_dependencies(odom_path_recorder_node rclcpp nav_msgs std_srvs)
 
 install(TARGETS robot_hardware_backends robot_chassis_hardware

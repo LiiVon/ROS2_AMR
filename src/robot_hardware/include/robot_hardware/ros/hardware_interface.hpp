@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include "robot_hardware/chassis_backend.hpp"
-#include "robot_hardware/chassis_system_adapter.hpp"
+#include "robot_hardware/transport/backend.hpp"
+#include "robot_hardware/system/adapter.hpp"
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
 #include "hardware_interface/system_interface.hpp"
@@ -18,6 +18,14 @@
 
 namespace robot_hardware
 {
+    using protocol::Command;
+    using transport::BackendConfig;
+    using system::Adapter;
+    using system::Config;
+    using system::Snapshot;
+    using kinematics::WheelSpeeds;
+    using kinematics::EstimateChassisCommand;
+
     // 底盘硬件接口类，继承自ROS2的SystemInterface，提供对底盘硬件的抽象访问
     class ChassisHardwareInterface final : public hardware_interface::SystemInterface
     {
@@ -55,19 +63,19 @@ namespace robot_hardware
         bool ValidateJoints() const;
 
         // 根据轮子速度命令计算底盘运动指令
-        ChassisCommand CommandFromWheelVelocityCommands() const;
+        Command WheelCommandsToChassisCommand() const;
 
         // 根据底盘状态更新轮子位置和速度
-        void UpdateWheelStates(const ChassisSystemState &state, double period_seconds);
+        void UpdateWheelStates(const Snapshot &state, double period_seconds);
 
-        ChassisBackendConfig backend_config_;                                             // 底盘后端配置
-        ChassisSystemAdapterConfig adapter_config_;                                       // 底盘系统适配器配置
+        BackendConfig backend_config_;                                             // 底盘后端配置
+        Config adapter_config_;                                       // 底盘系统适配器配置
         std::string calibration_profile_ = "nominal_reference";                           // 校准配置文件名
         std::string backend_name_ = "mock";                                               // 底盘通信后端名称，默认使用模拟后端
         std::array<std::string, 2> joint_names_{"left_wheel_joint", "right_wheel_joint"}; // 轮子关节名称
         std::array<double, 2> wheel_position_rad_{0.0, 0.0};                              // 轮子位置（单位：弧度）
         std::array<double, 2> wheel_velocity_radps_{0.0, 0.0};                            // 轮子速度（单位：弧度/秒）
         std::array<double, 2> wheel_command_radps_{0.0, 0.0};                             // 轮子命令（单位：弧度/秒）
-        std::unique_ptr<ChassisSystemAdapter> adapter_;                                   // 底盘系统适配器，用于处理底盘通信和状态更新
+        std::unique_ptr<Adapter> adapter_;                                   // 底盘系统适配器，用于处理底盘通信和状态更新
     };
 }

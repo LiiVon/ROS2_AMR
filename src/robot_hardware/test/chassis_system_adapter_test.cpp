@@ -1,4 +1,4 @@
-#include "robot_hardware/chassis_system_adapter.hpp"
+#include "robot_hardware/system/adapter.hpp"
 
 #include <deque>
 #include <limits>
@@ -10,16 +10,23 @@
 
 #include <gtest/gtest.h>
 
-#include "robot_hardware/mock_backend.hpp"
+#include "robot_hardware/transport/mock_backend.hpp"
 
 namespace robot_hardware {
+
+using namespace robot_hardware::protocol;
+using namespace robot_hardware::transport;
+using namespace robot_hardware::kinematics;
+using namespace robot_hardware::system;
 namespace {
 
-class ScriptedBackend final : public ChassisBackend {
+class ScriptedBackend final : public Backend {
  public:
   explicit ScriptedBackend(std::deque<std::string> reads) : reads_(std::move(reads)) {}
 
   std::string Name() const override { return "scripted"; }
+
+  BackendKind Kind() const override { return BackendKind::kSerial; }
 
   bool Open(std::string*) override {
     open_ = true;
@@ -30,7 +37,7 @@ class ScriptedBackend final : public ChassisBackend {
 
   bool IsOpen() const override { return open_; }
 
-  bool WriteCommand(const ChassisCommand& command, std::string*) override {
+  bool WriteCommand(const Command& command, std::string*) override {
     last_command_ = command;
     return open_;
   }
@@ -44,77 +51,77 @@ class ScriptedBackend final : public ChassisBackend {
     return next;
   }
 
-  ChassisCommand LastCommand() const { return last_command_; }
+  Command LastCommand() const { return last_command_; }
 
  private:
   bool open_ = false;
   std::deque<std::string> reads_;
-  ChassisCommand last_command_;
+  Command last_command_;
 };
 
 }  // namespace
 
-TEST(ChassisSystemAdapterTest, Constructor_NullBackend_ThrowsInvalidArgument) {
-  EXPECT_THROW(ChassisSystemAdapter(nullptr), std::invalid_argument);
+TEST(AdapterTest, Constructor_NullBackend_ThrowsInvalidArgument) {
+  EXPECT_THROW(Adapter(nullptr), std::invalid_argument);
 }
 
-TEST(ChassisSystemAdapterTest, ValidateCalibration_DefaultReferenceConfiguration_Succeeds) {
-  ChassisSystemAdapterConfig config;
+TEST(AdapterTest, ValidateCalibration_DefaultReferenceConfiguration_Succeeds) {
+  Config config;
   std::string error;
 
-  EXPECT_TRUE(ValidateChassisSystemAdapterConfig(config, &error));
+  EXPECT_TRUE(ValidateConfig(config, &error));
   EXPECT_TRUE(error.empty());
   EXPECT_DOUBLE_EQ(config.track_width_m, 0.43);
 }
 
-TEST(ChassisSystemAdapterTest, Constructor_InvalidCalibration_ThrowsBeforeBackendUse) {
-  ChassisSystemAdapterConfig config;
+TEST(AdapterTest, Constructor_InvalidCalibration_ThrowsBeforeBackendUse) {
+  Config config;
   config.track_width_m = 0.0;
 
   EXPECT_THROW(
-      ChassisSystemAdapter(std::make_unique<MockBackend>(), config), std::invalid_argument);
+      Adapter(std::make_unique<MockBackend>(), config), std::invalid_argument);
 }
 
-TEST(ChassisSystemAdapterTest, ValidateCalibration_NonFiniteGeometry_Fails) {
-  ChassisSystemAdapterConfig config;
+TEST(AdapterTest, ValidateCalibration_NonFiniteGeometry_Fails) {
+  Config config;
   config.wheel_diameter_m = std::numeric_limits<double>::quiet_NaN();
   std::string error;
 
-  EXPECT_FALSE(ValidateChassisSystemAdapterConfig(config, &error));
+  EXPECT_FALSE(ValidateConfig(config, &error));
   EXPECT_NE(error.find("wheel_diameter_m"), std::string::npos);
 }
 
-TEST(ChassisSystemAdapterTest, ValidateCalibration_NonIdentityEncoderCorrection_FailsClearly) {
-  ChassisSystemAdapterConfig config;
+TEST(AdapterTest, ValidateCalibration_NonIdentityEncoderCorrection_FailsClearly) {
+  Config config;
   config.left_direction_sign = -1;
   std::string error;
 
-  EXPECT_FALSE(ValidateChassisSystemAdapterConfig(config, &error));
+  EXPECT_FALSE(ValidateConfig(config, &error));
   EXPECT_NE(error.find("raw wheel encoders"), std::string::npos);
 }
 
-TEST(ChassisSystemAdapterTest, Write_ClosedBackend_ReturnsError) {
-  ChassisSystemAdapter adapter(std::make_unique<MockBackend>());
+TEST(AdapterTest, Write_ClosedBackend_ReturnsError) {
+  Adapter adapter(std::make_unique<MockBackend>());
 
   std::string error;
-  const bool ok = adapter.Write(ChassisCommand{}, &error);
+  const bool ok = adapter.Write(Command{}, &error);
 
   EXPECT_FALSE(ok);
   EXPECT_EQ(error, "chassis backend is not open");
 }
 
-TEST(ChassisSystemAdapterTest, Read_MockDiffDriveCommand_IntegratesPlanarState) {
+TEST(AdapterTest, Read_MockDiffDriveCommand_IntegratesPlanarState) {
   auto backend = std::make_unique<MockBackend>();
   const MockBackend* backend_ptr = backend.get();
-  ChassisSystemAdapter adapter(std::move(backend));
+  Adapter adapter(std::move(backend));
   ASSERT_TRUE(adapter.Open(nullptr));
-  ChassisCommand command;
+  Command command;
   command.linear_x_mps = 0.5;
   command.linear_y_mps = 0.25;
   command.angular_z_radps = 0.2;
   ASSERT_TRUE(adapter.Write(command, nullptr));
 
-  ChassisSystemState state;
+  Snapshot state;
   ASSERT_TRUE(adapter.Read(2.0, &state, nullptr));
 
   EXPECT_TRUE(state.backend_open);
@@ -130,16 +137,16 @@ TEST(ChassisSystemAdapterTest, Read_MockDiffDriveCommand_IntegratesPlanarState) 
   EXPECT_NE(state.wheel_speeds.rpm[0], state.wheel_speeds.rpm[1]);
 }
 
-TEST(ChassisSystemAdapterTest, Read_MockDiffDrive_UsesConfiguredEffectiveTrackWidth) {
-  ChassisSystemAdapterConfig config;
+TEST(AdapterTest, Read_MockDiffDrive_UsesConfiguredEffectiveTrackWidth) {
+  Config config;
   config.track_width_m = 0.50;
-  ChassisSystemAdapter adapter(std::make_unique<MockBackend>(), config);
+  Adapter adapter(std::make_unique<MockBackend>(), config);
   ASSERT_TRUE(adapter.Open(nullptr));
-  ChassisCommand command;
+  Command command;
   command.angular_z_radps = 1.0;
   ASSERT_TRUE(adapter.Write(command, nullptr));
 
-  ChassisSystemState state;
+  Snapshot state;
   ASSERT_TRUE(adapter.Read(0.1, &state, nullptr));
   const WheelSpeeds expected = EstimateWheelSpeeds(
       command, "diff_drive", config.wheel_diameter_m, config.wheel_base_m,
@@ -149,19 +156,19 @@ TEST(ChassisSystemAdapterTest, Read_MockDiffDrive_UsesConfiguredEffectiveTrackWi
   EXPECT_NEAR(state.wheel_speeds.rpm[1], expected.rpm[1], 1e-9);
 }
 
-TEST(ChassisSystemAdapterTest, Read_MockMecanumCommand_PreservesSidewaysVelocity) {
+TEST(AdapterTest, Read_MockMecanumCommand_PreservesSidewaysVelocity) {
   auto backend = std::make_unique<MockBackend>();
   const MockBackend* backend_ptr = backend.get();
-  ChassisSystemAdapterConfig config;
+  Config config;
   config.kinematics_model = "mecanum";
-  ChassisSystemAdapter adapter(std::move(backend), config);
+  Adapter adapter(std::move(backend), config);
   ASSERT_TRUE(adapter.Open(nullptr));
-  ChassisCommand command;
+  Command command;
   command.linear_x_mps = 0.5;
   command.linear_y_mps = 0.25;
   ASSERT_TRUE(adapter.Write(command, nullptr));
 
-  ChassisSystemState state;
+  Snapshot state;
   ASSERT_TRUE(adapter.Read(1.0, &state, nullptr));
 
   EXPECT_NEAR(state.x_m, 0.5, 1e-9);
@@ -170,19 +177,19 @@ TEST(ChassisSystemAdapterTest, Read_MockMecanumCommand_PreservesSidewaysVelocity
   EXPECT_NEAR(backend_ptr->LastCommand().linear_y_mps, 0.25, 1e-9);
 }
 
-TEST(ChassisSystemAdapterTest, Read_MockFourWheelSteerAliasDegradesToDiffDrive) {
+TEST(AdapterTest, Read_MockFourWheelSteerAliasDegradesToDiffDrive) {
   auto backend = std::make_unique<MockBackend>();
   const MockBackend* backend_ptr = backend.get();
-  ChassisSystemAdapterConfig config;
+  Config config;
   config.kinematics_model = "four_ws4wd";
-  ChassisSystemAdapter adapter(std::move(backend), config);
+  Adapter adapter(std::move(backend), config);
   ASSERT_TRUE(adapter.Open(nullptr));
-  ChassisCommand command;
+  Command command;
   command.linear_x_mps = 0.5;
   command.linear_y_mps = 0.25;
   ASSERT_TRUE(adapter.Write(command, nullptr));
 
-  ChassisSystemState state;
+  Snapshot state;
   ASSERT_TRUE(adapter.Read(1.0, &state, nullptr));
 
   EXPECT_NEAR(state.x_m, 0.5, 1e-9);
@@ -191,13 +198,13 @@ TEST(ChassisSystemAdapterTest, Read_MockFourWheelSteerAliasDegradesToDiffDrive) 
   EXPECT_NEAR(backend_ptr->LastCommand().linear_y_mps, 0.0, 1e-9);
 }
 
-TEST(ChassisSystemAdapterTest, Read_TextPackets_UpdatesMeasuredState) {
+TEST(AdapterTest, Read_TextPackets_UpdatesMeasuredState) {
   auto backend = std::make_unique<ScriptedBackend>(
       std::deque<std::string>{"ODOM 1.25 0.10 0.02 0.30 -0.04 24.1\nSTATE simulated 23.8\n"});
-  ChassisSystemAdapter adapter(std::move(backend));
+  Adapter adapter(std::move(backend));
   ASSERT_TRUE(adapter.Open(nullptr));
 
-  ChassisSystemState state;
+  Snapshot state;
   ASSERT_TRUE(adapter.Read(0.02, &state, nullptr));
 
   EXPECT_TRUE(state.connected);
@@ -211,30 +218,30 @@ TEST(ChassisSystemAdapterTest, Read_TextPackets_UpdatesMeasuredState) {
   EXPECT_EQ(state.packet_sequence, 2U);
 }
 
-TEST(ChassisSystemAdapterTest, SetKinematicsModel_DiffDriveToMecanum_PreservesSidewaysVelocity) {
+TEST(AdapterTest, SetKinematicsModel_DiffDriveToMecanum_PreservesSidewaysVelocity) {
   auto backend = std::make_unique<MockBackend>();
   const MockBackend* backend_ptr = backend.get();
-  ChassisSystemAdapter adapter(std::move(backend));
+  Adapter adapter(std::move(backend));
   ASSERT_TRUE(adapter.Open(nullptr));
   adapter.SetKinematicsModel("mecanum");
-  ChassisCommand command;
+  Command command;
   command.linear_y_mps = 0.25;
   ASSERT_TRUE(adapter.Write(command, nullptr));
 
-  ChassisSystemState state;
+  Snapshot state;
   ASSERT_TRUE(adapter.Read(1.0, &state, nullptr));
 
   EXPECT_NEAR(state.y_m, 0.25, 1e-9);
   EXPECT_NEAR(backend_ptr->LastCommand().linear_y_mps, 0.25, 1e-9);
 }
 
-TEST(ChassisSystemAdapterTest, ResetOdometry_IntegratedMockState_ClearsPoseOnly) {
-  ChassisSystemAdapter adapter(std::make_unique<MockBackend>());
+TEST(AdapterTest, ResetOdometry_IntegratedMockState_ClearsPoseOnly) {
+  Adapter adapter(std::make_unique<MockBackend>());
   ASSERT_TRUE(adapter.Open(nullptr));
-  ChassisCommand command;
+  Command command;
   command.linear_x_mps = 0.5;
   ASSERT_TRUE(adapter.Write(command, nullptr));
-  ChassisSystemState state;
+  Snapshot state;
   ASSERT_TRUE(adapter.Read(1.0, &state, nullptr));
   ASSERT_NEAR(state.x_m, 0.5, 1e-9);
 
@@ -247,13 +254,13 @@ TEST(ChassisSystemAdapterTest, ResetOdometry_IntegratedMockState_ClearsPoseOnly)
   EXPECT_NEAR(state.linear_x_mps, 0.5, 1e-9);
 }
 
-TEST(ChassisSystemAdapterTest, Read_MalformedTextPacket_ReturnsObservableError) {
+TEST(AdapterTest, Read_MalformedTextPacket_ReturnsObservableError) {
   auto backend = std::make_unique<ScriptedBackend>(std::deque<std::string>{"NOPE bad packet\n"});
-  ChassisSystemAdapter adapter(std::move(backend));
+  Adapter adapter(std::move(backend));
   ASSERT_TRUE(adapter.Open(nullptr));
 
   std::string error;
-  ChassisSystemState state;
+  Snapshot state;
   const bool ok = adapter.Read(0.02, &state, &error);
 
   EXPECT_FALSE(ok);
@@ -261,8 +268,8 @@ TEST(ChassisSystemAdapterTest, Read_MalformedTextPacket_ReturnsObservableError) 
   EXPECT_FALSE(state.connected);
 }
 
-TEST(ChassisSystemAdapterTest, Close_OpenBackend_DropsConnectionState) {
-  ChassisSystemAdapter adapter(std::make_unique<MockBackend>());
+TEST(AdapterTest, Close_OpenBackend_DropsConnectionState) {
+  Adapter adapter(std::make_unique<MockBackend>());
   ASSERT_TRUE(adapter.Open(nullptr));
 
   adapter.Close();

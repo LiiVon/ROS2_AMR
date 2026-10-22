@@ -2,26 +2,29 @@
 
 #include <string>
 
-#include "robot_hardware/chassis_backend.hpp"
+#include "robot_hardware/transport/backend.hpp"
 
-namespace robot_hardware
+namespace robot_hardware::transport
 {
+    using protocol::Command;
 
-    class SerialBackend final : public ChassisBackend
+
+    class SerialBackend final : public Backend
     {
     public:
-        explicit SerialBackend(ChassisBackendConfig config);
+        explicit SerialBackend(BackendConfig config);
         ~SerialBackend() override;
 
         std::string Name() const override;
+        BackendKind Kind() const override;
         bool Open(std::string *error) override;
         void Close() override;
         bool IsOpen() const override;
-        bool WriteCommand(const ChassisCommand &command, std::string *error) override;
+        bool WriteCommand(const Command &command, std::string *error) override;
         std::optional<std::string> Read(std::string *error) override;
 
     private:
-        ChassisBackendConfig config_;
+        BackendConfig config_;
         int fd_ = -1;
     };
 

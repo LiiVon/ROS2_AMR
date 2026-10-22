@@ -17,10 +17,13 @@
 #include <unistd.h>
 
 #include "rclcpp/rclcpp.hpp"
-#include "robot_hardware/chassis_kinematics.hpp"
-#include "robot_hardware/chassis_packet.hpp"
+#include "robot_hardware/kinematics/kinematics.hpp"
+#include "robot_hardware/protocol/packet.hpp"
 
 using namespace std::chrono_literals;
+using namespace robot_hardware::protocol;
+using namespace robot_hardware::kinematics;
+
 
 namespace
 {
@@ -53,7 +56,7 @@ public:
         last_update_ = now();
         last_rx_buffer_update_ = last_update_;
         timer_ = create_wall_timer(20ms, [this]()
-                                   { Tick(); });
+                                   { OnTimer(); });
     }
 
     ~ChassisSimulatorNode()
@@ -96,14 +99,14 @@ private:
         RCLCPP_INFO(get_logger(), "UDP socket bound to %s:%d", bind_host_.c_str(), port_);
     }
 
-    void Tick()
+    void OnTimer()
     {
         const auto stamp = now();
         const double dt = std::max(0.001, (stamp - last_update_).seconds());
         last_update_ = stamp;
 
         ReadCommands(stamp);
-        pose_ = robot_hardware::IntegratePlanarMotion(pose_, command_, dt);
+        pose_ = IntegratePose(pose_, command_, dt);
         PublishPackets();
     }
 
@@ -148,7 +151,7 @@ private:
         {
             const std::string line = rx_buffer_.substr(0, newline);
             rx_buffer_.erase(0, newline + 1);
-            if (auto command = robot_hardware::DecodeCommand(line))
+            if (auto command = DecodeCommand(line))
             {
                 command_ = *command;
             }
@@ -166,17 +169,17 @@ private:
         {
             return;
         }
-        robot_hardware::ChassisOdometryPacket odom;
+        OdometryPacket odom;
         odom.x_m = pose_.x_m;
         odom.y_m = pose_.y_m;
         odom.yaw_rad = pose_.yaw_rad;
         odom.linear_x_mps = command_.linear_x_mps;
         odom.angular_z_radps = command_.angular_z_radps;
         odom.battery_voltage = battery_voltage_;
-        robot_hardware::ChassisStatePacket state;
+        StatePacket state;
         state.status = "simulated";
         state.battery_voltage = battery_voltage_;
-        const std::string packet = robot_hardware::EncodeOdometry(odom) + robot_hardware::EncodeState(state);
+        const std::string packet = EncodeOdometry(odom) + EncodeState(state);
         const ssize_t sent =
             sendto(fd_, packet.data(), packet.size(), 0,
                    reinterpret_cast<const sockaddr *>(&remote_addr_), sizeof(remote_addr_));
@@ -194,12 +197,12 @@ private:
     sockaddr_in remote_addr_{};              // 远程主机的 UDP 地址
     bool has_remote_ = false;                // 是否已经接收到远程主机的 UDP 数据
     std::string rx_buffer_;                  // 接收缓冲区，用于存储接收到的 UDP 数据
-    robot_hardware::PlanarPose pose_;        // 机器人在平面上的位姿，包括 x、y 坐标和航向角
+    Pose2D pose_;        // 机器人在平面上的位姿，包括 x、y 坐标和航向角
     double battery_voltage_ = 24.0;          // 机器人电池电压（单位：伏特）
-    robot_hardware::ChassisCommand command_; // 当前的底盘运动指令，包括线速度和角速度
+    Command command_; // 当前的底盘运动指令，包括线速度和角速度
     rclcpp::Time last_update_;               // 上一次更新的时间戳
     rclcpp::Time last_rx_buffer_update_;     // 上一次接收到 UDP 数据的时间戳
-    rclcpp::TimerBase::SharedPtr timer_;     // 定时器，用于周期性地调用 Tick() 函数
+    rclcpp::TimerBase::SharedPtr timer_;     // 定时器，用于周期性地调用 OnTimer() 函数
 };
 
 int main(int argc, char **argv)

@@ -6,16 +6,17 @@
 #include <memory>
 #include <string>
 
-#include "robot_hardware/chassis_backend.hpp"
+#include "robot_hardware/transport/backend.hpp"
 
-namespace robot_hardware
+namespace robot_hardware::transport
 {
+
 
     // 创建底盘通信后端。
     // 支持的类型：mock、serial、udp。
     // 不支持的类型会抛出 std::invalid_argument。
-    std::unique_ptr<ChassisBackend> CreateChassisBackend(
+    std::unique_ptr<Backend> CreateBackend(
         const std::string &backend,
-        const ChassisBackendConfig &config);
+        const BackendConfig &config);
 
 } // namespace robot_hardware

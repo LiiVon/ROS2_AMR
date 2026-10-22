@@ -9,9 +9,9 @@
 #include <string>
 #include <utility>
 
-#include "robot_hardware/chassis_backend_factory.hpp"
-#include "robot_hardware/chassis_kinematics.hpp"
-#include "robot_hardware/chassis_system_adapter.hpp"
+#include "robot_hardware/transport/backend_factory.hpp"
+#include "robot_hardware/kinematics/kinematics.hpp"
+#include "robot_hardware/system/adapter.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -24,6 +24,11 @@
 #include "tf2_ros/transform_broadcaster.h"
 
 using namespace std::chrono_literals;
+using namespace robot_hardware::protocol;
+using namespace robot_hardware::transport;
+using namespace robot_hardware::kinematics;
+using namespace robot_hardware::system;
+
 
 namespace
 {
@@ -61,7 +66,7 @@ public:
         // 机械底盘类型：用于确定采用的运动学模型
         chassis_type_ = declare_parameter<std::string>("chassis_type", "diff_drive");
         // 根据底盘类型确定软件使用的运动学模型
-        kinematics_model_ = robot_hardware::NormalizeKinematicsModel(chassis_type_);
+        kinematics_model_ = NormalizeModel(chassis_type_);
         requested_backend_ = declare_parameter<std::string>("backend", "mock");
         publish_tf_ = declare_parameter<bool>("publish_tf", true);
         publish_odom_ = declare_parameter<bool>("publish_odom", true);
@@ -81,7 +86,7 @@ public:
         io_timeout_ms_ = declare_parameter<int>("io_timeout_ms", 500);
 
         // 声明底盘系统适配器的相关参数，包括校准配置文件名、运动学模型名称、协议类型，以及轮子直径、轴距、轮距等参数
-        robot_hardware::ChassisSystemAdapterConfig adapter_config;
+        Config adapter_config;
         adapter_config.calibration_profile = declare_parameter<std::string>("calibration_profile", "nominal_reference");
         adapter_config.kinematics_model = kinematics_model_;
         adapter_config.protocol = backend_config_.protocol;
@@ -95,7 +100,7 @@ public:
         adapter_config.fallback_battery_voltage = battery_voltage_;
 
         std::string calibration_error;
-        if (!robot_hardware::ValidateChassisSystemAdapterConfig(adapter_config, &calibration_error))
+        if (!ValidateConfig(adapter_config, &calibration_error))
         {
             RCLCPP_ERROR(get_logger(), "Invalid chassis system adapter configuration: %s", calibration_error.c_str());
             throw std::runtime_error("Invalid chassis system adapter configuration" + calibration_error);
@@ -107,12 +112,13 @@ public:
             adapter_config.calibration_profile.c_str(), adapter_config.wheel_diameter_m,
             adapter_config.wheel_base_m, adapter_config.track_width_m);
 
-        auto backend = robot_hardware::CreateChassisBackend(requested_backend_, backend_config_);
+        auto backend = CreateBackend(requested_backend_, backend_config_);
         backend_name_ = backend->Name();
-        chassis_adapter_ = std::make_unique<robot_hardware::ChassisSystemAdapter>(std::move(backend), adapter_config);
+        backend_kind_ = backend->Kind();
+        chassis_adapter_ = std::make_unique<Adapter>(std::move(backend), adapter_config);
         system_state_ = chassis_adapter_->State();
         imu_source_ = declare_parameter<std::string>("imu_source", "auto");
-        publish_synthetic_imu_ = ResolvePublishSyntheticImu();
+        publish_synthetic_imu_ = ShouldPublishSyntheticImu();
         cmd_subscription_ = create_subscription<geometry_msgs::msg::Twist>(
             "/cmd_vel", 10, [this](geometry_msgs::msg::Twist::SharedPtr msg)
             { HandleCommand(*msg); });
@@ -141,7 +147,7 @@ public:
         last_packet_stamp_ = now();
         OpenBackend();
         timer_ = create_wall_timer(20ms, [this]()
-                                   { Tick(); });
+                                   { OnTimer(); });
     }
 
 private:
@@ -157,15 +163,15 @@ private:
             return;
         }
 
-        if (backend_name_ == "serial")
+        if (backend_kind_ == BackendKind::kSerial)
         {
             RCLCPP_INFO(get_logger(), "serial backend opened: device=%s baud=%d", backend_config_.serial_device.c_str(), backend_config_.serial_baud);
         }
-        else if (backend_name_ == "udp")
+        else if (backend_kind_ == BackendKind::kUdp)
         {
             RCLCPP_INFO(get_logger(), "udp backend opened: host=%s port=%d", backend_config_.udp_host.c_str(), backend_config_.udp_port);
         }
-        else if (backend_name_ == "mock")
+        else if (backend_kind_ == BackendKind::kMock)
         {
             connected_ = system_state_.connected;
             RCLCPP_INFO(get_logger(), "mock backend opened");
@@ -214,7 +220,7 @@ private:
         try
         {
             normalized =
-                robot_hardware::NormalizeKinematicsModel(request->mode);
+                NormalizeModel(request->mode);
         }
         catch (const std::invalid_argument &e)
         {
@@ -233,7 +239,7 @@ private:
         }
 
         //  真实硬件不允许通过此服务随意切换模型
-        if (backend_name_ != "mock")
+        if (backend_kind_ != BackendKind::kMock)
         {
             response->success = false;
             response->message =
@@ -254,7 +260,7 @@ private:
     }
 
     // 时钟滴答函数，每隔一定时间调用一次，用于读取底盘状态、积分轮子里程计、发布里程计和IMU数据，以及发布底盘状态
-    void Tick()
+    void OnTimer()
     {
         const auto stamp = now();
         const double dt = std::max(0.001, (stamp - last_update_).seconds());
@@ -288,7 +294,7 @@ private:
         {
             last_packet_stamp_ = stamp;
         }
-        if (backend_name_ == "mock")
+        if (backend_kind_ == BackendKind::kMock)
         {
             connected_ = read_ok;
         }
@@ -300,11 +306,11 @@ private:
     }
 
     //
-    bool ResolvePublishSyntheticImu()
+    bool ShouldPublishSyntheticImu()
     {
         if (imu_source_ == "auto")
         {
-            return backend_name_ == "mock";
+            return backend_kind_ == BackendKind::kMock;
         }
         if (imu_source_ == "synthetic" || imu_source_ == "fake")
         {
@@ -323,11 +329,11 @@ private:
 
     void IntegrateWheelOdometry(const double dt)
     {
-        wheel_odom_command_ = robot_hardware::EstimateCommandFromWheelSpeeds(
+        wheel_odom_command_ = EstimateChassisCommand(
             system_state_.wheel_speeds, kinematics_model_, wheel_diameter_m_, wheel_base_m_,
             track_width_m_);
-        robot_hardware::PlanarPose pose{wheel_x_, wheel_y_, wheel_yaw_};
-        pose = robot_hardware::IntegratePlanarMotion(pose, wheel_odom_command_, dt);
+        Pose2D pose{wheel_x_, wheel_y_, wheel_yaw_};
+        pose = IntegratePose(pose, wheel_odom_command_, dt);
         wheel_x_ = pose.x_m;
         wheel_y_ = pose.y_m;
         wheel_yaw_ = pose.yaw_rad;
@@ -437,10 +443,11 @@ private:
     std::string chassis_type_;                                                            // 启动时配置的物理底盘类型
     std::string kinematics_model_;                                                        // 当前软件实际使用的运动学模型
     std::string requested_backend_;                                                       // 用户请求的底盘后端类型
-    std::string backend_name_;                                                            // 实际使用的底盘后端类型
-    robot_hardware::ChassisBackendConfig backend_config_;                                 // 底盘后端配置，包括串口和UDP的相关参数
-    std::unique_ptr<robot_hardware::ChassisSystemAdapter> chassis_adapter_;               // 底盘系统适配器，用于处理底盘运动指令和读取底盘状态
-    robot_hardware::ChassisSystemState system_state_;                                     // 当前底盘系统状态，包括位置、速度、轮子转速、电池电压等信息
+    std::string backend_name_;
+    BackendKind backend_kind_ = BackendKind::kMock;                                                            // 实际使用的底盘后端类型
+    BackendConfig backend_config_;                                 // 底盘后端配置，包括串口和UDP的相关参数
+    std::unique_ptr<Adapter> chassis_adapter_;               // 底盘系统适配器，用于处理底盘运动指令和读取底盘状态
+    Snapshot system_state_;                                     // 当前底盘系统状态，包括位置、速度、轮子转速、电池电压等信息
     std::string wheel_odom_topic_;                                                        // 轮子里程计话题名称
     std::string odom_topic_;                                                              // 里程计话题名称
     std::string imu_source_;                                                              // IMU 数据来源，如 "auto"、"synthetic"、"none" 等
@@ -457,8 +464,8 @@ private:
     double wheel_diameter_m_ = 0.15;                                                      // 轮子直径（单位：米）
     double wheel_base_m_ = 0.42;                                                          // 轴距：前后车轴之间的距离
     double track_width_m_ = 0.43;                                                         // 轮距：左右车轮之间的距离
-    robot_hardware::ChassisCommand cmd_;                                                  // 当前底盘运动指令，包括线速度和角速度
-    robot_hardware::ChassisCommand wheel_odom_command_;                                   // 轮子里程计计算出的运动指令，包括线速度和角速度
+    Command cmd_;                                                  // 当前底盘运动指令，包括线速度和角速度
+    Command wheel_odom_command_;                                   // 轮子里程计计算出的运动指令，包括线速度和角速度
     rclcpp::Time last_update_;                                                            // 上一次更新的时间戳
     rclcpp::Time last_packet_stamp_;                                                      // 上一次接收到底盘数据包的时间戳
     rclcpp::Time previous_imu_stamp_;                                                     // 上一次发布IMU数据的时间戳
@@ -472,7 +479,7 @@ private:
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;                       // 用于发布TF坐标变换，将底盘的位姿信息广播给整个ROS2系统
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr clear_odom_service_;                     // 提供清除里程计服务，用于重置底盘的位姿和速度信息
     rclcpp::Service<robot_interfaces_core::srv::SetChassisMode>::SharedPtr set_mode_service_; // 提供设置底盘模式服务，用于切换底盘的运动学模型和控制模式
-    rclcpp::TimerBase::SharedPtr timer_;                                                  // 定时器，用于周期性调用 Tick() 函数，读取底盘状态、积分轮子里程计、发布里程计和IMU数据，以及发布底盘状态
+    rclcpp::TimerBase::SharedPtr timer_;                                                  // 定时器，用于周期性调用 OnTimer() 函数，读取底盘状态、积分轮子里程计、发布里程计和IMU数据，以及发布底盘状态
 };
 
 int main(int argc, char **argv)

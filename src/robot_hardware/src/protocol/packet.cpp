@@ -1,4 +1,4 @@
-#include "robot_hardware/chassis_packet.hpp"
+#include "robot_hardware/protocol/packet.hpp"
 
 #include <algorithm>
 #include <array>
@@ -9,8 +9,9 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace robot_hardware
+namespace robot_hardware::protocol
 {
+
     namespace
     {
         // ============================================================
@@ -138,7 +139,7 @@ namespace robot_hardware
         }
 
         // 检查多个速度、位置和角度字段是否全部为有限数
-        bool IsFiniteOdometry(const ChassisOdometryPacket &odometry)
+        bool IsFiniteOdometry(const OdometryPacket &odometry)
         {
             return std::isfinite(odometry.x_m) &&
                    std::isfinite(odometry.y_m) &&
@@ -156,7 +157,7 @@ namespace robot_hardware
     // 将底盘速度指令编码为：
     // 内部数据结构  ---> 文本协议
     // CMD linear_x_mps linear_y_mps angular_z_radps\n
-    std::string EncodeCommand(const ChassisCommand &command)
+    std::string EncodeCommand(const Command &command)
     {
         std::ostringstream oss;
 
@@ -173,7 +174,7 @@ namespace robot_hardware
     // 内部数据结构  ---> 文本协议
     // ODOM x y yaw vx vy wz [battery]\n
     std::string EncodeOdometry(
-        const ChassisOdometryPacket &odometry)
+        const OdometryPacket &odometry)
     {
         // 保持与旧版线协议一致：x y yaw vx wz [batt]（不发送横向速度）
         std::ostringstream oss;
@@ -200,7 +201,7 @@ namespace robot_hardware
     // 将底盘状态编码为文本
     // 内部数据结构  ---> 文本协议
     // STATE status [battery]\n
-    std::string EncodeState(const ChassisStatePacket &state)
+    std::string EncodeState(const StatePacket &state)
     {
         // 检查状态描述是否合法
         if (state.status.empty() ||
@@ -243,14 +244,14 @@ namespace robot_hardware
     // 解码速度指令。
     // 当前协议要求 CMD 后必须有三个速度参数。
     // 文本协议  ---> 内部数据结构
-    std::optional<ChassisCommand> DecodeCommand(
+    std::optional<Command> DecodeCommand(
         const std::string &text)
     {
         const std::string line = TrimCarriageReturn(text);
         std::istringstream iss(line);
 
         std::string tag;
-        ChassisCommand command;
+        Command command;
 
         if (!(iss >> tag >> command.linear_x_mps))
         {
@@ -297,7 +298,7 @@ namespace robot_hardware
     // 解码统一的数据包。
     // 根据首字段判断是 ODOM 还是 STATE。
     // 文本协议  ---> 内部数据结构
-    std::optional<ChassisPacket> DecodePacket(
+    std::optional<Packet> DecodePacket(
         const std::string &text)
     {
         const std::string line = TrimCarriageReturn(text);
@@ -315,7 +316,7 @@ namespace robot_hardware
         // ------------------------------------------------------------
         if (tag == "ODOM")
         {
-            ChassisOdometryPacket odometry;
+            OdometryPacket odometry;
 
             if (!(iss >> odometry.x_m >> odometry.y_m >> odometry.yaw_rad >> odometry.linear_x_mps))
             {
@@ -364,8 +365,8 @@ namespace robot_hardware
                 return std::nullopt;
             }
 
-            ChassisPacket packet;
-            packet.kind = ChassisPacketKind::kOdometry;
+            Packet packet;
+            packet.kind = PacketKind::kOdometry;
             packet.odometry = odometry;
 
             return packet;
@@ -376,7 +377,7 @@ namespace robot_hardware
         // ------------------------------------------------------------
         if (tag == "STATE")
         {
-            ChassisStatePacket state;
+            StatePacket state;
 
             if (!(iss >> state.status))
             {
@@ -389,8 +390,8 @@ namespace robot_hardware
                 return std::nullopt;
             }
 
-            ChassisPacket packet;
-            packet.kind = ChassisPacketKind::kState;
+            Packet packet;
+            packet.kind = PacketKind::kState;
             packet.state = state;
 
             return packet;
@@ -411,7 +412,7 @@ namespace robot_hardware
     //
     // LENGTH = TYPE 的 1 字节 + CHECKSUM 的 1 字节 + DATA 长度
     // 内部数据结构----> Mick二进制数据
-    std::vector<uint8_t> EncodeMickBinaryFrame(
+    std::vector<uint8_t> EncodeBinaryFrame(
         const uint8_t type,
         const std::vector<uint8_t> &data)
     {
@@ -464,7 +465,7 @@ namespace robot_hardware
     // 两个线速度按 mm/s 编码，角速度按 mrad/s 编码。
     // 内部数据结构----> Mick二进制数据
     std::vector<uint8_t> EncodeMickSpeedCommand(
-        const ChassisCommand &command)
+        const Command &command)
     {
         std::vector<uint8_t> data;
         data.reserve(6);
@@ -482,13 +483,13 @@ namespace robot_hardware
             EncodeInt16Checked(command.angular_z_radps * 1000.0));
 
         // 0xF3：当前实现使用的速度命令类型
-        return EncodeMickBinaryFrame(0xF3, data);
+        return EncodeBinaryFrame(0xF3, data);
     }
 
     // 生成清零里程计的二进制命令
     std::vector<uint8_t> EncodeMickClearOdometryCommand()
     {
-        return EncodeMickBinaryFrame(
+        return EncodeBinaryFrame(
             0xE1, {0x01, 0x00, 0x00, 0x00});
     }
 
@@ -496,11 +497,11 @@ namespace robot_hardware
     // 四、Mick 二进制协议解码
     // ================================================================
 
-    // 将已经提取出 type 和 data 的二进制帧解码为 ChassisPacket。
-    // 本函数不负责帧头、帧尾和校验和检查, 这些工作由 MickBinaryPacketStream 完成。
+    // 将已经提取出 type 和 data 的二进制帧解码为 Packet。
+    // 本函数不负责帧头、帧尾和校验和检查, 这些工作由 BinaryPacketStream 完成。
     // Mick二进制数据 ---> 内部数据结构
-    std::optional<ChassisPacket> DecodeMickBinaryPacket(
-        const MickBinaryFrame &frame)
+    std::optional<Packet> DecodeMickBinaryPacket(
+        const BinaryFrame &frame)
     {
         // ------------------------------------------------------------
         // 0xA1：里程计数据
@@ -514,7 +515,7 @@ namespace robot_hardware
                 return std::nullopt;
             }
 
-            ChassisOdometryPacket odometry;
+            OdometryPacket odometry;
 
             odometry.x_m =
                 ReadInt16(frame.data, 0) / 1000.0;
@@ -548,8 +549,8 @@ namespace robot_hardware
                     ReadUInt16(frame.data, 10) / 100.0;
             }
 
-            ChassisPacket packet;
-            packet.kind = ChassisPacketKind::kOdometry;
+            Packet packet;
+            packet.kind = PacketKind::kOdometry;
             packet.odometry = odometry;
 
             return packet;
@@ -572,7 +573,7 @@ namespace robot_hardware
                 return std::nullopt;
             }
 
-            ChassisStatePacket state;
+            StatePacket state;
 
             state.status =
                 frame.data.empty() || frame.data[0] == 0 ? "running" : "fault";
@@ -583,8 +584,8 @@ namespace robot_hardware
                     ReadUInt16(frame.data, 1) / 100.0;
             }
 
-            ChassisPacket packet;
-            packet.kind = ChassisPacketKind::kState;
+            Packet packet;
+            packet.kind = PacketKind::kState;
             packet.state = state;
 
             return packet;
@@ -595,17 +596,17 @@ namespace robot_hardware
     }
 
     // ================================================================
-    // 五、文本数据流解析器 ChassisPacketStream
+    // 五、文本数据流解析器 PacketStream
     // ================================================================
 
-    ChassisPacketStream::ChassisPacketStream(std::size_t max_buffer_size)
+    PacketStream::PacketStream(std::size_t max_buffer_size)
         : max_buffer_size_(max_buffer_size)
     {
     }
 
     // 追加一段文本数据。
     // 先检查容量，避免超大输入先触发大规模内存分配。
-    void ChassisPacketStream::Append(const char *data, std::size_t size)
+    void PacketStream::Append(const char *data, std::size_t size)
     {
         if (size == 0U)
         {
@@ -629,16 +630,16 @@ namespace robot_hardware
         buffer_.append(data, size);
     }
     // 方便调用者直接追加 std::string
-    void ChassisPacketStream::Append(const std::string &data)
+    void PacketStream::Append(const std::string &data)
     {
         Append(data.data(), data.size());
     }
 
     // 从缓冲区中提取所有完整文本行并解析。
-    std::vector<ChassisPacket>
-    ChassisPacketStream::DrainPackets()
+    std::vector<Packet>
+    PacketStream::DrainPackets()
     {
-        std::vector<ChassisPacket> packets;
+        std::vector<Packet> packets;
 
         std::size_t newline = std::string::npos;
 
@@ -673,27 +674,27 @@ namespace robot_hardware
         return packets;
     }
 
-    bool ChassisPacketStream::Overflowed() const
+    bool PacketStream::Overflowed() const
     {
         return overflowed_;
     }
 
-    std::size_t ChassisPacketStream::InvalidLineCount() const
+    std::size_t PacketStream::InvalidLineCount() const
     {
         return invalid_line_count_;
     }
 
-    void ChassisPacketStream::ClearOverflow()
+    void PacketStream::ClearOverflow()
     {
         overflowed_ = false;
     }
 
-    void ChassisPacketStream::ClearInvalidLineCount()
+    void PacketStream::ClearInvalidLineCount()
     {
         invalid_line_count_ = 0;
     }
 
-    void ChassisPacketStream::Clear()
+    void PacketStream::Clear()
     {
         buffer_.clear();
         overflowed_ = false;
@@ -701,17 +702,17 @@ namespace robot_hardware
     }
 
     // ================================================================
-    // 六、二进制数据流解析器 MickBinaryPacketStream
+    // 六、二进制数据流解析器 BinaryPacketStream
     // ================================================================
 
-    MickBinaryPacketStream::MickBinaryPacketStream(
+    BinaryPacketStream::BinaryPacketStream(
         std::size_t max_buffer_size)
         : max_buffer_size_(max_buffer_size)
     {
     }
 
     // 追加二进制字节。
-    void MickBinaryPacketStream::Append(const char *data, std::size_t size)
+    void BinaryPacketStream::Append(const char *data, std::size_t size)
     {
         if (size == 0U)
         {
@@ -737,16 +738,16 @@ namespace robot_hardware
     }
 
     // 方便调用者直接追加字节向量
-    void MickBinaryPacketStream::Append(const std::string &data)
+    void BinaryPacketStream::Append(const std::string &data)
     {
         Append(data.data(), data.size());
     }
 
     // 在二进制缓冲区中寻找并提取所有完整数据帧。
-    std::vector<ChassisPacket>
-    MickBinaryPacketStream::DrainPackets()
+    std::vector<Packet>
+    BinaryPacketStream::DrainPackets()
     {
-        std::vector<ChassisPacket> packets;
+        std::vector<Packet> packets;
 
         constexpr std::array<uint8_t, 2> magic{0xAE, 0xEA};
 
@@ -818,7 +819,7 @@ namespace robot_hardware
             }
 
             // 重新计算校验和。
-            // 范围与 EncodeMickBinaryFrame() 一致：
+            // 范围与 EncodeBinaryFrame() 一致：
             // LENGTH、TYPE 和 DATA，不包含 CHECKSUM。
             uint8_t checksum = 0;
 
@@ -839,7 +840,7 @@ namespace robot_hardware
             }
 
             // 帧结构和校验均通过，提取类型和有效载荷
-            MickBinaryFrame frame;
+            BinaryFrame frame;
 
             frame.type = buffer_[3];
 
@@ -867,27 +868,27 @@ namespace robot_hardware
         return packets;
     }
 
-    bool MickBinaryPacketStream::Overflowed() const
+    bool BinaryPacketStream::Overflowed() const
     {
         return overflowed_;
     }
 
-    std::size_t MickBinaryPacketStream::InvalidFrameCount() const
+    std::size_t BinaryPacketStream::InvalidFrameCount() const
     {
         return invalid_frame_count_;
     }
 
-    void MickBinaryPacketStream::ClearOverflow()
+    void BinaryPacketStream::ClearOverflow()
     {
         overflowed_ = false;
     }
 
-    void MickBinaryPacketStream::ClearInvalidFrameCount()
+    void BinaryPacketStream::ClearInvalidFrameCount()
     {
         invalid_frame_count_ = 0;
     }
 
-    void MickBinaryPacketStream::Clear()
+    void BinaryPacketStream::Clear()
     {
         buffer_.clear();
         overflowed_ = false;

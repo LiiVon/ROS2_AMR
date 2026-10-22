@@ -1,14 +1,16 @@
 // chassis_kinematics.cpp
 // 底盘运动学计算的具体实现。
 
-#include "robot_hardware/chassis_kinematics.hpp"
+#include "robot_hardware/kinematics/kinematics.hpp"
 
 #include <cmath>
 #include <stdexcept>
 #include <string>
 
-namespace robot_hardware
+namespace robot_hardware::kinematics
 {
+    using protocol::Command;
+
 
     namespace
     {
@@ -37,7 +39,7 @@ namespace robot_hardware
         }
 
         // 检查底盘速度指令的数值是否合法。
-        void ValidateCommand(const ChassisCommand &command)
+        void ValidateCommand(const Command &command)
         {
             ValidateFinite("linear_x_mps", command.linear_x_mps);
             ValidateFinite("linear_y_mps", command.linear_y_mps);
@@ -74,7 +76,7 @@ namespace robot_hardware
 
     } // namespace
 
-    std::string NormalizeKinematicsModel(
+    std::string NormalizeModel(
         const std::string &model_name)
     {
         if (model_name == "mecanum" ||
@@ -107,9 +109,9 @@ namespace robot_hardware
 
     // 根据机体坐标系速度积分机器人位姿。
     // 使用区间中点的朝向估算位置变化，降低转弯时的积分误差。
-    PlanarPose IntegratePlanarMotion(
-        const PlanarPose &pose,
-        const ChassisCommand &command,
+    Pose2D IntegratePose(
+        const Pose2D &pose,
+        const Command &command,
         double dt_seconds)
     {
         ValidateFinite("pose.x_m", pose.x_m);
@@ -129,7 +131,7 @@ namespace robot_hardware
         const double cos_yaw = std::cos(pose.yaw_rad);
         const double sin_yaw = std::sin(pose.yaw_rad);
 
-        PlanarPose result = pose;
+        Pose2D result = pose;
 
         // 将机体坐标系速度转换成世界坐标系速度，再积分位置。
         result.x_m +=
@@ -157,14 +159,14 @@ namespace robot_hardware
 
     // 根据底盘速度计算轮子转速。
     WheelSpeeds EstimateWheelSpeeds(
-        const ChassisCommand &command,
+        const Command &command,
         const std::string &model,
         double wheel_diameter_m,
         double wheel_base_m,
         double track_width_m)
     {
         const std::string normalized_model =
-            NormalizeKinematicsModel(model);
+            NormalizeModel(model);
 
         ValidateCommand(command);
         ValidatePositiveFinite(
@@ -214,7 +216,7 @@ namespace robot_hardware
             return speeds;
         }
 
-        // 经过 NormalizeKinematicsModel() 后，
+        // 经过 NormalizeModel() 后，
         // 这里仅剩 diff_drive 模型。
         // 差速底盘不支持横向平移：忽略横向速度（与旧版一致，不报错）
         const double half_track = track_width_m * 0.5;
@@ -237,7 +239,7 @@ namespace robot_hardware
     }
 
     // 根据四轮转速反推底盘速度。
-    ChassisCommand EstimateCommandFromWheelSpeeds(
+    Command EstimateChassisCommand(
         const WheelSpeeds &speeds,
         const std::string &model,
         double wheel_diameter_m,
@@ -245,7 +247,7 @@ namespace robot_hardware
         double track_width_m)
     {
         const std::string normalized_model =
-            NormalizeKinematicsModel(model);
+            NormalizeModel(model);
 
         ValidatePositiveFinite(
             "wheel_diameter_m", wheel_diameter_m);
@@ -269,7 +271,7 @@ namespace robot_hardware
             WheelLinearFromRpm(
                 speeds.rpm[3], wheel_diameter_m);
 
-        ChassisCommand command;
+        Command command;
 
         if (normalized_model == "mecanum")
         {

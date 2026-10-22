@@ -1,4 +1,4 @@
-#include "robot_hardware/serial_backend.hpp"
+#include "robot_hardware/transport/serial_backend.hpp"
 
 #include <cerrno>
 #include <cstring>
@@ -9,8 +9,12 @@
 #include <utility>
 #include <stdexcept>
 
-namespace robot_hardware
+namespace robot_hardware::transport
 {
+    using protocol::Command;
+    using protocol::EncodeCommand;
+    using protocol::EncodeMickSpeedCommand;
+
     namespace
     {
         // 自己的 baud rate → Linux termios baud rate
@@ -86,7 +90,7 @@ namespace robot_hardware
         }
     }
 
-    SerialBackend::SerialBackend(ChassisBackendConfig config) : config_(std::move(config)) {}
+    SerialBackend::SerialBackend(BackendConfig config) : config_(std::move(config)) {}
     
     SerialBackend::~SerialBackend()
     {
@@ -96,6 +100,11 @@ namespace robot_hardware
     std::string SerialBackend::Name() const
     {
         return "serial";
+    }
+
+    BackendKind SerialBackend::Kind() const
+    {
+        return BackendKind::kSerial;
     }
 
     bool SerialBackend::Open(std::string *error)
@@ -141,7 +150,7 @@ namespace robot_hardware
         return fd_ >= 0;
     }
 
-    bool SerialBackend::WriteCommand(const ChassisCommand &command, std::string *error)
+    bool SerialBackend::WriteCommand(const Command &command, std::string *error)
     {
         if (!IsOpen())
         {

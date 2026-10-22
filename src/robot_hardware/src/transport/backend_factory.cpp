@@ -1,20 +1,21 @@
 // chassis_backend_factory.cpp
 // 底盘后端工厂的具体实现。
 
-#include "robot_hardware/chassis_backend_factory.hpp"
+#include "robot_hardware/transport/backend_factory.hpp"
 
 #include <stdexcept>
 
-#include "robot_hardware/mock_backend.hpp"
-#include "robot_hardware/serial_backend.hpp"
-#include "robot_hardware/udp_backend.hpp"
+#include "robot_hardware/transport/mock_backend.hpp"
+#include "robot_hardware/transport/serial_backend.hpp"
+#include "robot_hardware/transport/udp_backend.hpp"
 
-namespace robot_hardware
+namespace robot_hardware::transport
 {
 
-    std::unique_ptr<ChassisBackend> CreateChassisBackend(
+
+    std::unique_ptr<Backend> CreateBackend(
         const std::string &backend,
-        const ChassisBackendConfig &config)
+        const BackendConfig &config)
     {
         // 1. 显式创建模拟底盘后端。
         if (backend == "mock")

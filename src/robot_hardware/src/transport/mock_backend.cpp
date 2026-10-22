@@ -1,10 +1,17 @@
-#include "robot_hardware/mock_backend.hpp"
+#include "robot_hardware/transport/mock_backend.hpp"
 
-namespace robot_hardware
+namespace robot_hardware::transport
 {
+    using protocol::Command;
+
     std::string MockBackend::Name() const
     {
         return "mock";
+    }
+
+    BackendKind MockBackend::Kind() const
+    {
+        return BackendKind::kMock;
     }
 
     bool MockBackend::Open(std::string *error)
@@ -27,7 +34,7 @@ namespace robot_hardware
         return open_;
     }
 
-    bool MockBackend::WriteCommand(const ChassisCommand &command, std::string *error)
+    bool MockBackend::WriteCommand(const Command &command, std::string *error)
     {
         last_command_ = command;
         if (!open_)
@@ -54,7 +61,7 @@ namespace robot_hardware
         return std::optional<std::string>("Mock data");
     }
 
-    ChassisCommand MockBackend::LastCommand() const
+    Command MockBackend::LastCommand() const
     {
         return last_command_;
     }

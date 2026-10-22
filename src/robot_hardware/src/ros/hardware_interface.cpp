@@ -5,13 +5,22 @@
 #include <limits>
 #include <optional>
 
-#include "robot_hardware/chassis_backend_factory.hpp"
-#include "robot_hardware/chassis_hardware_interface.hpp"
+#include "robot_hardware/transport/backend_factory.hpp"
+#include "robot_hardware/ros/hardware_interface.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "pluginlib/class_list_macros.hpp"
 
 namespace robot_hardware
 {
+    using protocol::Command;
+    using transport::BackendConfig;
+    using transport::CreateBackend;
+    using system::Adapter;
+    using system::Config;
+    using system::Snapshot;
+    using kinematics::WheelSpeeds;
+    using kinematics::EstimateChassisCommand;
+
     namespace
     {
         constexpr double kPi = 3.14159265358979323846;
@@ -122,8 +131,8 @@ namespace robot_hardware
     hardware_interface::CallbackReturn ChassisHardwareInterface::on_configure(
         const rclcpp_lifecycle::State &)
     {
-        auto backend = CreateChassisBackend(backend_name_, backend_config_);
-        adapter_ = std::make_unique<ChassisSystemAdapter>(std::move(backend), adapter_config_);
+        auto backend = CreateBackend(backend_name_, backend_config_);
+        adapter_ = std::make_unique<Adapter>(std::move(backend), adapter_config_);
         std::string error;
         if (!adapter_->Open(&error))
         {
@@ -141,7 +150,7 @@ namespace robot_hardware
         if (adapter_)
         {
             std::string error;
-            adapter_->Write(ChassisCommand{}, &error);
+            adapter_->Write(Command{}, &error);
         }
         return hardware_interface::CallbackReturn::SUCCESS;
     }
@@ -152,7 +161,7 @@ namespace robot_hardware
         if (adapter_)
         {
             std::string error;
-            adapter_->Write(ChassisCommand{}, &error);
+            adapter_->Write(Command{}, &error);
             adapter_->Close();
         }
         return hardware_interface::CallbackReturn::SUCCESS;
@@ -192,7 +201,7 @@ namespace robot_hardware
             return hardware_interface::return_type::ERROR;
         }
 
-        ChassisSystemState state;
+        Snapshot state;
         std::string error;
         const double period_seconds = std::max(0.0, period.seconds());
         if (!adapter_->Read(period_seconds, &state, &error) && !error.empty())
@@ -214,7 +223,7 @@ namespace robot_hardware
         }
 
         std::string error;
-        if (!adapter_->Write(CommandFromWheelVelocityCommands(), &error))
+        if (!adapter_->Write(WheelCommandsToChassisCommand(), &error))
         {
             RCLCPP_WARN(
                 rclcpp::get_logger("ChassisHardwareInterface"), "chassis write failed: %s",
@@ -290,7 +299,7 @@ namespace robot_hardware
         adapter_config_.fallback_battery_voltage =
             ParameterAsDouble(info_, "fallback_battery_voltage", 24.0);
         std::string calibration_error;
-        if (!ValidateChassisSystemAdapterConfig(adapter_config_, &calibration_error))
+        if (!ValidateConfig(adapter_config_, &calibration_error))
         {
             RCLCPP_ERROR(
                 rclcpp::get_logger("ChassisHardwareInterface"),
@@ -330,20 +339,20 @@ namespace robot_hardware
         return true;
     }
 
-    ChassisCommand ChassisHardwareInterface::CommandFromWheelVelocityCommands() const
+    Command ChassisHardwareInterface::WheelCommandsToChassisCommand() const
     {
         WheelSpeeds speeds;
         speeds.rpm[0] = WheelRpmFromRadPerSecond(wheel_command_radps_[0]);
         speeds.rpm[1] = WheelRpmFromRadPerSecond(wheel_command_radps_[1]);
         speeds.rpm[2] = speeds.rpm[0];
         speeds.rpm[3] = speeds.rpm[1];
-        return EstimateCommandFromWheelSpeeds(
+        return EstimateChassisCommand(
             speeds, adapter_config_.kinematics_model, adapter_config_.wheel_diameter_m,
             adapter_config_.wheel_base_m, adapter_config_.track_width_m);
     }
 
     void ChassisHardwareInterface::UpdateWheelStates(
-        const ChassisSystemState &state, const double period_seconds)
+        const Snapshot &state, const double period_seconds)
     {
         wheel_velocity_radps_[0] = WheelRadPerSecondFromRpm(state.wheel_speeds.rpm[0]);
         wheel_velocity_radps_[1] = WheelRadPerSecondFromRpm(state.wheel_speeds.rpm[1]);

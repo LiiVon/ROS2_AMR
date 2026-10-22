@@ -6,14 +6,16 @@
 #include <array>
 #include <string>
 
-#include "robot_hardware/chassis_packet.hpp"
+#include "robot_hardware/protocol/packet.hpp"
 
-namespace robot_hardware
+namespace robot_hardware::kinematics
 {
+    using protocol::Command;
+
 
     // 机器人在世界坐标系（例如 odom）中的二维位姿。
     // x、y 的单位是米，yaw 的单位是弧度。
-    struct PlanarPose
+    struct Pose2D
     {
         double x_m = 0.0;
         double y_m = 0.0;
@@ -31,26 +33,26 @@ namespace robot_hardware
 
     // 将已支持的运动学模型名称转换为标准名称。
     // 当前支持 diff_drive 和 mecanum。
-    std::string NormalizeKinematicsModel(const std::string &model_name);
+    std::string NormalizeModel(const std::string &model_name);
 
     // 根据机器人当前位姿、机体坐标系速度和时间间隔，
     // 估算新的世界坐标系位姿。
-    PlanarPose IntegratePlanarMotion(
-        const PlanarPose &pose,
-        const ChassisCommand &command,
+    Pose2D IntegratePose(
+        const Pose2D &pose,
+        const Command &command,
         double dt_seconds);
 
     // 根据底盘速度计算四个车轮的转速。
     // wheel_base_m：轴距；track_width_m：轮距。
     WheelSpeeds EstimateWheelSpeeds(
-        const ChassisCommand &command,
+        const Command &command,
         const std::string &model,
         double wheel_diameter_m,
         double wheel_base_m,
         double track_width_m);
 
     // 根据四个车轮的转速，估算底盘线速度与角速度。
-    ChassisCommand EstimateCommandFromWheelSpeeds(
+    Command EstimateChassisCommand(
         const WheelSpeeds &speeds,
         const std::string &model,
         double wheel_diameter_m,

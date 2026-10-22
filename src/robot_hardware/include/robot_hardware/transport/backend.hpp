@@ -7,15 +7,17 @@
 #include <optional>
 #include <string>
 
-#include "robot_hardware/chassis_packet.hpp"
+#include "robot_hardware/protocol/packet.hpp"
 
-namespace robot_hardware
+namespace robot_hardware::transport
 {
+    using protocol::Command;
+
 
     // 底盘后端配置。
     // SerialBackend 使用串口相关配置；UdpBackend 使用 UDP 相关配置。
     // protocol 供底盘数据协议解析层使用。
-    struct ChassisBackendConfig
+    struct BackendConfig
     {
         // 串口配置
         std::string serial_device{"/dev/ttyUSB0"};
@@ -31,17 +33,41 @@ namespace robot_hardware
         std::string protocol{"text"};
     };
 
+    // 后端类型：内部判断一律使用枚举，避免字符串比较的隐性耦合
+    enum class BackendKind
+    {
+        kMock,
+        kSerial,
+        kUdp,
+    };
+
+    inline const char *ToString(BackendKind kind)
+    {
+        switch (kind)
+        {
+        case BackendKind::kMock:
+            return "mock";
+        case BackendKind::kSerial:
+            return "serial";
+        case BackendKind::kUdp:
+            return "udp";
+        }
+        return "unknown";
+    }
+
     // 底盘通信后端抽象基类。
     // Mock、Serial、UDP 等具体后端都必须实现该接口。
-    class ChassisBackend
+    class Backend
     {
     public:
         // 通过基类指针销毁具体后端对象时，确保调用派生类析构函数。
-        virtual ~ChassisBackend() = default;
+        virtual ~Backend() = default;
 
         // 返回后端名称，例如 "mock"、"serial" 或 "udp"。
         virtual std::string Name() const = 0;
 
+        // 返回后端类型（用于内部逻辑判断）
+        virtual BackendKind Kind() const = 0;
         // 打开底盘通信后端。
         // 成功返回 true；失败返回 false，并尽可能填写 error。
         virtual bool Open(std::string *error) = 0;
@@ -55,7 +81,7 @@ namespace robot_hardware
         // 向底盘发送运动指令。
         // command 是要发送的底盘指令；失败时尽可能填写 error。
         virtual bool WriteCommand(
-            const ChassisCommand &command,
+            const Command &command,
             std::string *error) = 0;
 
         // 读取底盘通信数据。

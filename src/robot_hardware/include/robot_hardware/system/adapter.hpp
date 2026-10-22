@@ -5,14 +5,27 @@
 #include <memory>
 #include <string>
 
-#include "robot_hardware/chassis_backend.hpp"
-#include "robot_hardware/chassis_kinematics.hpp"
-#include "robot_hardware/chassis_packet.hpp"
+#include "robot_hardware/transport/backend.hpp"
+#include "robot_hardware/kinematics/kinematics.hpp"
+#include "robot_hardware/protocol/packet.hpp"
 
-namespace robot_hardware
+namespace robot_hardware::system
 {
+    using protocol::Command;
+    using protocol::Packet;
+    using protocol::PacketKind;
+    using protocol::PacketStream;
+    using protocol::BinaryPacketStream;
+    using transport::Backend;
+    using transport::BackendConfig;
+    using kinematics::Pose2D;
+    using kinematics::WheelSpeeds;
+    using kinematics::IntegratePose;
+    using kinematics::EstimateWheelSpeeds;
+    using kinematics::NormalizeModel;
+
     // 配置结构体
-    struct ChassisSystemAdapterConfig
+    struct Config
     {
         std::string calibration_profile = "nominal_reference"; // 校准配置文件名
         std::string kinematics_model = "diff_drive";           // 运动学模型名称
@@ -29,10 +42,10 @@ namespace robot_hardware
     };
 
     // 配置校验
-    bool ValidateChassisSystemAdapterConfig(const ChassisSystemAdapterConfig &config, std::string *error);
+    bool ValidateConfig(const Config &config, std::string *error);
 
     // 统一状态快照
-    struct ChassisSystemState
+    struct Snapshot
     {
         std::string backend_name;                // 底盘通信协议名称
         std::string hardware_status = "running"; // 底盘硬件状态，默认值为 "running"
@@ -51,11 +64,11 @@ namespace robot_hardware
         unsigned long long packet_sequence = 0; // 底盘通信数据包的序列号，默认值为 0
     };
 
-    class ChassisSystemAdapter
+    class Adapter
     {
     public:
         // 注入通信后端并加载配置
-        ChassisSystemAdapter(std::unique_ptr<ChassisBackend> backend, ChassisSystemAdapterConfig config = {});
+        Adapter(std::unique_ptr<Backend> backend, Config config = {});
 
         std::string BackendName() const;
         // 打开 关闭 通信后端
@@ -67,39 +80,39 @@ namespace robot_hardware
         void SetKinematicsModel(const std::string &model);
 
         // 处理并发送底盘运动指令
-        bool Write(const ChassisCommand &command, std::string *error);
+        bool Write(const Command &command, std::string *error);
 
         // 读取底盘数据并更新状态
-        bool Read(double period_seconds, ChassisSystemState *state, std::string *error);
+        bool Read(double period_seconds, Snapshot *state, std::string *error);
 
         // 重置里程计状态
         void ResetOdometry();
 
         // 获取当前状态快照的只读引用
-        const ChassisSystemState &State() const;
+        const Snapshot &State() const;
 
     private:
         // 规范化指令
-        ChassisCommand NormalizeCommand(const ChassisCommand &command) const;
+        Command NormalizeCommand(const Command &command) const;
 
         // 积分模拟运动
-        void IntegrateMock(double period_seconds);
+        void IntegrateMockMotion(double period_seconds);
 
         // 读取底层数据包
-        bool ReadBackendPackets(std::string *error);
+        bool ReadBackend(std::string *error);
 
         // 将数据包应用到机器人状态
-        void ApplyPacket(const ChassisPacket &packet);
+        void ApplyPacket(const Packet &packet);
 
         // 刷新后端打开状态
-        void RefreshOpenState();
+        void RefreshBackendState();
 
-        std::unique_ptr<ChassisBackend> backend_; // 通信后端
-        ChassisSystemAdapterConfig config_;       // 运行配置
-        ChassisSystemState state_;                // 当前状态
-        ChassisCommand command_;                  // 当前指令
+        std::unique_ptr<Backend> backend_; // 通信后端
+        Config config_;       // 运行配置
+        Snapshot state_;                // 当前状态
+        Command command_;                  // 当前指令
 
-        ChassisPacketStream text_stream_;      // 文本协议数据流
-        MickBinaryPacketStream binary_stream_; // Mick 二进制数据流
+        PacketStream text_stream_;      // 文本协议数据流
+        BinaryPacketStream binary_stream_; // Mick 二进制数据流
     };
 }

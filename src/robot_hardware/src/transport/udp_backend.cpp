@@ -1,4 +1,4 @@
-#include "robot_hardware/udp_backend.hpp"
+#include "robot_hardware/transport/udp_backend.hpp"
 
 #include <arpa/inet.h>
 #include <cerrno>
@@ -8,9 +8,13 @@
 #include <unistd.h>
 #include <utility>
 
-namespace robot_hardware
+namespace robot_hardware::transport
 {
-    UdpBackend::UdpBackend(ChassisBackendConfig config) : config_(std::move(config)) {}
+    using protocol::Command;
+    using protocol::EncodeCommand;
+    using protocol::EncodeMickSpeedCommand;
+
+    UdpBackend::UdpBackend(BackendConfig config) : config_(std::move(config)) {}
 
     UdpBackend::~UdpBackend()
     {
@@ -20,6 +24,11 @@ namespace robot_hardware
     std::string UdpBackend::Name() const
     {
         return "udp";
+    }
+
+    BackendKind UdpBackend::Kind() const
+    {
+        return BackendKind::kUdp;
     }
 
     bool UdpBackend::Open(std::string *error)
@@ -64,7 +73,7 @@ namespace robot_hardware
         return fd_ >= 0;
     }
 
-    bool UdpBackend::WriteCommand(const ChassisCommand &command, std::string *error)
+    bool UdpBackend::WriteCommand(const Command &command, std::string *error)
     {
         if (!IsOpen())
         {

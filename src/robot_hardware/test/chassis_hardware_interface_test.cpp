@@ -6,9 +6,14 @@
 #include "hardware_interface/hardware_info.hpp"
 #include "hardware_interface/types/hardware_component_interface_params.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "robot_hardware/chassis_hardware_interface.hpp"
+#include "robot_hardware/ros/hardware_interface.hpp"
 
 namespace robot_hardware {
+
+using namespace robot_hardware::protocol;
+using namespace robot_hardware::transport;
+using namespace robot_hardware::kinematics;
+using namespace robot_hardware::system;
 namespace {
 
 hardware_interface::InterfaceInfo MakeInterface(const std::string& name) {
