@@ -1,4 +1,4 @@
-#include "robot_tasks/queued_mission_start_behavior_tree.hpp"
+#include "robot_tasks/behavior/queued_mission_start_behavior_tree.hpp"
 
 #include <gtest/gtest.h>
 

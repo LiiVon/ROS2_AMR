@@ -1,4 +1,4 @@
-#include "robot_tasks/operator_snapshot.hpp"
+#include "robot_tasks/report/operator_snapshot.hpp"
 
 #include <gtest/gtest.h>
 

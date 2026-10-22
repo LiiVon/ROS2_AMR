@@ -1,4 +1,4 @@
-#include "robot_tasks/mission_event_log.hpp"
+#include "robot_tasks/model/mission_event_log.hpp"
 
 #include <gtest/gtest.h>
 

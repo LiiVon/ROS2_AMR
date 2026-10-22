@@ -1,4 +1,4 @@
-#include "robot_teleop/cmd_vel_safety.hpp"
+#include "robot_teleop/safety/cmd_vel_safety.hpp"
 
 #include <gtest/gtest.h>
 

@@ -11,7 +11,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
-add_executable(experiment_runner_node src/experiment_runner_node.cpp)
+add_executable(experiment_runner_node src/nodes/experiment_runner_node.cpp)
 ament_target_dependencies(experiment_runner_node robot_interfaces_core rclcpp nav_msgs geometry_msgs std_msgs visualization_msgs )
 
 install(TARGETS experiment_runner_node

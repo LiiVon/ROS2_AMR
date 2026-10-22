@@ -1,4 +1,4 @@
-#include "robot_tasks/station_sequence_behavior_tree.hpp"
+#include "robot_tasks/behavior/station_sequence_behavior_tree.hpp"
 
 #include <gtest/gtest.h>
 

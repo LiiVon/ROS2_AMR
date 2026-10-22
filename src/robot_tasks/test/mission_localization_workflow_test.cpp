@@ -1,4 +1,4 @@
-#include "robot_tasks/mission_localization_workflow.hpp"
+#include "robot_tasks/workflow/mission_localization_workflow.hpp"
 
 #include <gtest/gtest.h>
 

@@ -1,4 +1,4 @@
-#include "robot_tasks/mission_queue.hpp"
+#include "robot_tasks/model/mission_queue.hpp"
 
 #include <gtest/gtest.h>
 

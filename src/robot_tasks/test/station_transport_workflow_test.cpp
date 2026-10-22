@@ -1,4 +1,4 @@
-#include "robot_tasks/station_transport_workflow.hpp"
+#include "robot_tasks/workflow/station_transport_workflow.hpp"
 
 #include <gtest/gtest.h>
 

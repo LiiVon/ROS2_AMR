@@ -1,4 +1,4 @@
-#include "robot_tasks/fleet_runtime_state.hpp"
+#include "robot_tasks/model/fleet_runtime_state.hpp"
 
 #include <gtest/gtest.h>
 

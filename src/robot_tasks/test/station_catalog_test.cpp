@@ -1,4 +1,4 @@
-#include "robot_tasks/station_catalog.hpp"
+#include "robot_tasks/model/station_catalog.hpp"
 
 #include <gtest/gtest.h>
 

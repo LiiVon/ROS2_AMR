@@ -1,13 +1,13 @@
-#include "robot_tasks/mission_profile.hpp"
-#include "robot_tasks/dock_catalog.hpp"
-#include "robot_tasks/facility_catalog.hpp"
-#include "robot_tasks/fleet_catalog.hpp"
-#include "robot_tasks/mission_estimator.hpp"
-#include "robot_tasks/mission_preflight.hpp"
-#include "robot_tasks/mission_recovery_policy.hpp"
-#include "robot_tasks/scenario_catalog.hpp"
-#include "robot_tasks/station_catalog.hpp"
-#include "robot_navigation/zone_catalog.hpp"
+#include "robot_tasks/model/mission_profile.hpp"
+#include "robot_tasks/model/dock_catalog.hpp"
+#include "robot_tasks/model/facility_catalog.hpp"
+#include "robot_tasks/model/fleet_catalog.hpp"
+#include "robot_tasks/model/mission_estimator.hpp"
+#include "robot_tasks/policy/mission_preflight.hpp"
+#include "robot_tasks/policy/mission_recovery_policy.hpp"
+#include "robot_tasks/model/scenario_catalog.hpp"
+#include "robot_tasks/model/station_catalog.hpp"
+#include "robot_navigation/model/zone_catalog.hpp"
 
 #include <filesystem>
 #include <fstream>

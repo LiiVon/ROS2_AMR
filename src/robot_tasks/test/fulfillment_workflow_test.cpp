@@ -1,4 +1,4 @@
-#include "robot_tasks/fulfillment_workflow.hpp"
+#include "robot_tasks/workflow/fulfillment_workflow.hpp"
 
 #include <gtest/gtest.h>
 

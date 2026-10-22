@@ -1,4 +1,4 @@
-#include "robot_tasks/facility_reservation.hpp"
+#include "robot_tasks/model/facility_reservation.hpp"
 
 #include <gtest/gtest.h>
 

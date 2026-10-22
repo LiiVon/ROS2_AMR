@@ -1,4 +1,4 @@
-#include "robot_tasks/scenario_catalog.hpp"
+#include "robot_tasks/model/scenario_catalog.hpp"
 
 #include <gtest/gtest.h>
 

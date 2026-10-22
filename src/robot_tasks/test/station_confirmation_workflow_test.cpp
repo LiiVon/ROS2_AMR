@@ -1,4 +1,4 @@
-#include "robot_tasks/station_confirmation_workflow.hpp"
+#include "robot_tasks/workflow/station_confirmation_workflow.hpp"
 
 #include <gtest/gtest.h>
 

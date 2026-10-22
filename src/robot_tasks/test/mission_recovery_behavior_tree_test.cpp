@@ -1,4 +1,4 @@
-#include "robot_tasks/mission_recovery_behavior_tree.hpp"
+#include "robot_tasks/behavior/mission_recovery_behavior_tree.hpp"
 
 #include <gtest/gtest.h>
 

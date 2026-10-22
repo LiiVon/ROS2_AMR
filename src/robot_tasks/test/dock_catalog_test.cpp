@@ -1,4 +1,4 @@
-#include "robot_tasks/dock_catalog.hpp"
+#include "robot_tasks/model/dock_catalog.hpp"
 
 #include <gtest/gtest.h>
 

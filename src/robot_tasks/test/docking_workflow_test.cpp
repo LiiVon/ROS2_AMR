@@ -1,4 +1,4 @@
-#include "robot_tasks/docking_workflow.hpp"
+#include "robot_tasks/workflow/docking_workflow.hpp"
 
 #include <gtest/gtest.h>
 

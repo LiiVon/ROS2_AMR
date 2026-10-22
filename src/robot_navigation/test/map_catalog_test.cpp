@@ -1,4 +1,4 @@
-#include "robot_navigation/map_catalog.hpp"
+#include "robot_navigation/model/map_catalog.hpp"
 
 #include <filesystem>
 #include <fstream>

@@ -1,4 +1,4 @@
-#include "robot_tasks/mission_resource_cleanup.hpp"
+#include "robot_tasks/workflow/mission_resource_cleanup.hpp"
 
 #include <gtest/gtest.h>
 

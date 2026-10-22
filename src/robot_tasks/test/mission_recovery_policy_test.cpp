@@ -1,4 +1,4 @@
-#include "robot_tasks/mission_recovery_policy.hpp"
+#include "robot_tasks/policy/mission_recovery_policy.hpp"
 
 #include <gtest/gtest.h>
 

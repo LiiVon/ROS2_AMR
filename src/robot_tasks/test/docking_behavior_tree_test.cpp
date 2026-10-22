@@ -1,4 +1,4 @@
-#include "robot_tasks/docking_behavior_tree.hpp"
+#include "robot_tasks/behavior/docking_behavior_tree.hpp"
 
 #include <gtest/gtest.h>
 

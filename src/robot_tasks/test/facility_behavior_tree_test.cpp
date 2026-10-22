@@ -1,4 +1,4 @@
-#include "robot_tasks/facility_behavior_tree.hpp"
+#include "robot_tasks/behavior/facility_behavior_tree.hpp"
 
 #include <gtest/gtest.h>
 

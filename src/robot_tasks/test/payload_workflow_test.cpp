@@ -1,4 +1,4 @@
-#include "robot_tasks/payload_workflow.hpp"
+#include "robot_tasks/workflow/payload_workflow.hpp"
 
 #include <gtest/gtest.h>
 

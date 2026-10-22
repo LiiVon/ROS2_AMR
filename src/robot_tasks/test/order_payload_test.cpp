@@ -1,4 +1,4 @@
-#include "robot_tasks/order_payload.hpp"
+#include "robot_tasks/model/order_payload.hpp"
 
 #include <gtest/gtest.h>
 

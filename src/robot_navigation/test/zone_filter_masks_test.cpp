@@ -1,4 +1,4 @@
-#include "robot_navigation/zone_filter_masks.hpp"
+#include "robot_navigation/filters/zone_filter_masks.hpp"
 
 #include <filesystem>
 #include <fstream>

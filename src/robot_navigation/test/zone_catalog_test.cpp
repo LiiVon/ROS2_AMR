@@ -1,4 +1,4 @@
-#include "robot_navigation/zone_catalog.hpp"
+#include "robot_navigation/model/zone_catalog.hpp"
 
 #include <filesystem>
 #include <fstream>

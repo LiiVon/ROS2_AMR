@@ -1,4 +1,4 @@
-#include "robot_tasks/mission_profile_builders.hpp"
+#include "robot_tasks/model/mission_profile_builders.hpp"
 
 #include <gtest/gtest.h>
 

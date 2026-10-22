@@ -11,32 +11,32 @@ find_package(robot_interfaces_navigation REQUIRED)
 find_package(std_msgs REQUIRED)
 
 add_library(robot_navigation_map_catalog
-  src/map_catalog.cpp)
+  src/model/map_catalog.cpp)
 target_include_directories(robot_navigation_map_catalog PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
 add_library(robot_navigation_zone_catalog
-  src/zone_catalog.cpp)
+  src/model/zone_catalog.cpp)
 target_include_directories(robot_navigation_zone_catalog PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
 add_library(robot_navigation_zone_filter_masks
-  src/zone_filter_masks.cpp)
+  src/filters/zone_filter_masks.cpp)
 target_include_directories(robot_navigation_zone_filter_masks PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_link_libraries(robot_navigation_zone_filter_masks
   robot_navigation_zone_catalog)
 
-add_executable(map_manager_node src/map_manager_node.cpp)
+add_executable(map_manager_node src/nodes/map_manager_node.cpp)
 target_link_libraries(map_manager_node
   robot_navigation_map_catalog
   robot_navigation_zone_catalog)
 ament_target_dependencies(map_manager_node robot_interfaces_core ament_index_cpp rclcpp  robot_interfaces_navigation std_msgs)
 
-add_executable(export_zone_filter_masks src/export_zone_filter_masks.cpp)
+add_executable(export_zone_filter_masks src/nodes/export_zone_filter_masks.cpp)
 target_link_libraries(export_zone_filter_masks
   robot_navigation_zone_catalog
   robot_navigation_zone_filter_masks)

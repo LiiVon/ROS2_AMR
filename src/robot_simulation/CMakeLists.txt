@@ -17,13 +17,13 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
-add_library(robot_simulation_planar_odometry src/planar_odometry.cpp)
+add_library(robot_simulation_planar_odometry src/core/planar_odometry.cpp)
 target_include_directories(robot_simulation_planar_odometry PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(robot_simulation_planar_odometry robot_interfaces_navigation robot_interfaces_facility robot_interfaces_mission robot_interfaces_fleet robot_interfaces_business nav_msgs tf2)
 
-add_executable(amr_sim_visualizer_node src/amr_sim_visualizer_node.cpp)
+add_executable(amr_sim_visualizer_node src/demo/amr_sim_visualizer_node.cpp)
 ament_target_dependencies(amr_sim_visualizer_node robot_interfaces_navigation geometry_msgs
   nav_msgs
   rclcpp
@@ -35,7 +35,7 @@ ament_target_dependencies(amr_sim_visualizer_node robot_interfaces_navigation ge
   std_msgs
   visualization_msgs)
 
-add_executable(amr_sim_demo_director_node src/amr_sim_demo_director_node.cpp)
+add_executable(amr_sim_demo_director_node src/demo/amr_sim_demo_director_node.cpp)
 ament_target_dependencies(amr_sim_demo_director_node
   geometry_msgs
   nav_msgs
@@ -48,7 +48,7 @@ ament_target_dependencies(amr_sim_demo_director_node
   robot_interfaces_navigation
   std_msgs)
 
-add_executable(amr_sim_gazebo_entity_bridge_node src/amr_sim_gazebo_entity_bridge_node.cpp)
+add_executable(amr_sim_gazebo_entity_bridge_node src/gazebo/amr_sim_gazebo_entity_bridge_node.cpp)
 ament_target_dependencies(amr_sim_gazebo_entity_bridge_node robot_interfaces_navigation robot_interfaces_business geometry_msgs
   nav_msgs
   rclcpp
@@ -59,7 +59,7 @@ ament_target_dependencies(amr_sim_gazebo_entity_bridge_node robot_interfaces_nav
   ros_gz_interfaces
   std_msgs)
 
-add_executable(robot2_fleet_demo_driver_node src/robot2_fleet_demo_driver_node.cpp)
+add_executable(robot2_fleet_demo_driver_node src/demo/robot2_fleet_demo_driver_node.cpp)
 ament_target_dependencies(robot2_fleet_demo_driver_node robot_interfaces_navigation robot_interfaces_facility robot_interfaces_business geometry_msgs
   nav_msgs
   rclcpp
@@ -67,14 +67,14 @@ ament_target_dependencies(robot2_fleet_demo_driver_node robot_interfaces_navigat
   robot_interfaces_fleet
   robot_interfaces_mission)
 
-add_executable(gazebo_odom_tf_node src/gazebo_odom_tf_node.cpp)
+add_executable(gazebo_odom_tf_node src/gazebo/gazebo_odom_tf_node.cpp)
 target_link_libraries(gazebo_odom_tf_node robot_simulation_planar_odometry)
 ament_target_dependencies(gazebo_odom_tf_node robot_interfaces_navigation robot_interfaces_facility robot_interfaces_mission robot_interfaces_fleet robot_interfaces_business geometry_msgs
   nav_msgs
   rclcpp
   tf2_ros)
 
-add_executable(gazebo_unpause_node src/gazebo_unpause_node.cpp)
+add_executable(gazebo_unpause_node src/gazebo/gazebo_unpause_node.cpp)
 ament_target_dependencies(gazebo_unpause_node robot_interfaces_navigation robot_interfaces_facility robot_interfaces_mission robot_interfaces_fleet robot_interfaces_business rclcpp
   ros_gz_interfaces)
 

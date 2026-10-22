@@ -23,39 +23,39 @@ find_package(robot_navigation REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 
 add_library(robot_tasks_mission_profile
-  src/business_order_catalog.cpp
-  src/dock_catalog.cpp
-  src/docking_workflow.cpp
-  src/facility_catalog.cpp
-  src/facility_reservation.cpp
-  src/facility_workflow.cpp
-  src/fleet_catalog.cpp
-  src/fleet_runtime_state.cpp
-  src/fulfillment_workflow.cpp
-  src/mission_event_log.cpp
-  src/mission_estimator.cpp
-  src/mission_charging_workflow.cpp
-  src/mission_localization_workflow.cpp
-  src/mission_preflight.cpp
-  src/mission_profile.cpp
-  src/mission_profile_builders.cpp
-  src/mission_queue.cpp
-  src/operator_snapshot.cpp
-  src/mission_resource_cleanup.cpp
-  src/mission_result_workflow.cpp
-  src/mission_runtime_workflow.cpp
-  src/mission_safety_workflow.cpp
-  src/mission_recovery_policy.cpp
-  src/order_payload.cpp
-  src/payload_workflow.cpp
-  src/scenario_catalog.cpp
-  src/station_confirmation_workflow.cpp
-  src/station_sequence_workflow.cpp
-  src/station_transport_workflow.cpp
-  src/station_catalog.cpp
-  src/submit_order_router.cpp
-  src/traffic_reservation.cpp
-  src/workflow_control.cpp)
+  src/model/business_order_catalog.cpp
+  src/model/dock_catalog.cpp
+  src/workflow/docking_workflow.cpp
+  src/model/facility_catalog.cpp
+  src/model/facility_reservation.cpp
+  src/workflow/facility_workflow.cpp
+  src/model/fleet_catalog.cpp
+  src/model/fleet_runtime_state.cpp
+  src/workflow/fulfillment_workflow.cpp
+  src/model/mission_event_log.cpp
+  src/model/mission_estimator.cpp
+  src/workflow/mission_charging_workflow.cpp
+  src/workflow/mission_localization_workflow.cpp
+  src/policy/mission_preflight.cpp
+  src/model/mission_profile.cpp
+  src/model/mission_profile_builders.cpp
+  src/model/mission_queue.cpp
+  src/report/operator_snapshot.cpp
+  src/workflow/mission_resource_cleanup.cpp
+  src/workflow/mission_result_workflow.cpp
+  src/workflow/mission_runtime_workflow.cpp
+  src/workflow/mission_safety_workflow.cpp
+  src/policy/mission_recovery_policy.cpp
+  src/model/order_payload.cpp
+  src/workflow/payload_workflow.cpp
+  src/model/scenario_catalog.cpp
+  src/workflow/station_confirmation_workflow.cpp
+  src/workflow/station_sequence_workflow.cpp
+  src/workflow/station_transport_workflow.cpp
+  src/model/station_catalog.cpp
+  src/routing/submit_order_router.cpp
+  src/model/traffic_reservation.cpp
+  src/workflow/workflow_control.cpp)
 target_include_directories(robot_tasks_mission_profile PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -63,16 +63,16 @@ target_link_libraries(robot_tasks_mission_profile robot_navigation::robot_naviga
 ament_target_dependencies(robot_tasks_mission_profile robot_interfaces_core robot_interfaces_navigation robot_interfaces_facility robot_interfaces_mission robot_interfaces_fleet robot_interfaces_business robot_interfaces_site robot_navigation)
 
 add_library(robot_tasks_behavior_trees
-  src/docking_behavior_tree.cpp
-  src/facility_behavior_tree.cpp
-  src/mission_queue_behavior_tree.cpp
-  src/mission_recovery_behavior_tree.cpp
-  src/mission_resource_cleanup_behavior_tree.cpp
-  src/mission_result_behavior_tree.cpp
-  src/mission_runtime_behavior_tree.cpp
-  src/queued_mission_start_behavior_tree.cpp
-  src/station_sequence_behavior_tree.cpp
-  src/submit_order_behavior_tree.cpp)
+  src/behavior/docking_behavior_tree.cpp
+  src/behavior/facility_behavior_tree.cpp
+  src/behavior/mission_queue_behavior_tree.cpp
+  src/behavior/mission_recovery_behavior_tree.cpp
+  src/behavior/mission_resource_cleanup_behavior_tree.cpp
+  src/behavior/mission_result_behavior_tree.cpp
+  src/behavior/mission_runtime_behavior_tree.cpp
+  src/behavior/queued_mission_start_behavior_tree.cpp
+  src/behavior/station_sequence_behavior_tree.cpp
+  src/behavior/submit_order_behavior_tree.cpp)
 target_include_directories(robot_tasks_behavior_trees PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -80,14 +80,14 @@ target_link_libraries(robot_tasks_behavior_trees
   robot_tasks_mission_profile
   behaviortree_cpp::behaviortree_cpp)
 
-add_executable(navigate_sequence_server_node src/navigate_sequence_server_node.cpp)
+add_executable(navigate_sequence_server_node src/nodes/navigate_sequence_server_node.cpp)
 ament_target_dependencies(navigate_sequence_server_node robot_interfaces_navigation robot_interfaces_facility robot_interfaces_mission robot_interfaces_fleet robot_interfaces_business robot_interfaces_site rclcpp rclcpp_action geometry_msgs nav_msgs nav2_msgs std_msgs std_srvs  robot_interfaces_core)
 
-add_executable(mission_runner_node src/mission_runner_node.cpp)
+add_executable(mission_runner_node src/nodes/mission_runner_node.cpp)
 target_link_libraries(mission_runner_node robot_tasks_mission_profile robot_tasks_behavior_trees)
 ament_target_dependencies(mission_runner_node robot_interfaces_core robot_interfaces_site ament_index_cpp rclcpp rclcpp_action geometry_msgs nav_msgs nav2_msgs std_srvs  robot_interfaces_business robot_interfaces_facility robot_interfaces_fleet robot_interfaces_mission robot_interfaces_navigation robot_navigation)
 
-add_executable(site_config_manager_node src/site_config_manager_node.cpp)
+add_executable(site_config_manager_node src/nodes/site_config_manager_node.cpp)
 target_link_libraries(site_config_manager_node robot_tasks_mission_profile)
 ament_target_dependencies(site_config_manager_node robot_interfaces_core robot_interfaces_navigation robot_interfaces_facility robot_interfaces_mission robot_interfaces_fleet robot_interfaces_business rclcpp  robot_interfaces_site robot_navigation)
 

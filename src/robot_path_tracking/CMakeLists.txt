@@ -13,13 +13,13 @@ find_package(tf2_geometry_msgs REQUIRED)
 
 include_directories(include)
 
-add_executable(path_publisher_node src/path_publisher_node.cpp)
+add_executable(path_publisher_node src/nodes/path_publisher_node.cpp)
 ament_target_dependencies(path_publisher_node robot_interfaces_core rclcpp geometry_msgs nav_msgs)
 
-add_executable(pure_pursuit_controller_node src/pure_pursuit_controller_node.cpp)
+add_executable(pure_pursuit_controller_node src/nodes/pure_pursuit_controller_node.cpp)
 ament_target_dependencies(pure_pursuit_controller_node robot_interfaces_core rclcpp geometry_msgs nav_msgs tf2 tf2_geometry_msgs )
 
-add_executable(stanley_controller_node src/stanley_controller_node.cpp)
+add_executable(stanley_controller_node src/nodes/stanley_controller_node.cpp)
 ament_target_dependencies(stanley_controller_node robot_interfaces_core rclcpp geometry_msgs nav_msgs tf2 tf2_geometry_msgs )
 
 install(TARGETS

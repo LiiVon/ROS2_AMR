@@ -1,4 +1,4 @@
-#include "robot_tasks/traffic_reservation.hpp"
+#include "robot_tasks/model/traffic_reservation.hpp"
 
 #include <gtest/gtest.h>
 

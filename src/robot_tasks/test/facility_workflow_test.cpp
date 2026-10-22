@@ -1,4 +1,4 @@
-#include "robot_tasks/facility_workflow.hpp"
+#include "robot_tasks/workflow/facility_workflow.hpp"
 
 #include <gtest/gtest.h>
 

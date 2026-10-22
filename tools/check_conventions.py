@@ -4,7 +4,8 @@
 检查项：
   1. 禁止出现 v2_ 前缀、/v2/ 路径、_srv_ 后缀、_pub/_sub 缩写、data_/tmp_ 占位名
   2. 单个 C++ 源文件不超过 1500 行
-  3. 关键对外名字必须存在（topic / service 常量抽查）
+  3. 目录分层：`include/<包名>/` 与 `src/` 根层不得堆放散装源文件
+  4. 关键对外名字必须存在（topic / service 常量抽查）
 用法：
   python3 tools/check_conventions.py [--root src] [--strict]
 退出码 0 表示全部通过。
@@ -29,6 +30,21 @@ SRC_EXT = {".cpp", ".hpp", ".h", ".inc"}
 MAX_LINES = 1500
 
 
+def check_layering(root: pathlib.Path) -> list:
+    """include/<包名>/ 与 src/ 根层必须只含子目录，文件需归入分层目录。"""
+    problems = []
+    for package in sorted(p for p in root.glob("robot_*") if p.is_dir()):
+        for base in (package / "include" / package.name, package / "src"):
+            if not base.is_dir():
+                continue
+            for entry in sorted(base.iterdir()):
+                if entry.is_file() and entry.suffix in SRC_EXT:
+                    problems.append(
+                        f"{entry}: 根层散装源文件，请归入分层子目录（model/workflow/nodes/core/...）"
+                    )
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default="src")
@@ -38,6 +54,8 @@ def main() -> int:
     root = pathlib.Path(args.root)
     problems = []
     warnings = []
+
+    problems.extend(check_layering(root))
 
     for path in sorted(root.rglob("*")):
         if not path.is_file():

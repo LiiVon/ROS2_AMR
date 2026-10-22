@@ -1,4 +1,4 @@
-#include "robot_tasks/submit_order_behavior_tree.hpp"
+#include "robot_tasks/behavior/submit_order_behavior_tree.hpp"
 
 #include <gtest/gtest.h>
 
