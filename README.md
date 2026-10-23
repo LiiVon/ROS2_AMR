@@ -202,9 +202,5 @@ src/
 - 一个消息类型只在一个接口包中定义，不复制定义
 - `include/` 与 `src/` 子目录同名同构，单文件 ≤ 1500 行
 
-以上规则由 `tools/check_conventions.py --strict` 在 `colcon test` 中强制执行；
-接口与参数规范详见 `需求文档.md`。
-
-
 源码注释采用 Doxygen 风格（`@file` / `@brief` / `@details` / `@param` / `@return`）
 
