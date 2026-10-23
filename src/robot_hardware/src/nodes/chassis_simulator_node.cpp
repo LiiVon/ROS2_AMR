@@ -1,7 +1,10 @@
-// chassis_simulator_node.cpp
-// 底盘模拟器 ROS 2 节点
-// 这个节点模拟底盘的运动学和动力学行为，接收来自上层的运动指令，并根据底盘模型计算轮子速度和位置
-// 同时发布模拟的 底盘状态和里程计信息
+/**
+ * @file chassis_simulator_node.cpp
+ * @brief 底盘模拟器节点（节点入口层）。
+ * @details chassis_simulator_node.cpp 底盘模拟器 ROS 2 节点 这个节点模拟底盘的运动学和动力学行为，接收来自上层的运动指令，并根据底盘模型计算轮子速度和位置 同时发布模拟的 底盘状态和里程计信息
+ * @details 所属包：`robot_hardware`；所在层次：节点入口层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
 
 #include <algorithm>
 #include <chrono>

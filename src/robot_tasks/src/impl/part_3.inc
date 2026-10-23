@@ -1,3 +1,9 @@
+/**
+ * @file part_3.inc
+ * @brief （实现细节）。
+ * @details 所属包：`robot_tasks`；所在层次：实现细节。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
 
   bool ValidateDockReferences(
       const robot_tasks::Dock& dock, const robot_tasks::FacilityCatalog& facilities,

@@ -1,3 +1,10 @@
+/**
+ * @file fulfillment_workflow.hpp
+ * @brief 履约工作流（业务流程层）。
+ * @details 所属包：`robot_tasks`；所在层次：业务流程层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #pragma once
 
 #include <cstddef>
@@ -6,6 +13,9 @@
 
 namespace robot_tasks {
 
+/**
+ * @brief 履约订单运行时状态（FulfillmentOrderRuntimeState）
+ */
 struct FulfillmentOrderRuntimeState {
   std::string fulfillment_id;
   std::string order_type;
@@ -21,6 +31,9 @@ struct FulfillmentOrderRuntimeState {
   std::vector<std::string> confirmation_ids;
 };
 
+/**
+ * @brief 履约提交请求（FulfillmentSubmitRequest）
+ */
 struct FulfillmentSubmitRequest {
   std::string fulfillment_id;
   std::string order_type;
@@ -29,6 +42,9 @@ struct FulfillmentSubmitRequest {
   bool require_two_stations = false;
 };
 
+/**
+ * @brief 履约提交判定（FulfillmentSubmitDecision）
+ */
 struct FulfillmentSubmitDecision {
   bool success = false;
   std::string fulfillment_id;
@@ -36,9 +52,17 @@ struct FulfillmentSubmitDecision {
   std::string message;
 };
 
+/**
+ * @brief PlanFulfillmentSubmit。
+ * @param request 输入请求（字段见同名结构体）
+ * @return 计算结果。
+ */
 FulfillmentSubmitDecision PlanFulfillmentSubmit(
     const FulfillmentSubmitRequest& request);
 
+/**
+ * @brief FulfillmentPickRequest 数据结构定义
+ */
 struct FulfillmentPickRequest {
   std::string fulfillment_id;
   std::string order_type;
@@ -47,6 +71,9 @@ struct FulfillmentPickRequest {
   int picked_quantity = 0;
 };
 
+/**
+ * @brief FulfillmentPickDecision 数据结构定义
+ */
 struct FulfillmentPickDecision {
   bool success = false;
   std::string fulfillment_id;
@@ -61,6 +88,9 @@ struct FulfillmentPickDecision {
   bool event_recoverable = true;
 };
 
+/**
+ * @brief FulfillmentDropoffRequest 数据结构定义
+ */
 struct FulfillmentDropoffRequest {
   std::string fulfillment_id;
   std::string order_type;
@@ -69,6 +99,9 @@ struct FulfillmentDropoffRequest {
   std::size_t confirmation_count = 0;
 };
 
+/**
+ * @brief FulfillmentDropoffDecision 数据结构定义
+ */
 struct FulfillmentDropoffDecision {
   bool success = false;
   std::string fulfillment_id;
@@ -81,6 +114,9 @@ struct FulfillmentDropoffDecision {
   bool event_recoverable = true;
 };
 
+/**
+ * @brief FulfillmentShortPickRequest 数据结构定义
+ */
 struct FulfillmentShortPickRequest {
   std::string fulfillment_id;
   std::string order_type;
@@ -89,6 +125,9 @@ struct FulfillmentShortPickRequest {
   int short_quantity = 0;
 };
 
+/**
+ * @brief FulfillmentShortPickDecision 数据结构定义
+ */
 struct FulfillmentShortPickDecision {
   bool success = false;
   std::string fulfillment_id;
@@ -101,6 +140,9 @@ struct FulfillmentShortPickDecision {
   bool event_recoverable = false;
 };
 
+/**
+ * @brief FulfillmentStatusProjection 数据结构定义
+ */
 struct FulfillmentStatusProjection {
   bool success = true;
   std::string fulfillment_id;
@@ -118,12 +160,32 @@ struct FulfillmentStatusProjection {
   std::string message;
 };
 
+/**
+ * @brief PlanFulfillmentPick。
+ * @param request 输入请求（字段见同名结构体）
+ * @return 计算结果。
+ */
 FulfillmentPickDecision PlanFulfillmentPick(
     const FulfillmentPickRequest& request);
+/**
+ * @brief PlanFulfillmentDropoff。
+ * @param request 输入请求（字段见同名结构体）
+ * @return 计算结果。
+ */
 FulfillmentDropoffDecision PlanFulfillmentDropoff(
     const FulfillmentDropoffRequest& request);
+/**
+ * @brief PlanFulfillmentShortPick。
+ * @param request 输入请求（字段见同名结构体）
+ * @return 计算结果。
+ */
 FulfillmentShortPickDecision PlanFulfillmentShortPick(
     const FulfillmentShortPickRequest& request);
+/**
+ * @brief 构建 BuildFulfillmentStatusProjection。
+ * @param order 参数
+ * @return 计算结果。
+ */
 FulfillmentStatusProjection BuildFulfillmentStatusProjection(
     const FulfillmentOrderRuntimeState& order);
 

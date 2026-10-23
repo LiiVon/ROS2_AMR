@@ -1,3 +1,9 @@
+/**
+ * @file part_5.inc
+ * @brief （实现细节）。
+ * @details 所属包：`robot_tasks`；所在层次：实现细节。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
 
   void SendMissionGoal(const NavigateSequence::Goal& goal,
                        const std::shared_ptr<std_srvs::srv::Trigger::Response>& response,

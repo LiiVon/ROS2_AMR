@@ -1,3 +1,10 @@
+/**
+ * @file mission_profile_test.cpp
+ * @brief （源码）。
+ * @details 所属包：`robot_tasks`；所在层次：源码。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_tasks/model/mission_profile.hpp"
 #include "robot_tasks/model/dock_catalog.hpp"
 #include "robot_tasks/model/facility_catalog.hpp"

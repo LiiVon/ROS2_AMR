@@ -1,3 +1,10 @@
+/**
+ * @file fake_scan_node.cpp
+ * @brief 模拟扫描节点（数据模拟层）。
+ * @details 所属包：`robot_sensors`；所在层次：数据模拟层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <chrono>
 #include <cmath>
 #include <memory>

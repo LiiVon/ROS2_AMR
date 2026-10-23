@@ -1,3 +1,10 @@
+/**
+ * @file amr_sim_demo_director_node.cpp
+ * @brief AMR仿真演示导演节点（演示编排层）。
+ * @details 所属包：`robot_simulation`；所在层次：演示编排层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <chrono>
 #include <memory>
 #include <string>

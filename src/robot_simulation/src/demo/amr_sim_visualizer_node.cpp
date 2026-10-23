@@ -1,3 +1,10 @@
+/**
+ * @file amr_sim_visualizer_node.cpp
+ * @brief AMR仿真可视化器节点（演示编排层）。
+ * @details 所属包：`robot_simulation`；所在层次：演示编排层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <chrono>
 #include <algorithm>
 #include <cmath>

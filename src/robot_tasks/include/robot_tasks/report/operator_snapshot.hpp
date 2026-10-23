@@ -1,3 +1,10 @@
+/**
+ * @file operator_snapshot.hpp
+ * @brief 操作员快照（视图输出层）。
+ * @details 所属包：`robot_tasks`；所在层次：视图输出层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #pragma once
 
 #include <string>
@@ -14,6 +21,9 @@
 
 namespace robot_tasks {
 
+/**
+ * @brief 操作员快照请求（OperatorSnapshotRequest）
+ */
 struct OperatorSnapshotRequest {
   std::string mission_state;
   std::string previous_mission_state;
@@ -33,6 +43,9 @@ struct OperatorSnapshotRequest {
   int event_limit = 0;
 };
 
+/**
+ * @brief OperatorSnapshotProjection 数据结构定义
+ */
 struct OperatorSnapshotProjection {
   bool success = true;
   std::string mission_state;
@@ -70,6 +83,11 @@ struct OperatorSnapshotProjection {
   std::string message;
 };
 
+/**
+ * @brief 构建 BuildOperatorSnapshotProjection。
+ * @param request 输入请求（字段见同名结构体）
+ * @return 计算结果。
+ */
 OperatorSnapshotProjection BuildOperatorSnapshotProjection(
     const OperatorSnapshotRequest& request);
 

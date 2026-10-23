@@ -1,3 +1,10 @@
+/**
+ * @file imu_100d4_parser_node.cpp
+ * @brief （IMU 数据处理层）。
+ * @details 所属包：`robot_sensors`；所在层次：IMU 数据处理层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <cmath>
 #include <cstdint>
 #include <memory>

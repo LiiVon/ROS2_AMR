@@ -1,3 +1,10 @@
+/**
+ * @file chassis_system_adapter_test.cpp
+ * @brief （源码）。
+ * @details 所属包：`robot_hardware`；所在层次：源码。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_hardware/system/adapter.hpp"
 
 #include <deque>

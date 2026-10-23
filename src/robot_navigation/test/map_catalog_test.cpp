@@ -1,3 +1,10 @@
+/**
+ * @file map_catalog_test.cpp
+ * @brief （源码）。
+ * @details 所属包：`robot_navigation`；所在层次：源码。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_navigation/model/map_catalog.hpp"
 
 #include <filesystem>

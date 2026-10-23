@@ -1,5 +1,10 @@
-// chassis_backend_factory.hpp
-// 底盘后端工厂：根据指定类型创建对应的底盘通信后端。
+/**
+ * @file backend_factory.hpp
+ * @brief 后端工厂（传输层）。
+ * @details chassis_backend_factory.hpp 底盘后端工厂：根据指定类型创建对应的底盘通信后端。
+ * @details 所属包：`robot_hardware`；所在层次：传输层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
 
 #pragma once
 

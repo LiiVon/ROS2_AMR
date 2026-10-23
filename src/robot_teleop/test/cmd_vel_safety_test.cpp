@@ -1,3 +1,10 @@
+/**
+ * @file cmd_vel_safety_test.cpp
+ * @brief （源码）。
+ * @details 所属包：`robot_teleop`；所在层次：源码。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_teleop/safety/cmd_vel_safety.hpp"
 
 #include <gtest/gtest.h>

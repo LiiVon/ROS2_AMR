@@ -1,3 +1,10 @@
+/**
+ * @file mock_backend.cpp
+ * @brief 模拟后端（传输层）。
+ * @details 所属包：`robot_hardware`；所在层次：传输层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_hardware/transport/mock_backend.hpp"
 
 namespace robot_hardware::transport

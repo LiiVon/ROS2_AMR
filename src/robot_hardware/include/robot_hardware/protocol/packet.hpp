@@ -1,5 +1,11 @@
-// chassis_packet
-// 机器人底盘硬件的 通信数据包定义与协议编解码
+/**
+ * @file packet.hpp
+ * @brief 报文（协议层）。
+ * @details chassis_packet 机器人底盘硬件的 通信数据包定义与协议编解码
+ * @details 所属包：`robot_hardware`；所在层次：协议层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #pragma once
 
 #include <cstddef>
@@ -13,6 +19,9 @@ namespace robot_hardware::protocol
 
     // ======================== 数据结构定义 =========================
     // 底盘运动指令
+    /**
+     * @brief 指令（Command）
+     */
     struct Command
     {
         double linear_x_mps = 0.0;    // 机器人在x方向的线速度（单位：米/秒）
@@ -21,6 +30,9 @@ namespace robot_hardware::protocol
     };
 
     // 底盘里程计数据
+    /**
+     * @brief 里程计报文（OdometryPacket）
+     */
     struct OdometryPacket
     {
         double x_m = 0.0;     // 机器人在世界坐标系下的x坐标（单位：米）
@@ -35,6 +47,9 @@ namespace robot_hardware::protocol
     };
 
     // 底盘状态数据
+    /**
+     * @brief 状态报文（StatePacket）
+     */
     struct StatePacket
     {
         std::string status;                    // 底盘状态描述，例如“正常”、“故障”等
@@ -42,6 +57,9 @@ namespace robot_hardware::protocol
     };
 
     // 数据包类型
+    /**
+     * @brief PacketKind 枚举定义
+     */
     enum class PacketKind
     {
         kOdometry, // 里程计数据包
@@ -49,6 +67,9 @@ namespace robot_hardware::protocol
     };
 
     // 统一的数据包容器
+    /**
+     * @brief 报文（Packet）
+     */
     struct Packet
     {
         // 默认是状态数据包
@@ -67,6 +88,9 @@ namespace robot_hardware::protocol
     std::optional<Packet> DecodePacket(const std::string &text);
 
     // ======================== 二进制协议的编码与解码 =========================
+    /**
+     * @brief BinaryFrame 数据结构定义
+     */
     struct BinaryFrame
     {
         uint8_t type = 0;          // 数据包类型
@@ -86,6 +110,9 @@ namespace robot_hardware::protocol
     std::optional<Packet> DecodeMickBinaryPacket(const BinaryFrame &frame);
 
     // ======================== 文本数据流解析器 =========================
+    /**
+     * @brief PacketStream 数据结构定义
+     */
     class PacketStream
     {
     public:
@@ -115,6 +142,9 @@ namespace robot_hardware::protocol
     };
 
     // ======================== 二进制数据流解析器 =========================
+    /**
+     * @brief BinaryPacketStream 数据结构定义
+     */
     class BinaryPacketStream
     {
     public:

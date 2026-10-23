@@ -1,0 +1,14 @@
+{
+  "scenario_name": "tracking_benchmark",
+  "controller_name": "unknown",
+  "path_file": "/home/lz/robot_ws/install/robot_experiments/share/robot_experiments/paths/demo_path.txt",
+  "output_csv": "experiment_results.csv",
+  "samples": 0,
+  "last_stamp_sec": 0,
+  "mean_abs_lateral_error": 0,
+  "mean_abs_heading_error": 0,
+  "sum_abs_lateral_error": 0,
+  "sum_abs_heading_error": 0,
+  "last_nearest_path_index": -1,
+  "interface_chain": "reference_path -> tracking_controller -> tracking_cmd_vel -> cmd_vel_mux -> cmd_vel -> odom -> tracking_error"
+}

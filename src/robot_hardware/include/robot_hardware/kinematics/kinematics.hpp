@@ -1,5 +1,10 @@
-// chassis_kinematics.hpp
-// 底盘运动学计算模块：定义位姿、轮速及运动学函数接口。
+/**
+ * @file kinematics.hpp
+ * @brief 运动学（运动学层）。
+ * @details chassis_kinematics.hpp 底盘运动学计算模块：定义位姿、轮速及运动学函数接口。
+ * @details 所属包：`robot_hardware`；所在层次：运动学层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
 
 #pragma once
 
@@ -15,6 +20,9 @@ namespace robot_hardware::kinematics
 
     // 机器人在世界坐标系（例如 odom）中的二维位姿。
     // x、y 的单位是米，yaw 的单位是弧度。
+    /**
+     * @brief Pose2D 数据结构定义
+     */
     struct Pose2D
     {
         double x_m = 0.0;
@@ -26,6 +34,9 @@ namespace robot_hardware::kinematics
     // 索引顺序固定为：
     // 0 = 左前轮，1 = 右前轮，
     // 2 = 左后轮，3 = 右后轮。
+    /**
+     * @brief WheelSpeeds 数据结构定义
+     */
     struct WheelSpeeds
     {
         std::array<double, 4> rpm{0.0, 0.0, 0.0, 0.0};

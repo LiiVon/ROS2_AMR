@@ -1,3 +1,10 @@
+/**
+ * @file map_catalog.cpp
+ * @brief 地图目录（数据模型层）。
+ * @details 所属包：`robot_navigation`；所在层次：数据模型层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_navigation/model/map_catalog.hpp"
 
 #include <algorithm>
@@ -118,4 +125,3 @@ std::optional<MapInfo> LoadMapInfo(const std::filesystem::path& yaml_path) {
 }
 
 }  // namespace robot_navigation
-

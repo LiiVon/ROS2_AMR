@@ -1,3 +1,10 @@
+/**
+ * @file mission_event_log_test.cpp
+ * @brief （源码）。
+ * @details 所属包：`robot_tasks`；所在层次：源码。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_tasks/model/mission_event_log.hpp"
 
 #include <gtest/gtest.h>

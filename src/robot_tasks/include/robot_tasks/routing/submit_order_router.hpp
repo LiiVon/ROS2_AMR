@@ -1,3 +1,10 @@
+/**
+ * @file submit_order_router.hpp
+ * @brief 提交订单路由器（入口路由层）。
+ * @details 所属包：`robot_tasks`；所在层次：入口路由层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #pragma once
 
 #include <optional>
@@ -6,6 +13,9 @@
 
 namespace robot_tasks {
 
+/**
+ * @brief SubmitOrderKind 枚举定义
+ */
 enum class SubmitOrderKind {
   kTransport,
   kStationTransport,
@@ -21,6 +31,9 @@ enum class SubmitOrderKind {
   kMilkRun,
 };
 
+/**
+ * @brief SubmitOrderInput 数据结构定义
+ */
 struct SubmitOrderInput {
   std::string order_id;
   std::string order_type;
@@ -29,6 +42,9 @@ struct SubmitOrderInput {
   std::vector<std::string> tags;
 };
 
+/**
+ * @brief SubmitOrderRoute 数据结构定义
+ */
 struct SubmitOrderRoute {
   SubmitOrderKind kind{SubmitOrderKind::kTransport};
   std::string normalized_order_type;
@@ -70,6 +86,9 @@ struct SubmitOrderRoute {
   std::string run_id;
 };
 
+/**
+ * @brief Vda5050StationOrderRequest 数据结构定义
+ */
 struct Vda5050StationOrderRequest {
   std::string order_id;
   std::string serial_number;
@@ -80,6 +99,9 @@ struct Vda5050StationOrderRequest {
   bool preempt_current{false};
 };
 
+/**
+ * @brief Vda5050StationOrderDecision 数据结构定义
+ */
 struct Vda5050StationOrderDecision {
   bool success{false};
   std::string order_id;
@@ -93,7 +115,18 @@ struct Vda5050StationOrderDecision {
   std::string message;
 };
 
+/**
+ * @brief 归一化提交订单类型。
+ * @param value 字符串
+ * @return 描述性字符串。
+ */
 std::string NormalizeSubmitOrderType(const std::string& value);
+/**
+ * @brief 构建 BuildSubmitOrderRoute。
+ * @param input 参数
+ * @param message 字符串
+ * @return 计算结果。
+ */
 std::optional<SubmitOrderRoute> BuildSubmitOrderRoute(
     const SubmitOrderInput& input, std::string* message);
 Vda5050StationOrderDecision PlanVda5050StationOrder(

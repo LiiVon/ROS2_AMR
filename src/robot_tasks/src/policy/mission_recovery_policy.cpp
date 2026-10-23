@@ -1,3 +1,10 @@
+/**
+ * @file mission_recovery_policy.cpp
+ * @brief 任务恢复策略（决策策略层）。
+ * @details 所属包：`robot_tasks`；所在层次：决策策略层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_tasks/policy/mission_recovery_policy.hpp"
 
 #include <algorithm>

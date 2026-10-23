@@ -1,3 +1,10 @@
+/**
+ * @file facility_reservation.cpp
+ * @brief 设施预约（数据模型层）。
+ * @details 所属包：`robot_tasks`；所在层次：数据模型层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_tasks/model/facility_reservation.hpp"
 
 namespace robot_tasks {

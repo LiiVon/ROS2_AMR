@@ -1,3 +1,10 @@
+/**
+ * @file gazebo_odom_tf_node.cpp
+ * @brief Gazebo里程计TF节点（仿真桥接层）。
+ * @details 所属包：`robot_simulation`；所在层次：仿真桥接层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <memory>
 #include <string>
 

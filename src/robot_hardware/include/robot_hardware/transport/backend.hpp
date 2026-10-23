@@ -1,6 +1,10 @@
-// chassis_backend.hpp
-// 底盘通信后端抽象接口。
-// 定义统一的底盘配置，以及所有后端必须实现的操作。
+/**
+ * @file backend.hpp
+ * @brief 后端（传输层）。
+ * @details chassis_backend.hpp 底盘通信后端抽象接口。 定义统一的底盘配置，以及所有后端必须实现的操作。
+ * @details 所属包：`robot_hardware`；所在层次：传输层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
 
 #pragma once
 
@@ -17,6 +21,9 @@ namespace robot_hardware::transport
     // 底盘后端配置。
     // SerialBackend 使用串口相关配置；UdpBackend 使用 UDP 相关配置。
     // protocol 供底盘数据协议解析层使用。
+    /**
+     * @brief 后端配置（BackendConfig）
+     */
     struct BackendConfig
     {
         // 串口配置
@@ -34,6 +41,9 @@ namespace robot_hardware::transport
     };
 
     // 后端类型：内部判断一律使用枚举，避免字符串比较的隐性耦合
+    /**
+     * @brief BackendKind 枚举定义
+     */
     enum class BackendKind
     {
         kMock,
@@ -57,6 +67,9 @@ namespace robot_hardware::transport
 
     // 底盘通信后端抽象基类。
     // Mock、Serial、UDP 等具体后端都必须实现该接口。
+    /**
+     * @brief 后端（Backend）
+     */
     class Backend
     {
     public:

@@ -1,3 +1,10 @@
+/**
+ * @file workflow_control.hpp
+ * @brief 工作流控制（业务流程层）。
+ * @details 所属包：`robot_tasks`；所在层次：业务流程层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #pragma once
 
 #include <string>
@@ -9,12 +16,18 @@
 
 namespace robot_tasks {
 
+/**
+ * @brief WorkflowActiveMission 数据结构定义
+ */
 struct WorkflowActiveMission {
   bool active = false;
   bool paused = false;
   std::string mission_id;
 };
 
+/**
+ * @brief WorkflowCancelRequest 数据结构定义
+ */
 struct WorkflowCancelRequest {
   std::string order_id;
   bool cancel_active = false;
@@ -22,6 +35,9 @@ struct WorkflowCancelRequest {
   WorkflowActiveMission active;
 };
 
+/**
+ * @brief WorkflowCancelDecision 数据结构定义
+ */
 struct WorkflowCancelDecision {
   bool success = false;
   bool active_cancel_requested = false;
@@ -30,6 +46,9 @@ struct WorkflowCancelDecision {
   std::vector<QueuedMission> remaining_queue;
 };
 
+/**
+ * @brief WorkflowPauseRequest 数据结构定义
+ */
 struct WorkflowPauseRequest {
   std::string order_id;
   bool pause_active = false;
@@ -38,6 +57,9 @@ struct WorkflowPauseRequest {
   WorkflowActiveMission active;
 };
 
+/**
+ * @brief WorkflowPauseDecision 数据结构定义
+ */
 struct WorkflowPauseDecision {
   bool success = false;
   bool active_pause_requested = false;
@@ -48,6 +70,9 @@ struct WorkflowPauseDecision {
   std::unordered_set<std::string> paused_order_ids;
 };
 
+/**
+ * @brief WorkflowResumeRequest 数据结构定义
+ */
 struct WorkflowResumeRequest {
   std::string order_id;
   bool resume_active = false;
@@ -56,6 +81,9 @@ struct WorkflowResumeRequest {
   WorkflowActiveMission active;
 };
 
+/**
+ * @brief WorkflowResumeDecision 数据结构定义
+ */
 struct WorkflowResumeDecision {
   bool success = false;
   bool active_resume_requested = false;
@@ -67,6 +95,9 @@ struct WorkflowResumeDecision {
   std::unordered_set<std::string> paused_order_ids;
 };
 
+/**
+ * @brief 工作流状态请求（WorkflowStatusRequest）
+ */
 struct WorkflowStatusRequest {
   std::string order_id;
   std::vector<QueuedMission> queue;
@@ -76,6 +107,9 @@ struct WorkflowStatusRequest {
   std::string current_state;
 };
 
+/**
+ * @brief 工作流状态快照（WorkflowStatusSnapshot）
+ */
 struct WorkflowStatusSnapshot {
   bool success = false;
   bool paused = false;
@@ -89,9 +123,29 @@ struct WorkflowStatusSnapshot {
   int queued_steps = 0;
 };
 
+/**
+ * @brief PlanWorkflowCancel。
+ * @param request 输入请求（字段见同名结构体）
+ * @return 计算结果。
+ */
 WorkflowCancelDecision PlanWorkflowCancel(const WorkflowCancelRequest& request);
+/**
+ * @brief PlanWorkflowPause。
+ * @param request 输入请求（字段见同名结构体）
+ * @return 计算结果。
+ */
 WorkflowPauseDecision PlanWorkflowPause(const WorkflowPauseRequest& request);
+/**
+ * @brief PlanWorkflowResume。
+ * @param request 输入请求（字段见同名结构体）
+ * @return 计算结果。
+ */
 WorkflowResumeDecision PlanWorkflowResume(const WorkflowResumeRequest& request);
+/**
+ * @brief 构建工作流状态快照。
+ * @param request 输入请求（字段见同名结构体）
+ * @return 计算结果。
+ */
 WorkflowStatusSnapshot BuildWorkflowStatusSnapshot(const WorkflowStatusRequest& request);
 
 }  // namespace robot_tasks

@@ -1,3 +1,10 @@
+/**
+ * @file part_1.inc
+ * @brief （实现细节）。
+ * @details 所属包：`robot_tasks`；所在层次：实现细节。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
   MissionRunnerNode() : Node("mission_runner_node") {
     const auto default_mission_file =
         std::filesystem::path(ament_index_cpp::get_package_share_directory("robot_tasks")) /

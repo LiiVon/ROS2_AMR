@@ -1,3 +1,10 @@
+/**
+ * @file zone_filter_masks.cpp
+ * @brief 区域过滤掩膜（数据过滤层）。
+ * @details 所属包：`robot_navigation`；所在层次：数据过滤层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_navigation/filters/zone_filter_masks.hpp"
 
 #include <algorithm>

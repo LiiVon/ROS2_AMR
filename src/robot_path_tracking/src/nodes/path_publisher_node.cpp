@@ -1,3 +1,10 @@
+/**
+ * @file path_publisher_node.cpp
+ * @brief 路径发布器节点（节点入口层）。
+ * @details 所属包：`robot_path_tracking`；所在层次：节点入口层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <chrono>
 #include <cmath>
 #include <fstream>

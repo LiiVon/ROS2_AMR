@@ -1,3 +1,10 @@
+/**
+ * @file export_zone_filter_masks.cpp
+ * @brief 导出区域过滤掩膜（节点入口层）。
+ * @details 所属包：`robot_navigation`；所在层次：节点入口层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>

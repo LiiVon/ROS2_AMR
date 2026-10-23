@@ -1,5 +1,10 @@
-// chassis_kinematics.cpp
-// 底盘运动学计算的具体实现。
+/**
+ * @file kinematics.cpp
+ * @brief 运动学（运动学层）。
+ * @details chassis_kinematics.cpp 底盘运动学计算的具体实现。
+ * @details 所属包：`robot_hardware`；所在层次：运动学层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
 
 #include "robot_hardware/kinematics/kinematics.hpp"
 

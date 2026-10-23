@@ -1,3 +1,10 @@
+/**
+ * @file submit_order_behavior_tree.cpp
+ * @brief 提交订单行为树（行为编排层）。
+ * @details 所属包：`robot_tasks`；所在层次：行为编排层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_tasks/behavior/submit_order_behavior_tree.hpp"
 
 #include "behaviortree_cpp/bt_factory.h"

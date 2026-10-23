@@ -1,6 +1,11 @@
-// chassis_system_adapter.hpp
-// 底盘通信层与上层 ROS2 控制逻辑的适配器
-// 统一管理底盘通信、运动学计算、状态读取和里程计的中间层
+/**
+ * @file adapter.hpp
+ * @brief 适配器（系统适配层）。
+ * @details chassis_system_adapter.hpp 底盘通信层与上层 ROS2 控制逻辑的适配器 统一管理底盘通信、运动学计算、状态读取和里程计的中间层
+ * @details 所属包：`robot_hardware`；所在层次：系统适配层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #pragma once
 #include <memory>
 #include <string>
@@ -25,6 +30,9 @@ namespace robot_hardware::system
     using kinematics::NormalizeModel;
 
     // 配置结构体
+    /**
+     * @brief 配置（Config）
+     */
     struct Config
     {
         std::string calibration_profile = "nominal_reference"; // 校准配置文件名
@@ -45,6 +53,9 @@ namespace robot_hardware::system
     bool ValidateConfig(const Config &config, std::string *error);
 
     // 统一状态快照
+    /**
+     * @brief 快照（Snapshot）
+     */
     struct Snapshot
     {
         std::string backend_name;                // 底盘通信协议名称
@@ -64,6 +75,9 @@ namespace robot_hardware::system
         unsigned long long packet_sequence = 0; // 底盘通信数据包的序列号，默认值为 0
     };
 
+    /**
+     * @brief 适配器（Adapter）
+     */
     class Adapter
     {
     public:

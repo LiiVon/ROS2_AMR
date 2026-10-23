@@ -1,3 +1,10 @@
+/**
+ * @file laser_filter_node.cpp
+ * @brief 激光过滤节点（激光数据处理层）。
+ * @details 所属包：`robot_sensors`；所在层次：激光数据处理层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <algorithm>
 #include <cmath>
 #include <limits>

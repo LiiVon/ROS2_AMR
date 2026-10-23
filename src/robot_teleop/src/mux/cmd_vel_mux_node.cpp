@@ -1,3 +1,10 @@
+/**
+ * @file cmd_vel_mux_node.cpp
+ * @brief 速度指令仲裁节点（指令仲裁层）。
+ * @details 所属包：`robot_teleop`；所在层次：指令仲裁层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <chrono>
 #include <cmath>
 #include <memory>

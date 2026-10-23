@@ -1,3 +1,10 @@
+/**
+ * @file pure_pursuit_controller_node.cpp
+ * @brief 纯追踪控制器节点（节点入口层）。
+ * @details 所属包：`robot_path_tracking`；所在层次：节点入口层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <algorithm>
 #include <cmath>
 #include <limits>

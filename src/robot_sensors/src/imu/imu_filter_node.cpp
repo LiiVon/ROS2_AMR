@@ -1,3 +1,10 @@
+/**
+ * @file imu_filter_node.cpp
+ * @brief IMU过滤节点（IMU 数据处理层）。
+ * @details 所属包：`robot_sensors`；所在层次：IMU 数据处理层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <memory>
 #include <string>
 

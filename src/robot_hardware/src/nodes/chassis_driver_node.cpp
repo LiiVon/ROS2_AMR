@@ -1,6 +1,11 @@
-// 底盘驱动 ROS 2 节点
-// ROS2 上层发出运动指令，这个节点把指令交给底盘，
-// 并持续读取底盘状态，再把机器人当前的运动信息发布给整个 ROS 2 系统
+/**
+ * @file chassis_driver_node.cpp
+ * @brief 底盘驱动节点（节点入口层）。
+ * @details 底盘驱动 ROS 2 节点 ROS2 上层发出运动指令，这个节点把指令交给底盘， 并持续读取底盘状态，再把机器人当前的运动信息发布给整个 ROS 2 系统
+ * @details 所属包：`robot_hardware`；所在层次：节点入口层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -124,7 +129,10 @@ public:
             { HandleCommand(*msg); });
 
         wheel_odom_publisher_ = create_publisher<nav_msgs::msg::Odometry>(wheel_odom_topic_, 10);
-        odom_publisher_ = create_publisher<nav_msgs::msg::Odometry>(odom_topic_, 10);
+        if (publish_odom_)
+        {
+            odom_publisher_ = create_publisher<nav_msgs::msg::Odometry>(odom_topic_, 10);
+        }
         if (publish_synthetic_imu_)
         {
             imu_publisher_ = create_publisher<sensor_msgs::msg::Imu>("/imu/data", 10);

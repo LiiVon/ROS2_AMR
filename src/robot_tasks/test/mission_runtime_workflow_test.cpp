@@ -1,3 +1,10 @@
+/**
+ * @file mission_runtime_workflow_test.cpp
+ * @brief （源码）。
+ * @details 所属包：`robot_tasks`；所在层次：源码。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_tasks/workflow/mission_runtime_workflow.hpp"
 
 #include <gtest/gtest.h>

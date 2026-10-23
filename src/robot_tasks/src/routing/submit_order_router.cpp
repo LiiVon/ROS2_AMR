@@ -1,3 +1,10 @@
+/**
+ * @file submit_order_router.cpp
+ * @brief 提交订单路由器（入口路由层）。
+ * @details 所属包：`robot_tasks`；所在层次：入口路由层。
+ * @note 教学说明见 `docs/教学/` 对应章节。
+ */
+
 #include "robot_tasks/routing/submit_order_router.hpp"
 
 #include <algorithm>
