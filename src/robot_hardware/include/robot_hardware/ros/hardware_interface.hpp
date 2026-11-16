@@ -1,7 +1,7 @@
 /**
  * @file hardware_interface.hpp
  * @brief 硬件接口（ROS 适配层）。
- * @details chassis_hardware_interface.hpp 底盘硬件接口类，继承自ROS2的SystemInterface，提供对底盘硬件的抽象访问
+ * @details hardware_interface.hpp 底盘硬件接口类，继承自ROS2的SystemInterface，提供对底盘硬件的抽象访问
  * @details 所属包：`robot_hardware`；所在层次：ROS 适配层。
  * @note 教学说明见 `docs/教学/` 对应章节。
  */

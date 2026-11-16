@@ -1,7 +1,7 @@
 /**
  * @file kinematics.hpp
  * @brief 运动学（运动学层）。
- * @details chassis_kinematics.hpp 底盘运动学计算模块：定义位姿、轮速及运动学函数接口。
+ * @details kinematics.hpp 底盘运动学计算模块：定义位姿、轮速及运动学函数接口。
  * @details 所属包：`robot_hardware`；所在层次：运动学层。
  * @note 教学说明见 `docs/教学/` 对应章节。
  */

@@ -1,7 +1,7 @@
 /**
  * @file backend.hpp
  * @brief 后端（传输层）。
- * @details chassis_backend.hpp 底盘通信后端抽象接口。 定义统一的底盘配置，以及所有后端必须实现的操作。
+ * @details backend.hpp 底盘通信后端抽象接口。 定义统一的底盘配置，以及所有后端必须实现的操作。
  * @details 所属包：`robot_hardware`；所在层次：传输层。
  * @note 教学说明见 `docs/教学/` 对应章节。
  */

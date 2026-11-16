@@ -1,5 +1,7 @@
 log/
 build/
 install/
-*.mdexperiment_results.*
-docs/
+/robot/
+*.md
+experiment_results.*
+compile_commands.json

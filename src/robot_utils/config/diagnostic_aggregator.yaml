@@ -1,14 +1,24 @@
-analyzers:
-  ros__parameters:
-    path: Robot
-    chassis:
-      type: diagnostic_aggregator/GenericAnalyzer
-      path: Chassis
-      startswith: ["system/chassis", "system/battery"]
+# ROS2 诊断聚合器配置
+# 把机器人各个模块发布的健康状态信息，按照功能分类整理起来，形成统一的机器人状态监控树。
+
+analyzers:                                              # 诊断分析器的配置命名空间
+  ros__parameters:                                      # ROS 2 节点参数
+    path: Robot                                         # 输出树的根节点名称
+    chassis:                                            # 分析器的配置标识
+      type: diagnostic_aggregator/GenericAnalyzer       # 使用通用诊断分析器插件
+      path: Chassis                                     # 输出树中的分类名称
+      startswith: ["system/chassis", "system/battery"]  # 诊断名称前缀匹配规则
     sensors:
       type: diagnostic_aggregator/GenericAnalyzer
       path: Sensors
-      startswith: ["system/scan", "system/imu", "system/odom", "laser_filter", "imu_filter"]
+      startswith:
+        [
+          "system/scan",
+          "system/imu",
+          "system/odom",
+          "laser_filter",
+          "imu_filter",
+        ]
     safety:
       type: diagnostic_aggregator/GenericAnalyzer
       path: Safety

@@ -1,0 +1,17 @@
+{
+  "configurations": [
+    {
+      "name": "ROS 2 Jazzy (robot_ws)",
+      "compileCommands": "${workspaceFolder}/compile_commands.json",
+      "includePath": [
+        "${workspaceFolder}/src/**",
+        "${workspaceFolder}/install/*/include/**",
+        "/opt/ros/jazzy/include/**"
+      ],
+      "cStandard": "c17",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "linux-gcc-x64"
+    }
+  ],
+  "version": 4
+}
