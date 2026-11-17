@@ -90,7 +90,7 @@ namespace robot_hardware::protocol
         }
 
         // 将有限浮点数四舍五入，并钳制在 int16_t 范围内
-        // 与旧版一致：超限不发异常，而是饱和处理，保证节点不会因异常退出
+        // 超限不发异常，而是饱和处理，保证节点不会因一条坏指令退出
         int16_t EncodeInt16Checked(double value)
         {
             if (!std::isfinite(value))
@@ -183,7 +183,8 @@ namespace robot_hardware::protocol
     std::string EncodeOdometry(
         const OdometryPacket &odometry)
     {
-        // 保持与旧版线协议一致：x y yaw vx wz [batt]（不发送横向速度）
+        // 线协议固定为：x y yaw vx wz [battery]，不携带横向速度。
+        // 横向速度仅在内部运动学与二进制协议中使用。
         std::ostringstream oss;
 
         oss << std::fixed << std::setprecision(4)
@@ -270,7 +271,7 @@ namespace robot_hardware::protocol
             return std::nullopt;
         }
 
-        // 兼容旧格式：CMD <vx> <wz>；新格式：CMD <vx> <vy> <wz>
+        // 协议规定：CMD <vx> <vy> <wz>，三个参数缺一不可。
         std::vector<double> values;
         double value = 0.0;
         while (iss >> value)
@@ -278,19 +279,13 @@ namespace robot_hardware::protocol
             values.push_back(value);
         }
 
-        if (values.size() == 1U)
-        {
-            command.angular_z_radps = values[0];
-        }
-        else if (values.size() == 2U)
-        {
-            command.linear_y_mps = values[0];
-            command.angular_z_radps = values[1];
-        }
-        else
+        if (values.size() != 2U)
         {
             return std::nullopt;
         }
+
+        command.linear_y_mps = values[0];
+        command.angular_z_radps = values[1];
 
         if (!std::isfinite(command.linear_x_mps) ||
             !std::isfinite(command.linear_y_mps) ||
@@ -330,10 +325,7 @@ namespace robot_hardware::protocol
                 return std::nullopt;
             }
 
-            // 兼容三种形态：
-            //   5 个数：x y yaw vx wz
-            //   6 个数：x y yaw vx wz batt（旧版带电池）
-            //   7 个数：x y yaw vx vy wz batt（全向扩展）
+            // 协议规定：ODOM x y yaw vx wz [battery]，即 5 或 6 个数。
             std::vector<double> rest;
             double value = 0.0;
             while (iss >> value)
@@ -341,24 +333,16 @@ namespace robot_hardware::protocol
                 rest.push_back(value);
             }
 
-            if (rest.size() == 1U)
-            {
-                odometry.angular_z_radps = rest[0];
-            }
-            else if (rest.size() == 2U)
-            {
-                odometry.angular_z_radps = rest[0];
-                odometry.battery_voltage = rest[1];
-            }
-            else if (rest.size() == 3U)
-            {
-                odometry.linear_y_mps = rest[0];
-                odometry.angular_z_radps = rest[1];
-                odometry.battery_voltage = rest[2];
-            }
-            else
+            if (rest.empty() || rest.size() > 2U)
             {
                 return std::nullopt;
+            }
+
+            odometry.angular_z_radps = rest[0];
+
+            if (rest.size() == 2U)
+            {
+                odometry.battery_voltage = rest[1];
             }
 
             if (!IsFiniteOdometry(odometry))
@@ -515,9 +499,8 @@ namespace robot_hardware::protocol
         // ------------------------------------------------------------
         if (frame.type == 0xA1)
         {
-            // 兼容旧版 12 字节（无横向速度）与扩展 14 字节（含横向速度）
-            if (frame.data.size() != 12U &&
-                frame.data.size() != 14U)
+            // 载荷固定 14 字节：x y yaw vx vy wz（各 2 字节）+ battery（2 字节）
+            if (frame.data.size() != 14U)
             {
                 return std::nullopt;
             }
@@ -536,25 +519,14 @@ namespace robot_hardware::protocol
             odometry.linear_x_mps =
                 ReadInt16(frame.data, 6) / 1000.0;
 
-            if (frame.data.size() == 14U)
-            {
-                odometry.linear_y_mps =
-                    ReadInt16(frame.data, 8) / 1000.0;
+            odometry.linear_y_mps =
+                ReadInt16(frame.data, 8) / 1000.0;
 
-                odometry.angular_z_radps =
-                    ReadInt16(frame.data, 10) / 1000.0;
+            odometry.angular_z_radps =
+                ReadInt16(frame.data, 10) / 1000.0;
 
-                odometry.battery_voltage =
-                    ReadUInt16(frame.data, 12) / 100.0;
-            }
-            else
-            {
-                odometry.angular_z_radps =
-                    ReadInt16(frame.data, 8) / 1000.0;
-
-                odometry.battery_voltage =
-                    ReadUInt16(frame.data, 10) / 100.0;
-            }
+            odometry.battery_voltage =
+                ReadUInt16(frame.data, 12) / 100.0;
 
             Packet packet;
             packet.kind = PacketKind::kOdometry;
@@ -566,15 +538,13 @@ namespace robot_hardware::protocol
         // ------------------------------------------------------------
         // 0xA2：底盘状态
         //
-        // 当前假定：
-        // 1 字节：状态码
-        // 可选 2 字节：电池电压
+        // 载荷定义：
+        //   1 字节：状态码（0 = 运行中，非 0 = 故障）
+        //   3 字节：状态码 + 电池电压
         // ------------------------------------------------------------
         if (frame.type == 0xA2)
         {
-            // 合法载荷长度：0（旧版空载荷视为运行中）、1（仅状态码）、3（状态码+电压）
-            if (frame.data.size() != 0U &&
-                frame.data.size() != 1U &&
+            if (frame.data.size() != 1U &&
                 frame.data.size() != 3U)
             {
                 return std::nullopt;
@@ -582,8 +552,7 @@ namespace robot_hardware::protocol
 
             StatePacket state;
 
-            state.status =
-                frame.data.empty() || frame.data[0] == 0 ? "running" : "fault";
+            state.status = frame.data[0] == 0 ? "running" : "fault";
 
             if (frame.data.size() == 3U)
             {

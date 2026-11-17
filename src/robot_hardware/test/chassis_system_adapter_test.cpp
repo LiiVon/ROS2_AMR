@@ -184,25 +184,12 @@ TEST(AdapterTest, Read_MockMecanumCommand_PreservesSidewaysVelocity) {
   EXPECT_NEAR(backend_ptr->LastCommand().linear_y_mps, 0.25, 1e-9);
 }
 
-TEST(AdapterTest, Read_MockFourWheelSteerAliasDegradesToDiffDrive) {
+TEST(AdapterTest, Construct_UnsupportedKinematicsModel_Throws) {
   auto backend = std::make_unique<MockBackend>();
-  const MockBackend* backend_ptr = backend.get();
   Config config;
   config.kinematics_model = "four_ws4wd";
-  Adapter adapter(std::move(backend), config);
-  ASSERT_TRUE(adapter.Open(nullptr));
-  Command command;
-  command.linear_x_mps = 0.5;
-  command.linear_y_mps = 0.25;
-  ASSERT_TRUE(adapter.Write(command, nullptr));
 
-  Snapshot state;
-  ASSERT_TRUE(adapter.Read(1.0, &state, nullptr));
-
-  EXPECT_NEAR(state.x_m, 0.5, 1e-9);
-  EXPECT_NEAR(state.y_m, 0.0, 1e-9);
-  EXPECT_NEAR(state.linear_y_mps, 0.0, 1e-9);
-  EXPECT_NEAR(backend_ptr->LastCommand().linear_y_mps, 0.0, 1e-9);
+  EXPECT_THROW(Adapter(std::move(backend), config), std::invalid_argument);
 }
 
 TEST(AdapterTest, Read_TextPackets_UpdatesMeasuredState) {

@@ -7,7 +7,6 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    mode = LaunchConfiguration("mode")
     backend = LaunchConfiguration("backend")
     use_sim_time = LaunchConfiguration("use_sim_time")
     dev = LaunchConfiguration("dev")
@@ -39,7 +38,6 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument("mode", default_value="hardware"),
             DeclareLaunchArgument("backend", default_value="mock"),
             DeclareLaunchArgument("use_sim_time", default_value="false"),
             DeclareLaunchArgument("dev", default_value="/dev/ttyUSB0"),
@@ -80,7 +78,6 @@ def generate_launch_description():
                     calibration_file,
                     {
                         "backend": backend,
-                        "mode": mode,
                         "use_sim_time": use_sim_time,
                         "serial_device": dev,
                         "serial_baud": baud,

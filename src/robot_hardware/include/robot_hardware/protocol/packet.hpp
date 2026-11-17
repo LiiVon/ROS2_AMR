@@ -79,7 +79,7 @@ namespace robot_hardware::protocol
     };
 
     // ======================== 文本协议的编码与解码 =========================
-
+    // 内部数据结构 与 文本协议 的相互转换
     std::string EncodeCommand(const Command &command);
     std::string EncodeOdometry(const OdometryPacket &odometry);
     std::string EncodeState(const StatePacket &state);
@@ -97,6 +97,7 @@ namespace robot_hardware::protocol
         std::vector<uint8_t> data; // 二进制数据
     };
 
+    using robot_hardware::protocol::Command;
     // 将帧类型和数据内容组装成二进制数据帧
     std::vector<uint8_t> EncodeBinaryFrame(const uint8_t type, const std::vector<uint8_t> &data);
 

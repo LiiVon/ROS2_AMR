@@ -58,17 +58,7 @@ public:
     ChassisDriverNode() : Node("chassis_driver_node")
     {
         // 声明相关参数
-        // 控制接口模式：当前节点只支持速度指令
-        // 控制模式：旧版参数名为 mode（如 mode:=hardware），仅记录不阻断启动
-        control_mode_ = declare_parameter<std::string>("mode", "velocity");
-        if (control_mode_ != "velocity")
-        {
-            RCLCPP_WARN(
-                get_logger(),
-                "control mode '%s' is recorded but only velocity control is implemented",
-                control_mode_.c_str());
-        }
-        // 机械底盘类型：用于确定采用的运动学模型
+        // 当前节点只实现速度控制，控制模式固定为 velocity（作为状态字符串对外报告）
         chassis_type_ = declare_parameter<std::string>("chassis_type", "diff_drive");
         // 根据底盘类型确定软件使用的运动学模型
         kinematics_model_ = NormalizeModel(chassis_type_);
@@ -447,7 +437,7 @@ private:
     }
 
 private:
-    std::string control_mode_;                                                            // 底盘控制模式，当前节点只支持速度指令
+    std::string control_mode_{"velocity"};                                                            // 控制模式，当前仅实现速度控制
     std::string chassis_type_;                                                            // 启动时配置的物理底盘类型
     std::string kinematics_model_;                                                        // 当前软件实际使用的运动学模型
     std::string requested_backend_;                                                       // 用户请求的底盘后端类型
@@ -493,7 +483,19 @@ private:
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<ChassisDriverNode>());
+    int exit_code = 0;
+    try
+    {
+        rclcpp::spin(std::make_shared<ChassisDriverNode>());
+    }
+    catch (const std::exception &e)
+    {
+        // 配置非法（如 chassis_type 不支持）时给出明确原因，而不是抛出未捕获异常而中止。
+        RCLCPP_FATAL(
+            rclcpp::get_logger("chassis_driver_node"),
+            "chassis_driver_node failed to start: %s", e.what());
+        exit_code = 1;
+    }
     rclcpp::shutdown();
-    return 0;
+    return exit_code;
 }

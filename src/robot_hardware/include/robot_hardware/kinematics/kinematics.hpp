@@ -42,8 +42,8 @@ namespace robot_hardware::kinematics
         std::array<double, 4> rpm{0.0, 0.0, 0.0, 0.0};
     };
 
-    // 将已支持的运动学模型名称转换为标准名称。
-    // 当前支持 diff_drive 和 mecanum。
+    // 校验并返回规范的运动学模型名称。
+    // 仅接受 diff_drive 与 mecanum；其它取值抛出 std::invalid_argument。
     std::string NormalizeModel(const std::string &model_name);
 
     // 根据机器人当前位姿、机体坐标系速度和时间间隔，

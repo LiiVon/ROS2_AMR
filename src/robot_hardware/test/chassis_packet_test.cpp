@@ -28,13 +28,9 @@ TEST(PacketTest, EncodeCommand_ValidCommand_FormatsLineProtocol) {
   EXPECT_EQ(EncodeCommand(command), "CMD 0.3000 0.1000 -0.2000\n");
 }
 
-TEST(PacketTest, ParseCommandLine_ValidCommand_ReturnsCommand) {
-  const auto command = DecodeCommand("CMD 0.125 -0.500");
-
-  ASSERT_TRUE(command.has_value());
-  EXPECT_DOUBLE_EQ(command->linear_x_mps, 0.125);
-  EXPECT_DOUBLE_EQ(command->linear_y_mps, 0.0);
-  EXPECT_DOUBLE_EQ(command->angular_z_radps, -0.5);
+TEST(PacketTest, ParseCommandLine_TwoAxisCommand_Rejected) {
+  // 协议要求 CMD 必须携带 vx vy wz 三个参数，两参数写法不再接受。
+  EXPECT_FALSE(DecodeCommand("CMD 0.125 -0.500").has_value());
 }
 
 TEST(PacketTest, ParseCommandLine_ThreeAxisCommand_ReturnsHolonomicCommand) {
@@ -123,9 +119,11 @@ TEST(PacketTest, BinaryPacketStream_StickyFrames_DrainsPackets) {
   append(-300);
   append(100);
   append(400);
+  append(250);
   append(-200);
   append(2450);
 
+  ASSERT_EQ(payload.size(), 14U);
   const auto frame = EncodeBinaryFrame(0xa1, payload);
   BinaryPacketStream stream;
   stream.Append(std::string(reinterpret_cast<const char*>(frame.data()), frame.size()));
@@ -135,6 +133,8 @@ TEST(PacketTest, BinaryPacketStream_StickyFrames_DrainsPackets) {
   EXPECT_EQ(packets[0].kind, PacketKind::kOdometry);
   EXPECT_NEAR(packets[0].odometry.x_m, 1.2, 1e-6);
   EXPECT_NEAR(packets[0].odometry.y_m, -0.3, 1e-6);
+  EXPECT_NEAR(packets[0].odometry.linear_y_mps, 0.25, 1e-6);
+  EXPECT_NEAR(packets[0].odometry.angular_z_radps, -0.2, 1e-6);
   ASSERT_TRUE(packets[0].odometry.battery_voltage.has_value());
   EXPECT_NEAR(*packets[0].odometry.battery_voltage, 24.5, 1e-6);
 }
@@ -187,24 +187,22 @@ TEST(ChassisKinematicsTest, EstimateWheelSpeeds_MecanumCommand_ProducesFourWheel
   EXPECT_NE(speeds.rpm[2], speeds.rpm[3]);
 }
 
-TEST(ChassisKinematicsTest, NormalizeModel_UnsupportedSteeringModesDegradeToDiffDrive) {
-  EXPECT_EQ(NormalizeModel("ackermann"), "diff_drive");
-  EXPECT_EQ(NormalizeModel("acker"), "diff_drive");
-  EXPECT_EQ(NormalizeModel("four_ws4wd"), "diff_drive");
-  EXPECT_EQ(NormalizeModel("4ws4wd"), "diff_drive");
-  EXPECT_EQ(NormalizeModel("four_wheel_steer"), "diff_drive");
+TEST(ChassisKinematicsTest, NormalizeModel_AcceptsCanonicalModelsOnly) {
+  EXPECT_EQ(NormalizeModel("diff_drive"), "diff_drive");
+  EXPECT_EQ(NormalizeModel("mecanum"), "mecanum");
+
+  EXPECT_THROW(NormalizeModel("ackermann"), std::invalid_argument);
+  EXPECT_THROW(NormalizeModel("omni"), std::invalid_argument);
+  EXPECT_THROW(NormalizeModel("differential_drive"), std::invalid_argument);
+  EXPECT_THROW(NormalizeModel(""), std::invalid_argument);
 }
 
-TEST(ChassisKinematicsTest, EstimateWheelSpeeds_FourWheelSteerAliasUsesDiffDriveProfile) {
+TEST(ChassisKinematicsTest, EstimateWheelSpeeds_UnknownModel_Throws) {
   Command command;
   command.linear_x_mps = 0.5;
-  command.linear_y_mps = 0.2;
-  command.angular_z_radps = 0.4;
 
-  const auto degraded = EstimateWheelSpeeds(command, "four_ws4wd", 0.15, 0.42, 0.36);
-  const auto diff_drive = EstimateWheelSpeeds(command, "diff_drive", 0.15, 0.42, 0.36);
-
-  EXPECT_EQ(degraded.rpm, diff_drive.rpm);
+  EXPECT_THROW(EstimateWheelSpeeds(command, "four_ws4wd", 0.15, 0.42, 0.36),
+               std::invalid_argument);
 }
 
 TEST(ChassisKinematicsTest, EstimateChassisCommand_DiffDriveRoundTrip) {

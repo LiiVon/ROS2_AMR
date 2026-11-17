@@ -84,32 +84,15 @@ namespace robot_hardware::kinematics
     std::string NormalizeModel(
         const std::string &model_name)
     {
-        if (model_name == "mecanum" ||
-            model_name == "Mecanum" ||
-            model_name == "omni")
+        if (model_name == "diff_drive" || model_name == "mecanum")
         {
-            return "mecanum";
+            return model_name;
         }
 
-        // 差速与其别名
-        if (model_name == "diff_drive" ||
-            model_name == "differential_drive")
-        {
-            return "diff_drive";
-        }
-
-        // 尚未实现真实转向模型的底盘：降级为差速，保证系统可运行
-        if (model_name == "ackermann" ||
-            model_name == "acker" ||
-            model_name == "four_ws4wd" ||
-            model_name == "4ws4wd" ||
-            model_name == "four_wheel_steer")
-        {
-            return "diff_drive";
-        }
-
-        // 未知值按差速处理（与旧版一致的宽容策略）
-        return "diff_drive";
+        // 不支持“别名降级”：模型名必须精确匹配，避免静默使用错误的运动学。
+        throw std::invalid_argument(
+            "Unsupported chassis model: '" + model_name +
+            "'（可选值：diff_drive、mecanum）");
     }
 
     // 根据机体坐标系速度积分机器人位姿。
@@ -132,7 +115,7 @@ namespace robot_hardware::kinematics
 
         const double dt = dt_seconds;
 
-        // 使用区间起点的航向角（与旧版保持一致，保证里程计数值等价）
+        // 使用区间起点的航向角进行积分（数值稳定，且与既有标定/实验数据一致）
         const double cos_yaw = std::cos(pose.yaw_rad);
         const double sin_yaw = std::sin(pose.yaw_rad);
 
@@ -223,7 +206,7 @@ namespace robot_hardware::kinematics
 
         // 经过 NormalizeModel() 后，
         // 这里仅剩 diff_drive 模型。
-        // 差速底盘不支持横向平移：忽略横向速度（与旧版一致，不报错）
+        // 差速底盘不支持横向平移：忽略横向速度，不视为错误
         const double half_track = track_width_m * 0.5;
 
         const double left =
