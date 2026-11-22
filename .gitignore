@@ -5,3 +5,9 @@ install/
 *.md
 experiment_results.*
 compile_commands.json
+
+# Python 缓存（构建/测试生成，不入库）
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
