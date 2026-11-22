@@ -2,7 +2,6 @@
  * @file operator_snapshot.hpp
  * @brief 操作员快照（视图输出层）。
  * @details 所属包：`robot_tasks`；所在层次：视图输出层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #pragma once

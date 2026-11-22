@@ -17,5 +17,6 @@ twist_mux:
     locks:
       manual_takeover:
         topic: /teleop/takeover_lock
-        timeout: 0.0
+        # 有限超时 + 周期心跳：发布者异常退出后锁自动释放，避免导航被永久屏蔽
+        timeout: 0.5
         priority: 100

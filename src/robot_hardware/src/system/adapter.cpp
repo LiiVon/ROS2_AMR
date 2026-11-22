@@ -2,7 +2,6 @@
  * @file adapter.cpp
  * @brief 适配器（系统适配层）。
  * @details 所属包：`robot_hardware`；所在层次：系统适配层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include "robot_hardware/system/adapter.hpp"
@@ -140,6 +139,20 @@ namespace robot_hardware::system
             return false;
         }
 
+        // 非有限指令（NaN/Inf）必须在入口被拦住：
+        // 否则它会进入 command_，在下一个周期被 IntegratePose/EstimateWheelSpeeds
+        // 抛出 invalid_argument，导致驱动节点直接退出。
+        const auto finite = [](const double value) { return std::isfinite(value); };
+        if (!finite(command.linear_x_mps) || !finite(command.linear_y_mps) ||
+            !finite(command.angular_z_radps))
+        {
+            if (error)
+            {
+                *error = "chassis command contains non-finite value (nan/inf); command dropped";
+            }
+            return false;
+        }
+
         const Command normalized = NormalizeCommand(command);
         if (!backend_->WriteCommand(normalized, error))
         {
@@ -194,6 +207,42 @@ namespace robot_hardware::system
         state_.x_m = 0.0;
         state_.y_m = 0.0;
         state_.yaw_rad = 0.0;
+        state_.linear_x_mps = 0.0;
+        state_.linear_y_mps = 0.0;
+        state_.angular_z_radps = 0.0;
+        state_.wheel_speeds = WheelSpeeds{};
+        command_ = Command{};
+    }
+
+    bool Adapter::SendClearOdometry(std::string *error)
+    {
+        RefreshBackendState();
+        if (!state_.backend_open)
+        {
+            if (error)
+            {
+                *error = "chassis backend is not open";
+            }
+            return false;
+        }
+
+        std::vector<std::uint8_t> frame;
+        if (config_.protocol == "mick_binary")
+        {
+            frame = protocol::EncodeMickClearOdometryCommand();
+        }
+        else
+        {
+            const std::string text = protocol::EncodeClearOdometryCommand();
+            frame.assign(text.begin(), text.end());
+        }
+
+        if (!backend_->WriteRawFrame(frame, error))
+        {
+            return false;
+        }
+        ResetOdometry();
+        return true;
     }
 
     Command Adapter::NormalizeCommand(const Command &command) const

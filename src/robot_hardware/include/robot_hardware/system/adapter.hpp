@@ -3,7 +3,6 @@
  * @brief 适配器（系统适配层）。
  * @details adapter.hpp 底盘通信层与上层 ROS2 控制逻辑的适配器 统一管理底盘通信、运动学计算、状态读取和里程计的中间层
  * @details 所属包：`robot_hardware`；所在层次：系统适配层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #pragma once
@@ -101,6 +100,10 @@ namespace robot_hardware::system
 
         // 重置里程计状态
         void ResetOdometry();
+
+        // 下发“里程计清零”到底盘并同步复位本地状态。
+        // 只清本地会导致底盘下一帧回传立刻把位姿覆盖回去（/odom 不归零）。
+        bool SendClearOdometry(std::string *error);
 
         // 获取当前状态快照的只读引用
         const Snapshot &State() const;

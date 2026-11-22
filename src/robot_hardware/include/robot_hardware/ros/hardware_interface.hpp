@@ -3,7 +3,6 @@
  * @brief 硬件接口（ROS 适配层）。
  * @details hardware_interface.hpp 底盘硬件接口类，继承自ROS2的SystemInterface，提供对底盘硬件的抽象访问
  * @details 所属包：`robot_hardware`；所在层次：ROS 适配层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #pragma once
@@ -86,5 +85,6 @@ namespace robot_hardware
         std::array<double, 2> wheel_velocity_radps_{0.0, 0.0};                            // 轮子速度（单位：弧度/秒）
         std::array<double, 2> wheel_command_radps_{0.0, 0.0};                             // 轮子命令（单位：弧度/秒）
         std::unique_ptr<Adapter> adapter_;                                   // 底盘系统适配器，用于处理底盘通信和状态更新
+        int consecutive_read_failures_ = 0;                                  // 连续读失败次数（用于上报 ERROR）
     };
 }

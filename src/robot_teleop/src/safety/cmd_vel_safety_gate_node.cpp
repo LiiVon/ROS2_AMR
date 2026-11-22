@@ -2,7 +2,6 @@
  * @file cmd_vel_safety_gate_node.cpp
  * @brief 速度指令安全闸门节点（安全逻辑层）。
  * @details 所属包：`robot_teleop`；所在层次：安全逻辑层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include <chrono>
@@ -92,13 +91,23 @@ class CmdVelSafetyGateNode final : public rclcpp::Node {
   void SetEmergencyStop(
       const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
       std::shared_ptr<std_srvs::srv::SetBool::Response> response, const bool target_state) {
-    if (target_state) {
-      emergency_stop_ = request->data;
-    } else if (request->data) {
-      emergency_stop_ = false;
+    // 置位与解除严格分离：两个服务只接受 data=true，
+    // 避免 enable 服务传 false 变成“隐藏解锁通道”。
+    if (!request->data) {
+      response->success = false;
+      response->message =
+          std::string(target_state ? "enable" : "clear") +
+          " service requires data=true; use " +
+          (target_state ? "/teleop/clear_emergency_stop" : "/teleop/enable_emergency_stop") +
+          " instead";
+      return;
     }
+    const bool changed = emergency_stop_ != target_state;
+    emergency_stop_ = target_state;
     response->success = true;
-    response->message = emergency_stop_ ? "emergency stop active" : "emergency stop cleared";
+    response->message = target_state
+                            ? "emergency stop active"
+                            : (changed ? "emergency stop cleared" : "emergency stop already cleared");
   }
 
   bool WatchdogExpired() const {

@@ -2,7 +2,6 @@
  * @file mission_safety_workflow.cpp
  * @brief 任务安全工作流（业务流程层）。
  * @details 所属包：`robot_tasks`；所在层次：业务流程层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include "robot_tasks/workflow/mission_safety_workflow.hpp"
@@ -70,17 +69,16 @@ MissionSafetyDecision PlanSetDynamicSpeedLimit(
   decision.safety.runtime_speed_limit_mps = request.speed_limit_mps;
   decision.safety.message =
       ReasonOrDefault(request.reason, "dynamic speed limit updated");
-  decision.safety.stop_reason =
-      decision.safety.runtime_speed_limit_mps > 0.0 ? decision.safety.message
-                                                    : request.current.stop_reason;
-  if (!decision.safety.obstacle_blocked && decision.safety.runtime_speed_limit_mps <= 0.0) {
-    decision.safety.stop_reason.clear();
-  }
+  // 限速只表示“降速”，不得写入 stop_reason：
+  // 发布端用 stop_reason 非空判定 safety_stop（整体停车），
+  // 若在此写入限速文案，限速会退化成停车。停车原因保持原值不变。
+  decision.safety.stop_reason = request.current.stop_reason;
 
   decision.event.emit = true;
   decision.event.mission_id = "safety";
   decision.event.state = "DYNAMIC_SPEED_LIMIT";
-  decision.event.previous_state = MissionSafetyStateName(decision.safety);
+  // previous_state 必须取变更前的状态，否则事件日志前后态恒等。
+  decision.event.previous_state = MissionSafetyStateName(request.current);
   decision.event.message = decision.safety.message;
   decision.event.recoverable = true;
 

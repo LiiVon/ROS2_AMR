@@ -2,7 +2,6 @@
  * @file tracking_math.hpp
  * @brief 跟踪数学（纯算法层）。
  * @details 所属包：`robot_path_tracking`；所在层次：纯算法层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #pragma once

@@ -2,7 +2,6 @@
  * @file mock_backend.cpp
  * @brief 模拟后端（传输层）。
  * @details 所属包：`robot_hardware`；所在层次：传输层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include "robot_hardware/transport/mock_backend.hpp"
@@ -53,6 +52,20 @@ namespace robot_hardware::transport
             return false;
         }
         return open_;
+    }
+
+    bool MockBackend::WriteRawFrame(const std::vector<std::uint8_t> &frame, std::string *error)
+    {
+        if (!open_)
+        {
+            if (error)
+            {
+                *error = "MockBackend is not open.";
+            }
+            return false;
+        }
+        (void)frame;
+        return true;
     }
 
     std::optional<std::string> MockBackend::Read(std::string *error)

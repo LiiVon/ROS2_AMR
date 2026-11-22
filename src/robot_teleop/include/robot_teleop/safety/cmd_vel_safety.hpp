@@ -2,7 +2,6 @@
  * @file cmd_vel_safety.hpp
  * @brief 速度指令安全（安全逻辑层）。
  * @details 所属包：`robot_teleop`；所在层次：安全逻辑层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #pragma once
@@ -34,16 +33,16 @@ inline geometry_msgs::msg::Twist MakeZeroTwist() {
 inline geometry_msgs::msg::Twist ApplyDynamicSpeedLimit(
     geometry_msgs::msg::Twist twist, const double linear_limit_mps,
     const double angular_limit_radps) {
-  if (linear_limit_mps <= 0.0) {
-    return twist;
-  }
-
-  const double linear_speed = std::hypot(twist.linear.x, twist.linear.y);
-  if (linear_speed > linear_limit_mps && linear_speed > 0.0) {
-    const double scale = linear_limit_mps / linear_speed;
-    twist.linear.x *= scale;
-    twist.linear.y *= scale;
-    twist.angular.z *= scale;
+  // 线速度与角速度限幅互相独立：线速度限值为 0 表示“不限速”，
+  // 但角速度上限仍然必须生效（否则 pure rotation 不受约束）。
+  if (linear_limit_mps > 0.0) {
+    const double linear_speed = std::hypot(twist.linear.x, twist.linear.y);
+    if (linear_speed > linear_limit_mps && linear_speed > 0.0) {
+      const double scale = linear_limit_mps / linear_speed;
+      twist.linear.x *= scale;
+      twist.linear.y *= scale;
+      twist.angular.z *= scale;
+    }
   }
 
   if (angular_limit_radps > 0.0) {

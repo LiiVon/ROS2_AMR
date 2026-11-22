@@ -2,7 +2,6 @@
  * @file serial_backend.cpp
  * @brief 串口后端（传输层）。
  * @details 所属包：`robot_hardware`；所在层次：传输层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include "robot_hardware/transport/serial_backend.hpp"
@@ -10,6 +9,7 @@
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
+#include <poll.h>
 #include <string>
 #include <termios.h>
 #include <unistd.h>
@@ -175,17 +175,70 @@ namespace robot_hardware::transport
         const char *data = config_.protocol == "mick_binary" ? reinterpret_cast<const char *>(binary_packet.data()) : test_packet.data();
         const std::size_t size = config_.protocol == "mick_binary" ? binary_packet.size() : test_packet.size();
 
-        // 把数据交给 Linux 串口驱动
-        const ssize_t written = write(fd_, data, size);
-        if (written < 0)
+        // 把数据交给 Linux 串口驱动：必须保证整帧写出，
+        // 短写会导致底盘侧解析失步（表现为间歇性丢指令/乱动）。
+        return WriteBytes(reinterpret_cast<const std::uint8_t *>(data), size, error);
+    }
+
+    bool SerialBackend::WriteBytes(const std::uint8_t *data, const std::size_t size,
+                                   std::string *error)
+    {
+        std::size_t written_total = 0;
+        while (written_total < size)
         {
+            const ssize_t written =
+                write(fd_, data + written_total, size - written_total);
+            if (written > 0)
+            {
+                written_total += static_cast<std::size_t>(written);
+                continue;
+            }
+            if (written < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+            {
+                // 发送缓冲已满：等待可写，最多 100 ms。
+                struct pollfd pfd
+                {
+                    fd_, POLLOUT, 0
+                };
+                const int ready = poll(&pfd, 1, 100);
+                if (ready > 0)
+                {
+                    continue;
+                }
+                if (error)
+                {
+                    *error = "serial write timed out waiting for writable socket";
+                }
+                return false;
+            }
+            if (written < 0 && errno == EINTR)
+            {
+                continue;
+            }
             if (error)
             {
                 *error = "Failed to write to serial port: " + std::string(std::strerror(errno));
             }
             return false;
         }
-        return written >= 0 || errno == EAGAIN || errno == EWOULDBLOCK;
+        return true;
+    }
+
+    bool SerialBackend::WriteRawFrame(const std::vector<std::uint8_t> &frame, std::string *error)
+    {
+        if (!IsOpen())
+        {
+            if (error)
+            {
+                *error = "Serial port is not open.";
+            }
+            return false;
+        }
+        if (frame.empty())
+        {
+            return true;
+        }
+        return WriteBytes(frame.data(), frame.size(), error);
     }
 
     std::optional<std::string> SerialBackend::Read(std::string *error)
@@ -203,6 +256,12 @@ namespace robot_hardware::transport
         const ssize_t bytes_read = read(fd_, buffer, sizeof(buffer));
         if (bytes_read < 0)
         {
+            // O_NONBLOCK 下 EAGAIN/EWOULDBLOCK 表示“当前没有数据”，不是故障；
+            // 若当作错误上报，驱动每 20 ms 会刷一条错误日志。
+            if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+            {
+                return std::nullopt;
+            }
             if (error)
             {
                 *error = "Failed to read from serial port: " + std::string(std::strerror(errno));

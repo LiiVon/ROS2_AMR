@@ -2,7 +2,6 @@
  * @file time_utils.hpp
  * @brief 时间工具（工具函数层）。
  * @details 所属包：`robot_utils`；所在层次：工具函数层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #pragma once

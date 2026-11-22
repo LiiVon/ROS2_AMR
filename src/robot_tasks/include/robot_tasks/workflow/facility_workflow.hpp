@@ -2,7 +2,6 @@
  * @file facility_workflow.hpp
  * @brief 设施工作流（业务流程层）。
  * @details 所属包：`robot_tasks`；所在层次：业务流程层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #pragma once

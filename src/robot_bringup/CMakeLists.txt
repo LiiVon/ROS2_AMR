@@ -8,7 +8,8 @@ install(DIRECTORY launch config
 
 if(BUILD_TESTING)
   find_package(launch_testing_ament_cmake REQUIRED)
-  add_launch_test(test/test_mock_bringup.launch.py TIMEOUT 30)
+  # 单用例最坏等待接近 30 s（多个 10 s 轮询串联），30 s 总超时会导致偶发失败。
+  add_launch_test(test/test_mock_bringup.launch.py TIMEOUT 120)
 
   # 代码规范检查（需求文档 TR-10）：命名、禁用词、单文件行数
   add_test(NAME conventions

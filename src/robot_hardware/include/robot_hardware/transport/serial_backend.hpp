@@ -2,7 +2,6 @@
  * @file serial_backend.hpp
  * @brief 串口后端（传输层）。
  * @details 所属包：`robot_hardware`；所在层次：传输层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #pragma once
@@ -32,6 +31,11 @@ namespace robot_hardware::transport
         bool IsOpen() const override;
         bool WriteCommand(const Command &command, std::string *error) override;
         std::optional<std::string> Read(std::string *error) override;
+        bool WriteRawFrame(const std::vector<std::uint8_t> &frame, std::string *error) override;
+
+    private:
+        // 可靠写入：处理 EAGAIN 与短写，保证整帧发出。
+        bool WriteBytes(const std::uint8_t *data, std::size_t size, std::string *error);
 
     private:
         BackendConfig config_;

@@ -3,7 +3,6 @@
  * @brief 底盘驱动节点（节点入口层）。
  * @details 底盘驱动 ROS 2 节点 ROS2 上层发出运动指令，这个节点把指令交给底盘， 并持续读取底盘状态，再把机器人当前的运动信息发布给整个 ROS 2 系统
  * @details 所属包：`robot_hardware`；所在层次：节点入口层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include <algorithm>
@@ -429,7 +428,14 @@ private:
 
     void ResetOdometry()
     {
-        chassis_adapter_->ResetOdometry();
+        std::string error;
+        // 必须下发到底盘：只清本地的话，底盘下一帧回传会把 /odom 覆盖回去。
+        if (!chassis_adapter_->SendClearOdometry(&error))
+        {
+            RCLCPP_WARN(get_logger(),
+                        "failed to send clear-odometry command to chassis: %s",
+                        error.c_str());
+        }
         system_state_ = chassis_adapter_->State();
         wheel_x_ = 0.0;
         wheel_y_ = 0.0;

@@ -2,7 +2,6 @@
  * @file hardware_interface.cpp
  * @brief 硬件接口（ROS 适配层）。
  * @details 所属包：`robot_hardware`；所在层次：ROS 适配层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include <algorithm>
@@ -31,6 +30,15 @@ namespace robot_hardware
     namespace
     {
         constexpr double kPi = 3.14159265358979323846;
+        // 连续读失败多少次后上报 ERROR（约 20 ms 周期下 = 200 ms 链路中断）。
+        constexpr int kMaxConsecutiveReadFailures = 10;
+
+        // 限流日志使用独立时钟：hardware_interface 不是 Node，没有 get_clock()。
+        rclcpp::Clock &ThrottleClock()
+        {
+            static rclcpp::Clock clock(RCL_STEADY_TIME);
+            return clock;
+        }
 
         /*
         @brief:ROS2的硬件参数通常以字符串形式提供，需要把它们转换成 double
@@ -213,9 +221,23 @@ namespace robot_hardware
         const double period_seconds = std::max(0.0, period.seconds());
         if (!adapter_->Read(period_seconds, &state, &error) && !error.empty())
         {
-            RCLCPP_WARN(
-                rclcpp::get_logger("ChassisHardwareInterface"), "chassis read failed: %s",
+            // 区分“偶发单次失败”与“链路确实不通”：
+            // 连续失败达到阈值就上报 ERROR，让 controller_manager 感知通信中断。
+            ++consecutive_read_failures_;
+            RCLCPP_WARN_THROTTLE(
+                rclcpp::get_logger("ChassisHardwareInterface"), ThrottleClock(),
+                2000, "chassis read failed (%d in a row): %s", consecutive_read_failures_,
                 error.c_str());
+            if (consecutive_read_failures_ >= kMaxConsecutiveReadFailures)
+            {
+                // 链路中断时冻结位置积分，避免用陈旧轮速继续漂移。
+                wheel_velocity_radps_ = {0.0, 0.0};
+                return hardware_interface::return_type::ERROR;
+            }
+        }
+        else
+        {
+            consecutive_read_failures_ = 0;
         }
         UpdateWheelStates(state, period_seconds);
         return hardware_interface::return_type::OK;
@@ -229,12 +251,27 @@ namespace robot_hardware
             return hardware_interface::return_type::ERROR;
         }
 
-        std::string error;
-        if (!adapter_->Write(WheelCommandsToChassisCommand(), &error))
+        Command command;
+        try
         {
-            RCLCPP_WARN(
-                rclcpp::get_logger("ChassisHardwareInterface"), "chassis write failed: %s",
-                error.c_str());
+            command = WheelCommandsToChassisCommand();
+        }
+        catch (const std::exception &e)
+        {
+            // 轮速非有限或运动学参数非法时不得让异常穿透 update 循环，
+            // 否则 controller_manager 进程会直接退出。
+            RCLCPP_ERROR_THROTTLE(
+                rclcpp::get_logger("ChassisHardwareInterface"), ThrottleClock(),
+                2000, "chassis write rejected: %s", e.what());
+            return hardware_interface::return_type::ERROR;
+        }
+
+        std::string error;
+        if (!adapter_->Write(command, &error))
+        {
+            RCLCPP_WARN_THROTTLE(
+                rclcpp::get_logger("ChassisHardwareInterface"), ThrottleClock(),
+                2000, "chassis write failed: %s", error.c_str());
             return hardware_interface::return_type::ERROR;
         }
         return hardware_interface::return_type::OK;

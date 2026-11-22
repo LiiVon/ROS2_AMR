@@ -75,13 +75,13 @@ flowchart TB
 原则：`nodes/` 只做装配，算法放 `core/`，流程放 `workflow/`，数据放 `model/`；
 单文件不超过 1500 行，命名与目录结构由 `tools/check_conventions.py` 强制校验。
 
-## 1. 环境
+## 2. 环境
 
 - Ubuntu 24.04 LTS、ROS 2 Jazzy
 - C++17、CMake ≥ 3.20、colcon、ament_cmake
 - 依赖：`nav2_bringup`、`slam_toolbox`、`robot_localization`、`twist_mux`、`behaviortree_cpp`、`ros_gz_sim`、`ros_gz_bridge`、`laser_filters`、`xacro`、`controller_manager`、`diff_drive_controller`、`diagnostic_aggregator`
 
-## 2. 构建
+## 3. 构建
 
 ```bash
 source /opt/ros/jazzy/setup.bash
@@ -99,7 +99,7 @@ source install/setup.bash
 colcon build --base-paths src --symlink-install --packages-select robot_hardware robot_tasks
 ```
 
-## 3. 运行
+## 4. 运行
 
 ```bash
 source install/setup.bash
@@ -142,7 +142,7 @@ ros2 launch robot_hardware hardware_ekf.launch.py backend:=mock
 ros2 launch robot_hardware chassis_simulator.launch.py bind_host:=127.0.0.1 port:=19000
 ```
 
-## 4. 测试
+## 5. 测试
 
 ```bash
 colcon test --base-paths src
@@ -160,7 +160,34 @@ python3 tools/check_conventions.py --strict   # 发布门禁（行数超限也�
 tools/smoke_mission.sh          # 提交订单→暂停→恢复→操作员快照，末尾输出 SMOKE PASSED
 ```
 
-## 5. 接口约定
+## 6. 操作台（前端 + HTTP 网关）
+
+`tools/operator_api.py` 把浏览器页面与 ROS 2 业务服务连起来（不含业务逻辑），
+`tools/front_end.html` 是零依赖单文件页面。
+
+```bash
+# 终端 1：底盘 + 传感器 + 安全链路
+ros2 launch robot_bringup bringup.launch.py backend:=mock
+# 终端 2：任务中枢（提供 business/mission 服务）
+ros2 launch robot_tasks mission_runner.launch.py autostart:=false preflight_enabled:=false
+# 终端 3：HTTP 网关
+python3 tools/operator_api.py --port 18080
+# 浏览器打开
+xdg-open http://127.0.0.1:18080/
+```
+
+| 方法 | 路径 | 对应 ROS 2 接口 |
+|---|---|---|
+| GET | `/` | 返回 `tools/front_end.html` |
+| GET | `/api/health` | 网关/ROS 就绪状态 |
+| GET | `/api/operator/snapshot?event_limit=N` | `/business/get_operator_snapshot` |
+| POST | `/api/business_orders` | `/business/submit_order`（`order_type=business`） |
+| POST | `/api/workflows/pause`、`/resume`、`/cancel` | `/business/*_workflow` |
+
+提交成功后返回 `workflow_order_id = business_<业务单号>`，页面会自动填入「工作流单号」，
+暂停/恢复/取消都用它。服务不可用时返回 503，缺参返回 400，业务拒绝原样回传 `message`。
+
+## 7. 接口约定
 
 | 类别 | 示例 |
 |---|---|
@@ -173,7 +200,7 @@ tools/smoke_mission.sh          # 提交订单→暂停→恢复→操作员快�
 
 完整清单见 `需求文档.md` 附录 B/C。
 
-## 6. 目录速查
+## 8. 目录速查
 
 ```text
 src/
@@ -194,7 +221,7 @@ src/
 
 每个包的详细分层、接口与启动方式见该包目录下的 `README.md`。
 
-## 7. 命名与代码规范
+## 9. 命名与代码规范
 
 - topic/service/action：`/<域>/<名称>`，不带版本/序号前缀
 - 类型/函数 `PascalCase`；变量/成员 `snake_case`（成员尾下划线）
@@ -203,4 +230,12 @@ src/
 - `include/` 与 `src/` 子目录同名同构，单文件 ≤ 1500 行
 
 源码注释采用 Doxygen 风格（`@file` / `@brief` / `@details` / `@param` / `@return`）
+
+## 10. 文档索引
+
+| 文档 | 内容 |
+|---|---|
+| `docs/需求文档.md` | 需求基线：命名规则、分层、94 个接口、FR/TR/Gate、交付物与风险 |
+| `docs/审计报告.md` | 工程审计结论与遗留项 |
+| 各包 `README.md` | 该包职责、分层表、接口、启动方式、约束与测试 |
 

@@ -2,7 +2,6 @@
  * @file queued_mission_start_behavior_tree.hpp
  * @brief 已排队任务启动行为树（行为编排层）。
  * @details 所属包：`robot_tasks`；所在层次：行为编排层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #pragma once

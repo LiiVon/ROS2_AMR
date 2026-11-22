@@ -2,7 +2,6 @@
  * @file chassis_system_adapter_test.cpp
  * @brief （源码）。
  * @details 所属包：`robot_hardware`；所在层次：源码。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include "robot_hardware/system/adapter.hpp"
@@ -229,7 +228,7 @@ TEST(AdapterTest, SetKinematicsModel_DiffDriveToMecanum_PreservesSidewaysVelocit
   EXPECT_NEAR(backend_ptr->LastCommand().linear_y_mps, 0.25, 1e-9);
 }
 
-TEST(AdapterTest, ResetOdometry_IntegratedMockState_ClearsPoseOnly) {
+TEST(AdapterTest, ResetOdometry_IntegratedMockState_ClearsPoseAndVelocity) {
   Adapter adapter(std::make_unique<MockBackend>());
   ASSERT_TRUE(adapter.Open(nullptr));
   Command command;
@@ -245,7 +244,8 @@ TEST(AdapterTest, ResetOdometry_IntegratedMockState_ClearsPoseOnly) {
   EXPECT_NEAR(state.x_m, 0.0, 1e-9);
   EXPECT_NEAR(state.y_m, 0.0, 1e-9);
   EXPECT_NEAR(state.yaw_rad, 0.0, 1e-9);
-  EXPECT_NEAR(state.linear_x_mps, 0.5, 1e-9);
+  // 清零后速度同样归零：否则 /odom.twist 仍会输出旧速度。
+  EXPECT_NEAR(state.linear_x_mps, 0.0, 1e-9);
 }
 
 TEST(AdapterTest, Read_MalformedTextPacket_ReturnsObservableError) {

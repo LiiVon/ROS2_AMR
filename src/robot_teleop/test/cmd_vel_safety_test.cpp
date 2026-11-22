@@ -2,7 +2,6 @@
  * @file cmd_vel_safety_test.cpp
  * @brief （源码）。
  * @details 所属包：`robot_teleop`；所在层次：源码。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include "robot_teleop/safety/cmd_vel_safety.hpp"
@@ -35,12 +34,24 @@ TEST(CmdVelSafetyTest, ClampsPureRotationInDynamicSpeedLimitedZone) {
 TEST(CmdVelSafetyTest, LeavesTwistUnchangedWhenLimitIsDisabled) {
   geometry_msgs::msg::Twist twist;
   twist.linear.x = 1.0;
-  twist.angular.z = 1.4;
+  twist.angular.z = 0.4;
 
   const auto limited = robot_teleop::ApplyDynamicSpeedLimit(twist, 0.0, 0.5);
 
   EXPECT_NEAR(limited.linear.x, 1.0, 1e-9);
-  EXPECT_NEAR(limited.angular.z, 1.4, 1e-9);
+  EXPECT_NEAR(limited.angular.z, 0.4, 1e-9);
+}
+
+TEST(CmdVelSafetyTest, ClampsAngularVelocityEvenWhenLinearLimitIsDisabled) {
+  geometry_msgs::msg::Twist twist;
+  twist.linear.x = 1.0;
+  twist.angular.z = 1.4;
+
+  const auto limited = robot_teleop::ApplyDynamicSpeedLimit(twist, 0.0, 0.5);
+
+  // 线速度不限幅，但角速度上限必须生效。
+  EXPECT_NEAR(limited.linear.x, 1.0, 1e-9);
+  EXPECT_NEAR(limited.angular.z, 0.5, 1e-9);
 }
 
 TEST(CmdVelSafetyTest, EvaluateCmdVelSafetyGate_EmergencyStop_PublishesZero) {

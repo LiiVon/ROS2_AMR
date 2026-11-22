@@ -60,9 +60,15 @@ def generate_test_description():
         executable="navigate_sequence_server_node",
         parameters=[
             {
+                "use_waypoint_follower": False,
                 "use_nav2_action": True,
                 "simulate_without_nav2": True,
                 "nav2_server_timeout_ms": 200,
+                # 不允许“只 sleep 就报成功”：开启基于 /odom 的真实仿真运动，
+                # 无里程计反馈时宁可失败也不假成功。
+                "simulated_motion_enabled": True,
+                "simulated_cmd_vel_topic": "/cmd_vel/nav2",
+                "simulated_odom_topic": "/odom",
             }
         ],
         output="screen",
@@ -208,9 +214,11 @@ class TestMockBringup(unittest.TestCase):
             self.assertIsNotNone(goal_handle)
             self.assertTrue(goal_handle.accepted)
 
+            # 现在是基于 /odom 反馈的真实仿真运动（1 m 目标 ≈ 3~6 s），
+            # 结果等待放宽到 30 s，仍远小于 CMake 的 120 s 总超时。
             result_future = goal_handle.get_result_async()
             rclpy.spin_until_future_complete(
-                node, result_future, executor=executor, timeout_sec=10.0)
+                node, result_future, executor=executor, timeout_sec=30.0)
             result = result_future.result().result
             self.assertTrue(result.success)
             self.assertEqual(1, result.succeeded_goals)

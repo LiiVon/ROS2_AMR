@@ -2,7 +2,6 @@
  * @file imu_100d4_parser_node.cpp
  * @brief （IMU 数据处理层）。
  * @details 所属包：`robot_sensors`；所在层次：IMU 数据处理层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include <cmath>
@@ -84,24 +83,49 @@ class Imu100d4ParserNode final : public rclcpp::Node {
 
  private:
   void Parse(const std::vector<uint8_t>& bytes) {
-    for (std::size_t i = 0; i + 6 < bytes.size(); ++i) {
-      if (bytes[i] != 0xa5 || bytes[i + 1] != 0x5a) {
+    if (bytes.empty()) {
+      return;
+    }
+    // 串口是字节流：一帧可能跨多条消息，也可能一条消息里有多个帧。
+    // 因此必须维护接收缓冲，循环消费所有完整帧（原实现只取第一帧且边界判错一位）。
+    buffer_.insert(buffer_.end(), bytes.begin(), bytes.end());
+
+    std::size_t consumed = 0;
+    while (consumed + 3U <= buffer_.size()) {
+      if (buffer_[consumed] != 0xa5 || buffer_[consumed + 1U] != 0x5a) {
+        ++consumed;
         continue;
       }
-      const std::size_t length = bytes[i + 2];
-      if (length < 24U || length > kMaxFrameLength || i + length + 2U >= bytes.size()) {
+      const std::size_t length = buffer_[consumed + 2U];
+      if (length < 24U || length > kMaxFrameLength) {
+        ++consumed;
         continue;
+      }
+      const std::size_t frame_size = length + 2U;
+      if (consumed + frame_size > buffer_.size()) {
+        // 半包：等待后续字节，不要丢弃。
+        break;
       }
       uint8_t checksum = 0;
-      for (std::size_t j = i + 2; j < i + 1 + length; ++j) {
-        checksum = static_cast<uint8_t>(checksum + bytes[j]);
+      for (std::size_t j = consumed + 2U; j < consumed + 1U + length; ++j) {
+        checksum = static_cast<uint8_t>(checksum + buffer_[j]);
       }
-      if (checksum != bytes[i + 1 + length]) {
+      if (checksum != buffer_[consumed + 1U + length]) {
+        ++consumed;
         continue;
       }
-      std::vector<uint8_t> frame(bytes.begin() + i, bytes.begin() + i + length + 2U);
+      std::vector<uint8_t> frame(buffer_.begin() + static_cast<long>(consumed),
+                                buffer_.begin() + static_cast<long>(consumed + frame_size));
+      consumed += frame_size;
       PublishImu(frame);
-      return;
+    }
+
+    buffer_.erase(buffer_.begin(), buffer_.begin() + static_cast<long>(consumed));
+    // 防止长期收不到有效帧导致缓冲无限增长。
+    constexpr std::size_t kMaxBufferBytes = 4096U;
+    if (buffer_.size() > kMaxBufferBytes) {
+      buffer_.erase(buffer_.begin(),
+                    buffer_.end() - static_cast<long>(kMaxBufferBytes));
     }
   }
 
@@ -133,6 +157,7 @@ class Imu100d4ParserNode final : public rclcpp::Node {
   std::string frame_id_;
   std::string calibration_state_ = "idle";
   double gravity_ = 9.80665;
+  std::vector<uint8_t> buffer_;
   rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr subscription_;
   rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr state_publisher_;

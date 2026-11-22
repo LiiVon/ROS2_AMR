@@ -105,7 +105,20 @@ def generate_launch_description():
             Node(
                 package="robot_tasks",
                 executable="navigate_sequence_server_node",
-                parameters=[{"use_sim_time": use_sim_time}],
+                parameters=[
+                    {
+                        "use_sim_time": use_sim_time,
+                        # 基础栈不启动 Nav2：这里用“基于 /odom 反馈的仿真运动”闭环，
+                        # 机器人会真的移动并靠位姿收敛到目标；
+                        # 若两者都不可用则明确失败，绝不静默判定成功。
+                        "use_waypoint_follower": False,
+                        "use_nav2_action": True,
+                        "simulate_without_nav2": True,
+                        "simulated_motion_enabled": True,
+                        "simulated_cmd_vel_topic": "/cmd_vel/nav2",
+                        "simulated_odom_topic": "/odom",
+                    }
+                ],
                 output="screen",
             ),
             Node(

@@ -2,7 +2,6 @@
  * @file part_1.inc
  * @brief （实现细节）。
  * @details 所属包：`robot_tasks`；所在层次：实现细节。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
   MissionRunnerNode() : Node("mission_runner_node") {
@@ -714,6 +713,9 @@
     robot_tasks::StationTransportRuntimeState state;
     robot_tasks::MissionProfile pickup_profile;
     robot_tasks::MissionProfile dropoff_profile;
+    // 路径锁在“真正派发”时才获取；提交阶段只把需要的锁清单存下来，
+    // 否则排队中的订单会一直占着整条走廊，后续同走廊订单必然被拒。
+    std::vector<std::string> route_lock_ids;
   };
 
   struct StationTransportDispatchContext {
@@ -926,6 +928,11 @@
     response->queue_size = static_cast<int>(mission_queue_.size());
     response->success = decision.success;
     response->message = decision.message;
+    if (response->success) {
+      // 取消后必须清除暂停标记：否则同名单再提交时任务会被永久跳过
+      // （FindNextRunnableMissionIndex 会把它当作仍处于暂停的工作流）。
+      paused_workflow_orders_.erase(order_id);
+    }
     if (response->success && !RunnerBusy()) {
       SetState("QUEUED", response->message, true);
     }

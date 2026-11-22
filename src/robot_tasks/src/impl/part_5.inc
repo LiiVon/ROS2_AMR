@@ -2,7 +2,6 @@
  * @file part_5.inc
  * @brief （实现细节）。
  * @details 所属包：`robot_tasks`；所在层次：实现细节。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
   void SendMissionGoal(const NavigateSequence::Goal& goal,
@@ -17,6 +16,13 @@
         return;
       }
       current_goal_handle_ = goal_handle;
+      if (cancellation_requested_) {
+        // 取消发生在“goal 已发出、尚未被接受”的窗口内：
+        // 必须在此刻撤销，否则任务会照常执行（用户感知为“取消失效”）。
+        action_client_->async_cancel_goal(goal_handle);
+        SetState("CANCELING", "cancellation applied right after goal acceptance", true);
+        return;
+      }
       SetState("RUNNING", "mission accepted by navigate sequence", true);
     };
     options.result_callback = [this](const GoalHandleNavigateSequence::WrappedResult& result) {
@@ -138,7 +144,9 @@
 
   void PauseMission(
       const std::shared_ptr<std_srvs::srv::Trigger::Response>& response) {
-    if (!mission_active_) {
+    // 站点运输执行期间 mission_active_ 可能为 false（由 active_station_transport_id_
+    // 表示），必须用 RunnerBusy() 判定，否则操作台无法暂停运输任务。
+    if (!RunnerBusy()) {
       response->success = false;
       response->message = "no active mission profile to pause";
       return;
@@ -152,7 +160,7 @@
 
   void ResumeMission(
       const std::shared_ptr<std_srvs::srv::Trigger::Response>& response) {
-    if (!mission_active_ || !paused_) {
+    if (!RunnerBusy() || !paused_) {
       response->success = false;
       response->message = "no paused mission profile to resume";
       return;

@@ -2,7 +2,6 @@
  * @file packet.cpp
  * @brief 报文（协议层）。
  * @details 所属包：`robot_hardware`；所在层次：协议层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include "robot_hardware/protocol/packet.hpp"
@@ -478,6 +477,12 @@ namespace robot_hardware::protocol
     }
 
     // 生成清零里程计的二进制命令
+    // 文本协议清零命令：CLEAR\n（底盘侧收到后将里程计归零）
+    std::string EncodeClearOdometryCommand()
+    {
+        return "CLEAR\n";
+    }
+
     std::vector<uint8_t> EncodeMickClearOdometryCommand()
     {
         return EncodeBinaryFrame(

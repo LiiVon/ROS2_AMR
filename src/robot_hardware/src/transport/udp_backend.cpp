@@ -2,7 +2,6 @@
  * @file udp_backend.cpp
  * @brief UDP后端（传输层）。
  * @details 所属包：`robot_hardware`；所在层次：传输层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include "robot_hardware/transport/udp_backend.hpp"
@@ -78,6 +77,34 @@ namespace robot_hardware::transport
     bool UdpBackend::IsOpen() const
     {
         return fd_ >= 0;
+    }
+
+    bool UdpBackend::WriteRawFrame(const std::vector<std::uint8_t> &frame, std::string *error)
+    {
+        if (!IsOpen())
+        {
+            if (error != nullptr)
+            {
+                *error = "UDP socket is not open";
+            }
+            return false;
+        }
+        if (frame.empty())
+        {
+            return true;
+        }
+        const ssize_t sent_bytes =
+            sendto(fd_, frame.data(), frame.size(), 0,
+                   reinterpret_cast<sockaddr *>(&remote_addr_), sizeof(remote_addr_));
+        if (sent_bytes < 0)
+        {
+            if (error != nullptr)
+            {
+                *error = "Failed to send raw frame over UDP: " + std::string(std::strerror(errno));
+            }
+            return false;
+        }
+        return true;
     }
 
     bool UdpBackend::WriteCommand(const Command &command, std::string *error)

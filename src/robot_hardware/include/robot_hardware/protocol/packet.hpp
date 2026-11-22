@@ -3,7 +3,6 @@
  * @brief 报文（协议层）。
  * @details chassis_packet 机器人底盘硬件的 通信数据包定义与协议编解码
  * @details 所属包：`robot_hardware`；所在层次：协议层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #pragma once
@@ -82,6 +81,9 @@ namespace robot_hardware::protocol
     // 内部数据结构 与 文本协议 的相互转换
     std::string EncodeCommand(const Command &command);
     std::string EncodeOdometry(const OdometryPacket &odometry);
+
+    // 文本协议里程计清零命令。
+    std::string EncodeClearOdometryCommand();
     std::string EncodeState(const StatePacket &state);
 
     std::optional<Command> DecodeCommand(const std::string &text);

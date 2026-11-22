@@ -2,7 +2,6 @@
  * @file laser_filter_node.cpp
  * @brief 激光过滤节点（激光数据处理层）。
  * @details 所属包：`robot_sensors`；所在层次：激光数据处理层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #include <algorithm>
@@ -48,8 +47,21 @@ class LaserFilterNode final : public rclcpp::Node {
     scan.range_min = range_min_;
     scan.range_max = range_max_;
     if (clockwise_) {
+      // 反转数据的同时必须重写角度元数据，否则每个点的角度仍按下标递增，
+      // 整幅扫描会被镜像（障碍物左右颠倒）。
+      const double old_angle_min = scan.angle_min;
+      const double old_increment = scan.angle_increment;
+      const std::size_t count = scan.ranges.size();
+      const double old_angle_max =
+          count == 0U ? old_angle_min
+                      : old_angle_min + old_increment * static_cast<double>(count - 1U);
       std::reverse(scan.ranges.begin(), scan.ranges.end());
-      std::reverse(scan.intensities.begin(), scan.intensities.end());
+      if (scan.intensities.size() == count) {
+        std::reverse(scan.intensities.begin(), scan.intensities.end());
+      }
+      scan.angle_min = -old_angle_max;
+      scan.angle_increment = -old_increment;
+      scan.angle_max = scan.angle_min + scan.angle_increment * static_cast<double>(count - 1U);
     }
     int invalid_count = 0;
     for (std::size_t i = 0; i < scan.ranges.size(); ++i) {

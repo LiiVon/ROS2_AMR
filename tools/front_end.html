@@ -196,6 +196,9 @@
       <button id="pauseBtn" class="danger">Pause</button>
       <button id="resumeBtn" class="secondary">Resume</button>
       <button id="cancelBtn" class="danger">Cancel</button>
+      <label class="muted" style="display:flex;align-items:center;gap:6px;">
+        <input id="autoRefresh" type="checkbox" style="width:auto;"> 自动刷新(5s)
+      </label>
     </div>
     <div class="statusline" id="statusLine">尚未加载数据。</div>
 
@@ -318,11 +321,14 @@
       renderKeyValueTable(missionTable, [
         ['state', joinList(mission.state)],
         ['active_mission', joinList(mission.active_mission_id || mission.active_goal_id || '-')],
+        ['message', joinList(mission.message)],
         ['paused_workflows', joinList(data.paused_workflow_order_ids || data.paused_workflows)],
         ['queue_size', joinList((data.queue && data.queue.size) ?? mission.queue_size ?? data.queue_size ?? '-')],
+        ['queue_ids', joinList(data.queue && data.queue.mission_ids)],
       ]);
       renderKeyValueTable(fleetTable, [
         ['robot_ids', joinList(data.fleet_robot_ids)],
+        ['robot_states', joinList((data.fleet || []).map((robot) => `${robot.robot_id}:${robot.state}:${Number(robot.battery_voltage).toFixed(1)}V`))],
         ['remote_tasks', formatRemoteTasks(data.remote_tasks || data.remote_task_ids)],
       ]);
       renderKeyValueTable(facilityTable, [
@@ -371,7 +377,13 @@
           business_type: document.getElementById('businessType').value,
           external_correlation_id: 'console_demo'
         });
-        setStatus(`业务工单已提交: ${result.business_order_id || result.external_correlation_id || 'ok'}`);
+        const workflowOrderId = result.workflow_order_id || `business_${result.business_order_id || ''}`;
+        document.getElementById('workflowOrderId').value = workflowOrderId;
+        if (result.success === false) {
+          setStatus(`业务工单被拒绝: ${result.message || 'unknown reason'}`);
+        } else {
+          setStatus(`业务工单已提交: ${result.business_order_id || 'ok'}（工作流 ${workflowOrderId}，任务数 ${(result.mission_ids || []).length}）`);
+        }
         await loadSnapshot();
       } catch (error) {
         setStatus(error.message);
@@ -430,6 +442,16 @@
         await loadSnapshot();
       } catch (error) {
         setStatus(error.message);
+      }
+    });
+
+    let autoTimer = null;
+    document.getElementById('autoRefresh').addEventListener('change', (event) => {
+      if (event.target.checked) {
+        autoTimer = setInterval(() => loadSnapshot().catch(() => {}), 5000);
+      } else if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
       }
     });
 

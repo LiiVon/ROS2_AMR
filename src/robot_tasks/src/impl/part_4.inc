@@ -2,7 +2,6 @@
  * @file part_4.inc
  * @brief （实现细节）。
  * @details 所属包：`robot_tasks`；所在层次：实现细节。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
   template <typename RequestT, typename ResponseT>
@@ -69,16 +68,8 @@
       response->queue_size = static_cast<int>(mission_queue_.size());
       return;
     }
-    std::string route_lock_message;
-    if (!ReserveRouteLocksForMission(
-            profile->mission_id, gate.route_lock_ids, &route_lock_message)) {
-      response->success = false;
-      response->mission_id = profile->mission_id;
-      response->message = "station transport route lock rejected: " + route_lock_message;
-      response->queue_size = static_cast<int>(mission_queue_.size());
-      return;
-    }
-
+    // 路径锁在派发时才获取（见 StartNextQueuedMission）：提交阶段只记录
+    // 该任务需要的锁清单，避免排队期间独占走廊导致同批订单被拒。
     StationTransportExecutionRecord execution;
     execution.state.mission_id = profile->mission_id;
     execution.state.pickup_station_id = stations->pickup.id;
@@ -87,6 +78,7 @@
         robot_tasks::BuildStationWaypointProfile(profile->mission_id, stations->pickup);
     execution.dropoff_profile =
         robot_tasks::BuildStationWaypointProfile(profile->mission_id, stations->dropoff);
+    execution.route_lock_ids = gate.route_lock_ids;
     station_transport_executions_[profile->mission_id] = execution;
 
     const auto admission = AdmitQueuedMission(
@@ -995,6 +987,16 @@
         return;
       }
 
+      // 真正开始执行时才占用路径锁；锁被占用时任务保持排队，稍后重试。
+      std::string route_lock_message;
+      if (!ReserveRouteLocksForMission(
+              transport->first, transport->second.route_lock_ids, &route_lock_message)) {
+        RequeueMissionAfterDispatchFailure(dispatch, "route resource locked: " + route_lock_message,
+                                           response);
+        return;
+      }
+
+      const auto previous_mission_file = mission_file_;
       mission_queue_ = dispatch.remaining_queue;
       profile_ = transport->second.pickup_profile;
       mission_file_ = dispatch.mission->mission_file;
@@ -1003,6 +1005,12 @@
       const bool sent = DispatchStationTransportLeg(
           transport->first, robot_tasks::StationTransportLeg::kPickup,
           &dispatch_message);
+      if (!sent) {
+        active_station_transport_id_.clear();
+        mission_file_ = previous_mission_file;
+        RequeueMissionAfterDispatchFailure(dispatch, dispatch_message, response);
+        return;
+      }
       if (response != nullptr) {
         response->success = sent;
         response->message = dispatch_message;
@@ -1013,7 +1021,29 @@
     mission_queue_ = dispatch.remaining_queue;
     profile_ = dispatch.mission->profile;
     mission_file_ = dispatch.mission->mission_file;
-    DispatchMission(response, "queued mission profile sent");
+    if (!DispatchMission(response, "queued mission profile sent")) {
+      RequeueMissionAfterDispatchFailure(dispatch, last_message_, response);
+    }
+  }
+
+  // 派发失败（导航 action server 未就绪、路径锁被占等）时把任务放回队列，
+  // 并恢复队列启动请求，避免任务静默丢失 + 后续任务永不启动。
+  void RequeueMissionAfterDispatchFailure(
+      const robot_tasks::MissionQueueDispatchResult& dispatch, const std::string& reason,
+      const std::shared_ptr<std_srvs::srv::Trigger::Response>& response) {
+    if (dispatch.mission.has_value()) {
+      mission_queue_.push_back(*dispatch.mission);
+      SortMissionQueue();
+    }
+    queue_start_requested_ = true;
+    queue_running_ = true;
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000,
+                         "mission dispatch deferred, will retry: %s", reason.c_str());
+    SetState("QUEUED", "dispatch deferred: " + reason, true);
+    if (response != nullptr) {
+      response->success = false;
+      response->message = "dispatch deferred: " + reason;
+    }
   }
 
   std::optional<robot_tasks::MissionProfile> LoadDockProfile(std::string* message) const {
@@ -1353,7 +1383,7 @@
     return true;
   }
 
-  void DispatchMission(const std::shared_ptr<std_srvs::srv::Trigger::Response>& response,
+  bool DispatchMission(const std::shared_ptr<std_srvs::srv::Trigger::Response>& response,
                        const std::string& accepted_message) {
     paused_ = false;
     cancellation_requested_ = false;
@@ -1366,7 +1396,7 @@
         response->success = false;
         response->message = last_message_;
       }
-      return;
+      return false;
     }
     if (active_recovery_mission_id_ != profile_->mission_id) {
       active_recovery_mission_id_ = profile_->mission_id;
@@ -1378,7 +1408,7 @@
         response->success = false;
         response->message = last_message_;
       }
-      return;
+      return false;
     }
 
     NavigateSequence::Goal goal;
@@ -1393,4 +1423,5 @@
       goal.goals.push_back(pose);
     }
     SendMissionGoal(goal, response, accepted_message);
+    return true;
   }

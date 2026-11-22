@@ -3,13 +3,14 @@
  * @brief 后端（传输层）。
  * @details backend.hpp 底盘通信后端抽象接口。 定义统一的底盘配置，以及所有后端必须实现的操作。
  * @details 所属包：`robot_hardware`；所在层次：传输层。
- * @note 教学说明见 `docs/教学/` 对应章节。
  */
 
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "robot_hardware/protocol/packet.hpp"
 
@@ -102,6 +103,17 @@ namespace robot_hardware::transport
         // 发生错误时尽可能填写 error。
         virtual std::optional<std::string> Read(
             std::string *error) = 0;
+
+        // 发送与速度指令无关的原始帧（例如“清零里程计”命令）。
+        // 默认实现返回 false（该后端不支持原始帧）。
+        virtual bool WriteRawFrame(const std::vector<uint8_t> &, std::string *error)
+        {
+            if (error)
+            {
+                *error = "backend does not support raw frames";
+            }
+            return false;
+        }
     };
 
 } // namespace robot_hardware
