@@ -110,7 +110,7 @@ class NavigateSequenceServerNode final : public rclcpp::Node {
           response->message = "mission cancellation requested";
         });
     action_server_ = rclcpp_action::create_server<NavigateSequence>(
-        this, "/navigate_sequence",
+        this, "/mission/navigate_sequence",
         [this](const auto&, const auto goal) { return HandleGoal(goal); },
         [this](const auto) {
           cancelled_ = true;
@@ -212,6 +212,8 @@ class NavigateSequenceServerNode final : public rclcpp::Node {
 
     active_ = false;
     statistics_.last_navigation_time_s = (now() - started).seconds();
+    accumulated_navigation_time_s_ += statistics_.last_navigation_time_s;
+    ++navigation_sample_count_;
     statistics_.total_goals += total_goals_;
     UpdateStatistics();
     auto result = std::make_shared<NavigateSequence::Result>();
@@ -219,6 +221,7 @@ class NavigateSequenceServerNode final : public rclcpp::Node {
     result->message = failed == 0 ? "sequence finished" : "sequence finished with failures";
     result->succeeded_goals = succeeded;
     result->failed_goals = failed;
+    result->state = failed == 0 ? "succeeded" : "failed";
     goal_handle->succeed(result);
   }
 
@@ -524,6 +527,7 @@ class NavigateSequenceServerNode final : public rclcpp::Node {
     result->message = message;
     result->succeeded_goals = 0;
     result->failed_goals = total_goals_;
+    result->state = "failed";
     goal_handle->abort(result);
   }
 
@@ -538,6 +542,7 @@ class NavigateSequenceServerNode final : public rclcpp::Node {
     result->message = "sequence cancelled";
     result->succeeded_goals = succeeded;
     result->failed_goals = failed + 1;
+    result->state = "cancelled";
     goal_handle->canceled(result);
   }
 
@@ -547,8 +552,9 @@ class NavigateSequenceServerNode final : public rclcpp::Node {
     statistics_.success_rate =
         finished == 0 ? 0.0 : static_cast<double>(statistics_.succeeded_goals) / finished;
     statistics_.mean_navigation_time_s =
-        statistics_.succeeded_goals == 0 ? 0.0 : statistics_.last_navigation_time_s /
-                                                static_cast<double>(statistics_.succeeded_goals);
+        navigation_sample_count_ == 0
+            ? 0.0
+            : accumulated_navigation_time_s_ / static_cast<double>(navigation_sample_count_);
   }
 
   void PublishState() {
@@ -597,6 +603,8 @@ class NavigateSequenceServerNode final : public rclcpp::Node {
   int total_goals_ = 0;
   std::string previous_state_ = "initializing";
   robot_interfaces_core::msg::NavigationStatistics statistics_;
+  double accumulated_navigation_time_s_ = 0.0;
+  std::size_t navigation_sample_count_ = 0;
   rclcpp_action::Client<FollowWaypoints>::SharedPtr waypoint_follower_client_;
   rclcpp_action::Client<NavigateToPose>::SharedPtr nav2_client_;
   rclcpp_action::Server<NavigateSequence>::SharedPtr action_server_;

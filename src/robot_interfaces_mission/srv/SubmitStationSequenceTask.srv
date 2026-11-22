@@ -1,11 +1,15 @@
-string order_id
-string[] station_ids
-int32 priority
-bool start_if_idle
-bool preempt_current
+# @file SubmitStationSequenceTask.srv
+# @brief 提交站点序列任务：按 station_ids 顺序依次导航，可拆成多个任务入队。
+# @details 所属包：robot_interfaces_mission
+#
+string order_id  # 业务侧订单号，用于关联与去重
+string[] station_ids  # 站点 ID 序列，按数组顺序执行（至少 2 个）
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
+bool preempt_current  # true 时抢占当前正在执行的任务
 ---
-bool success
-string message
-string[] mission_ids
-int32 queued_count
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] mission_ids  # 本次涉及的任务 ID 列表（按创建顺序）
+int32 queued_count  # 本次实际入队的任务数
+int32 queue_size  # 本次操作后，任务队列中的任务总数

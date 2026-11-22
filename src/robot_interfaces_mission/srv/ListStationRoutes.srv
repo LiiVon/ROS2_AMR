@@ -1,8 +1,12 @@
+# @file ListStationRoutes.srv
+# @brief 列出站点间路段（用于交通预约与距离估算）。
+# @details 所属包：robot_interfaces_mission
+#
 ---
-bool success
-string message
-string[] from_station
-string[] to_station
-float64[] distance_m
-bool[] bidirectional
-bool[] enabled
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] from_station  # 起点站点 ID 列表
+string[] to_station  # 终点站点 ID 列表，与 from_station 一一对应
+float64[] distance_m  # 路段长度，单位 m
+bool[] bidirectional  # 该路段是否双向可通行；false 表示仅 from→to
+bool[] enabled  # 该路段当前是否可用；false 表示被阻断或禁用

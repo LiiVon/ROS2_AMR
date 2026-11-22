@@ -1,8 +1,12 @@
-string fulfillment_id
-string operator_id
-string note
+# @file ConfirmDropoff.srv
+# @brief 确认送达/卸货完成，推进履约单状态。
+# @details 所属包：robot_interfaces_business
+#
+string fulfillment_id  # 履约单 ID
+string operator_id  # 操作员标识（审计用）
+string note  # 备注文本，仅记录
 ---
-bool success
-string message
-string fulfillment_id
-string state
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string fulfillment_id  # 履约单 ID（回显）
+string state  # 更新后的履约状态：ACCEPTED / DUPLICATE / SHORT_PICK 等

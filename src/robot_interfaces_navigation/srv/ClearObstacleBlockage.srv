@@ -1,7 +1,11 @@
-string blockage_id
-string resolution
-bool resume_active
+# @file ClearObstacleBlockage.srv
+# @brief 清除一次障碍阻塞：按 blockage_id 解除阻塞，可选恢复被暂停的任务。
+# @details 所属包：robot_interfaces_navigation
+#
+string blockage_id  # 要清除的阻塞事件 ID（由 ReportObstacleBlockage 返回）
+string resolution  # 处理说明文本，写入事件日志；为空时使用默认描述
+bool resume_active  # true 表示清除后恢复此前被暂停的任务
 ---
-bool success
-string message
-string state
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string state  # 清除后的安全状态：OK / SPEED_LIMITED / OBSTACLE_BLOCKED

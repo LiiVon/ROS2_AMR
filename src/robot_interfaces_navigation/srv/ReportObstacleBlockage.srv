@@ -1,8 +1,12 @@
-string blockage_id
-string reason
-bool pause_active
+# @file ReportObstacleBlockage.srv
+# @brief 上报一次障碍阻塞：记录 blockage_id、原因，并可按策略暂停当前任务。
+# @details 所属包：robot_interfaces_navigation
+#
+string blockage_id  # 阻塞事件 ID；为空时由实现生成
+string reason  # 阻塞原因文本，写入事件日志
+bool pause_active  # true 表示暂停当前正在执行的任务
 ---
-bool success
-string message
-string state
-string blockage_id
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string state  # 上报后的安全状态：OK / SPEED_LIMITED / OBSTACLE_BLOCKED
+string blockage_id  # 生效的阻塞事件 ID（后续可用它清除）

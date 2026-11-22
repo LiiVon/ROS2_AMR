@@ -1,12 +1,17 @@
-geometry_msgs/PoseStamped[] goals
-bool loop
+# @file NavigateSequence.action
+# @brief 多目标导航动作：一次下发多个位姿，按顺序导航并周期反馈进度，支持循环与取消。
+# @details 所属包：robot_interfaces_navigation
+#
+geometry_msgs/PoseStamped[] goals  # 目标位姿序列，按数组顺序执行；frame_id 由每个 PoseStamped 自带
+bool loop  # true 表示走完最后一个目标后从第一个重新开始，直到被取消
 ---
-bool success
-string message
-int32 succeeded_goals
-int32 failed_goals
+bool success  # 全部目标（或循环任务被正常终止前）是否成功
+string message  # 结果说明；失败时为失败原因
+int32 succeeded_goals  # 成功到达的目标数
+int32 failed_goals  # 失败或超时跳过的目标数
+string state  # 结果状态：succeeded / failed / cancelled
 ---
-int32 current_goal_index
-int32 total_goals
-string state
-string message
+int32 current_goal_index  # 当前执行到第几个目标（从 0 开始）
+int32 total_goals  # 目标总数
+string state  # 任务状态：idle / navigating / paused
+string message  # 结果说明；失败时为失败原因

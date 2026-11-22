@@ -1,12 +1,16 @@
-string resource_type
-bool include_disabled
+# @file ListFacilityResources.srv
+# @brief 列出设施资源清单及占用状态（可按类型过滤）。
+# @details 所属包：robot_interfaces_facility
+#
+string resource_type  # 资源类型：charger / door / elevator；为空表示全部
+bool include_disabled  # true 表示连 enabled=false 的资源一并返回
 ---
-bool success
-string message
-string[] resource_ids
-string[] resource_types
-string[] station_ids
-bool[] enabled
-bool[] available
-string[] holder_ids
-string[] status
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] resource_ids  # 资源 ID 列表
+string[] resource_types  # 资源类型列表，与 resource_ids 一一对应
+string[] station_ids  # 资源所在站点 ID，与 resource_ids 一一对应
+bool[] enabled  # 资源是否启用
+bool[] available  # 资源当前是否可占用
+string[] holder_ids  # 当前占用者标识（空闲时为空串）
+string[] status  # 资源状态：available / reserved / occupied / disabled

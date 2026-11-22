@@ -1,10 +1,14 @@
-string fulfillment_id
-string operator_id
-int32 short_quantity
-string reason
+# @file ReportShortPick.srv
+# @brief 上报短拣：把缺口数量与原因记入履约单，状态置为短拣。
+# @details 所属包：robot_interfaces_business
+#
+string fulfillment_id  # 履约单 ID
+string operator_id  # 操作员标识（审计用）
+int32 short_quantity  # 缺口数量；<=0 视为无效上报
+string reason  # 短拣原因，写入事件日志
 ---
-bool success
-string message
-string fulfillment_id
-string state
-int32 short_quantity
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string fulfillment_id  # 履约单 ID（回显）
+string state  # 更新后的履约状态（短拣时为 SHORT_PICK）
+int32 short_quantity  # 已记录的缺口数量

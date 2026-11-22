@@ -1,7 +1,10 @@
+# @file ListMaps.srv
+# @brief 列出可用地图及其文件路径，并给出当前激活地图。
+# @details 所属包：robot_interfaces_navigation
+#
 ---
-bool success
-string message
-string active_map
-string[] names
-string[] paths
-
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string active_map  # 当前激活的地图名称；未设置时为空
+string[] names  # 地图名称列表
+string[] paths  # 地图文件路径列表，与 names 一一对应（YAML 文件绝对路径）

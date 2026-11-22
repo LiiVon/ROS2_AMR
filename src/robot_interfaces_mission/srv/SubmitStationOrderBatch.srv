@@ -1,17 +1,21 @@
-string batch_id
-string[] order_ids
-string[] pickup_station_ids
-string[] dropoff_station_ids
-int32 priority
-bool start_if_idle
-bool preempt_current
-bool continue_on_error
+# @file SubmitStationOrderBatch.srv
+# @brief 批量提交站点运输订单：三个数组按相同下标组成一条订单，支持部分成功。
+# @details 所属包：robot_interfaces_mission
+#
+string batch_id  # 批次标识；为空时由实现生成
+string[] order_ids  # 订单号列表
+string[] pickup_station_ids  # 取货站点列表，与 order_ids 等长
+string[] dropoff_station_ids  # 放货站点列表，与 order_ids 等长
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
+bool preempt_current  # true 时抢占当前正在执行的任务
+bool continue_on_error  # true 表示单条失败后继续处理其余订单；false 则遇错终止
 ---
-bool success
-string message
-string[] mission_ids
-string[] rejected_order_ids
-string[] rejected_messages
-int32 accepted_count
-int32 rejected_count
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] mission_ids  # 成功入队对应的任务 ID 列表
+string[] rejected_order_ids  # 被拒绝的订单号列表
+string[] rejected_messages  # 拒绝原因列表，与 rejected_order_ids 一一对应
+int32 accepted_count  # 接收成功的订单数
+int32 rejected_count  # 被拒绝的订单数
+int32 queue_size  # 本次操作后，任务队列中的任务总数

@@ -1,11 +1,15 @@
-bool loaded
-string payload_id
-float64 weight_kg
-string message
+# @file SetPayloadLoaded.srv
+# @brief 直接设置载荷载货状态与重量（运维/联调用，不校验站点）。
+# @details 所属包：robot_interfaces_facility
+#
+bool loaded  # 目标载货状态
+string payload_id  # 载荷标识；loaded=false 时允许为空
+float64 weight_kg  # 载荷重量，单位 kg
+string message  # 写入载荷消息字段的说明文本
 ---
-bool success
-string message
-string payload_id
-string state
-bool loaded
-float64 weight_kg
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string payload_id  # 当前载荷标识
+string state  # 更新后的载荷状态：EMPTY / LOADED / TOP_MODULE_ACTION
+bool loaded  # 是否处于载货状态
+float64 weight_kg  # 当前载荷重量，单位 kg

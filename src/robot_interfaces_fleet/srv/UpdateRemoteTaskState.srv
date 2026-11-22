@@ -1,9 +1,13 @@
-string task_id
-string state
-string message
+# @file UpdateRemoteTaskState.srv
+# @brief 由远程机器人回报车队任务的状态变化。
+# @details 所属包：robot_interfaces_fleet
+#
+string task_id  # 车队任务标识
+string state  # 远程任务状态字符串（如 ACCEPTED / RUNNING / FINISHED / FAILED）
+string message  # 状态说明或失败原因
 ---
-bool success
-string message
-string task_id
-string assigned_robot_id
-string state
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string task_id  # 车队任务标识（回显）
+string assigned_robot_id  # 承接该任务的机器人 ID
+string state  # 更新后的远程任务状态

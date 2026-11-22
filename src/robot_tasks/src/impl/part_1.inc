@@ -49,7 +49,7 @@
     preflight_zones_file_ =
         declare_parameter<std::string>("preflight_zones_file", default_zones_file.string());
     preflight_map_name_ = declare_parameter<std::string>("preflight_map_name", "indoor_room");
-    action_name_ = declare_parameter<std::string>("action_name", "/navigate_sequence");
+    action_name_ = declare_parameter<std::string>("action_name", "/mission/navigate_sequence");
     pause_service_name_ = declare_parameter<std::string>("pause_service_name", "/mission/pause");
     resume_service_name_ = declare_parameter<std::string>("resume_service_name", "/mission/resume");
     cancel_service_name_ = declare_parameter<std::string>("cancel_service_name", "/mission/cancel");

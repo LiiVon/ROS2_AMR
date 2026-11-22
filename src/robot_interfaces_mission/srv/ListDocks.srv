@@ -1,12 +1,16 @@
-bool include_disabled
+# @file ListDocks.srv
+# @brief 列出停靠点（码头）及其占用的站点、充电资源与当前状态。
+# @details 所属包：robot_interfaces_mission
+#
+bool include_disabled  # true 表示连 enabled=false 的停靠点一并返回
 ---
-bool success
-string message
-string[] dock_ids
-string[] station_ids
-string[] approach_station_ids
-string[] charger_resource_ids
-bool[] enabled
-bool[] available
-string[] states
-string[] mission_ids
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] dock_ids  # 停靠点 ID 列表
+string[] station_ids  # 停靠点所在站点 ID，与 dock_ids 一一对应
+string[] approach_station_ids  # 接近站点 ID（停靠前的准备点）
+string[] charger_resource_ids  # 关联的充电资源 ID（非充电码头为空）
+bool[] enabled  # 停靠点是否启用
+bool[] available  # 当前是否可被占用
+string[] states  # 停靠状态：APPROACHING / CHARGING / FAILED / REJECTED 等
+string[] mission_ids  # 当前占用该停靠点的任务 ID（空闲时为空）

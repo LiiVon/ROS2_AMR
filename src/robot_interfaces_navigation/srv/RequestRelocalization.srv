@@ -1,6 +1,10 @@
-string reason
+# @file RequestRelocalization.srv
+# @brief 请求重新定位：触发全局重定位流程并返回定位状态。
+# @details 所属包：robot_interfaces_navigation
+#
+string reason  # 重定位原因，写入事件日志
 ---
-bool success
-string message
-string state
-bool localized
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string state  # 重定位后的定位状态：OK / LOST / RELOCALIZING / RECOVERED
+bool localized  # 当前是否定位可信

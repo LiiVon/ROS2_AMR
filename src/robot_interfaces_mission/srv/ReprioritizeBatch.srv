@@ -1,7 +1,11 @@
-string[] mission_ids
-int32[] priorities
+# @file ReprioritizeBatch.srv
+# @brief 批量调整排队任务优先级：两个数组按相同下标一一对应。
+# @details 所属包：robot_interfaces_mission
+#
+string[] mission_ids  # 任务 ID 列表
+int32[] priorities  # 与 mission_ids 等长的优先级列表；长度不一致时整批拒绝
 ---
-bool success
-string message
-string[] updated_mission_ids
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] updated_mission_ids  # 实际更新成功的任务 ID 列表
+int32 queue_size  # 本次操作后，任务队列中的任务总数

@@ -1,17 +1,21 @@
-string scenario_id
+# @file ListScenarioTasks.srv
+# @brief 列出某个场景下的预定义任务（可选按场景过滤）。
+# @details 所属包：robot_interfaces_business
+#
+string scenario_id  # 场景 ID；为空表示列出全部场景的任务
 ---
-bool success
-string message
-string[] scenario_ids
-string[] task_ids
-string[] labels
-string[] task_types
-string[] pickup_station_ids
-string[] dropoff_station_ids
-string[] station_sequences_csv
-string[] required_capabilities
-string[] resource_ids
-string[] resource_types
-string[] actions
-bool[] hold_after_actions
-int32[] default_priorities
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] scenario_ids  # 任务所属场景 ID 列表
+string[] task_ids  # 任务 ID 列表
+string[] labels  # 任务可读名称
+string[] task_types  # 任务类型（决定展开方式）
+string[] pickup_station_ids  # 取货站点 ID（无则为空串）
+string[] dropoff_station_ids  # 放货站点 ID（无则为空串）
+string[] station_sequences_csv  # 站点序列（逗号分隔字符串）
+string[] required_capabilities  # 要求的机器人能力
+string[] resource_ids  # 需要预约的设施资源 ID
+string[] resource_types  # 需要的资源类型（charger/door/elevator）
+string[] actions  # 需要对资源执行的动作
+bool[] hold_after_actions  # 动作后是否继续占用资源
+int32[] default_priorities  # 该任务的默认优先级

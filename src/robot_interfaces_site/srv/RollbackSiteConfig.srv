@@ -1,6 +1,10 @@
+# @file RollbackSiteConfig.srv
+# @brief 回滚到上一个生效过的站点配置版本。
+# @details 所属包：robot_interfaces_site
+#
 ---
-bool success
-string message
-string active_version_id
-string active_bundle_dir
-string rolled_back_from_version_id
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string active_version_id  # 回滚后生效的版本标识
+string active_bundle_dir  # 回滚后生效的配置包目录
+string rolled_back_from_version_id  # 被撤销的版本标识

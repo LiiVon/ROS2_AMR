@@ -1,8 +1,12 @@
+# @file DetectTrafficDeadlock.srv
+# @brief 检测交通死锁：找出互相等待对方资源、导致谁也无法前进的任务集合。
+# @details 所属包：robot_interfaces_mission
+#
 ---
-bool success
-string message
-bool deadlocked
-string[] mission_ids
-string[] conflict_resource_ids
-string[] conflict_station_ids
-string[] descriptions
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+bool deadlocked  # 是否检测到死锁
+string[] mission_ids  # 构成死环的任务 ID 列表
+string[] conflict_resource_ids  # 冲突的资源（路段）ID 列表
+string[] conflict_station_ids  # 冲突的站点 ID 列表
+string[] descriptions  # 每条冲突的可读描述，与任务/资源列表对应

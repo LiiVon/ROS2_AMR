@@ -1,11 +1,15 @@
-string capability
-bool include_disabled
+# @file ListFleetRobots.srv
+# @brief 列出车队中的机器人及其能力、状态与电量（可按能力过滤）。
+# @details 所属包：robot_interfaces_fleet
+#
+string capability  # 只看具备该能力的机器人；为空表示全部
+bool include_disabled  # true 表示连 enabled=false 的机器人一并返回
 ---
-bool success
-string message
-string[] robot_ids
-bool[] enabled
-string[] states
-float64[] battery_voltage
-string[] current_station_ids
-string[] capabilities
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] robot_ids  # 机器人 ID 列表
+bool[] enabled  # 各机器人是否启用，与 robot_ids 一一对应
+string[] states  # 各机器人状态字符串（如 IDLE / RUNNING / CHARGING）
+float64[] battery_voltage  # 各机器人电池电压，单位 V
+string[] current_station_ids  # 各机器人当前所在站点 ID
+string[] capabilities  # 各机器人能力标签列表（多条用逗号分隔）

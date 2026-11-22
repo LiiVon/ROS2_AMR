@@ -1,7 +1,11 @@
-string station_id
+# @file SetInitialPoseFromStation.srv
+# @brief 用站点坐标设置初始位姿（替代手工在地图上点选），并更新定位健康状态。
+# @details 所属包：robot_interfaces_navigation
+#
+string station_id  # 站点 ID（来自站点目录，需已配置坐标与朝向）
 ---
-bool success
-string message
-string station_id
-string state
-bool localized
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string station_id  # 实际使用的站点 ID
+string state  # 设置后的定位状态：OK / LOST / RELOCALIZING / RECOVERED
+bool localized  # 当前是否定位可信

@@ -1,14 +1,18 @@
-string scenario_id
-string task_id
-string order_id
-int32 priority
-bool start_if_idle
-bool preempt_current
+# @file SubmitScenarioTask.srv
+# @brief 按场景配置提交单个预定义任务（场景 + 任务 ID 来自场景目录）。
+# @details 所属包：robot_interfaces_business
+#
+string scenario_id  # 场景 ID（见 ListBusinessOrderTypes / ListScenarioTasks）
+string task_id  # 场景内任务 ID
+string order_id  # 业务订单号，用于关联与去重
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
+bool preempt_current  # true 时抢占当前正在执行的任务
 ---
-bool success
-string message
-string scenario_id
-string task_id
-string mission_id
-string assigned_robot_id
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string scenario_id  # 场景 ID（回显）
+string task_id  # 任务 ID（回显）
+string mission_id  # 生成的任务 ID
+string assigned_robot_id  # 承接该任务的机器人 ID（本地任务时为本机）
+int32 queue_size  # 本次操作后，任务队列中的任务总数

@@ -1,6 +1,10 @@
-string mission_id
-bool cancel_active
+# @file CancelQueuedMission.srv
+# @brief 取消指定任务：若它正在执行，可选择一并中断当前任务。
+# @details 所属包：robot_interfaces_mission
+#
+string mission_id  # 要取消的任务 ID
+bool cancel_active  # true 表示若该任务正在执行则中断当前任务；false 仅取消排队中的任务
 ---
-bool success
-string message
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+int32 queue_size  # 本次操作后，任务队列中的任务总数

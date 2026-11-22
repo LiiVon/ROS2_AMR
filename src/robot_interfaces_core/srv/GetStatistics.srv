@@ -1,2 +1,6 @@
+# @file GetStatistics.srv
+# @brief 获取导航统计快照（累计目标、成功率、里程、耗时、恢复次数）。
+# @details 所属包：robot_interfaces_core
+#
 ---
-NavigationStatistics statistics
+NavigationStatistics statistics  # 当前统计快照（见 NavigationStatistics.msg）

@@ -1,15 +1,19 @@
-string task_id
-string required_capability
-string pickup_station
-string dropoff_station
-int32 priority
-bool start_if_idle
-bool preempt_current
+# @file SubmitFleetStationTask.srv
+# @brief 向车队提交站点运输任务：选出机器人并创建对应任务。
+# @details 所属包：robot_interfaces_fleet
+#
+string task_id  # 车队任务标识，由调用方保证唯一
+string required_capability  # 任务要求的机器人能力；为空表示不限
+string pickup_station  # 取货站点 ID
+string dropoff_station  # 放货站点 ID
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
+bool preempt_current  # true 时抢占当前正在执行的任务
 ---
-bool success
-string message
-string task_id
-string assigned_robot_id
-string mission_id
-int32 queue_size
-float64 estimated_total_distance_m
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string task_id  # 车队任务标识（回显）
+string assigned_robot_id  # 实际承接任务的机器人 ID
+string mission_id  # 由本地任务中枢创建的任务 ID（远程机器人时可能为空）
+int32 queue_size  # 本次操作后，任务队列中的任务总数
+float64 estimated_total_distance_m  # 预估总里程，单位 m

@@ -1,9 +1,13 @@
-string bundle_dir
-string version_id
+# @file ValidateSiteConfig.srv
+# @brief 校验一份站点配置包（文件完整性/字段合法性），可选择不落地生效。
+# @details 所属包：robot_interfaces_site
+#
+string bundle_dir  # 配置包目录（含站点/设施/任务等 YAML）
+string version_id  # 配置版本标识；为空时由实现按目录生成
 ---
-bool success
-string message
-string version_id
-string[] checked_files
-string[] errors
-string diff_report
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string version_id  # 本次校验使用的版本标识
+string[] checked_files  # 实际检查过的文件列表
+string[] errors  # 发现的问题列表；为空表示校验通过
+string diff_report  # 与当前生效配置的差异摘要

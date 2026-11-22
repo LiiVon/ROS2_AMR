@@ -1,7 +1,11 @@
-float64 speed_limit_mps
-string reason
+# @file SetDynamicSpeedLimit.srv
+# @brief 设置/取消运行时动态限速，结果参与安全状态中的生效限速计算。
+# @details 所属包：robot_interfaces_navigation
+#
+float64 speed_limit_mps  # 限速值，单位 m/s；传 0 表示取消动态限速
+string reason  # 设置原因文本，写入事件日志
 ---
-bool success
-string message
-float64 runtime_speed_limit_mps
-float64 effective_speed_limit_mps
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+float64 runtime_speed_limit_mps  # 当前运行时动态限速，单位 m/s；0 表示未设置
+float64 effective_speed_limit_mps  # 与区域限速取小后的生效限速，单位 m/s；0 表示不限速

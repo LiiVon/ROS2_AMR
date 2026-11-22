@@ -1,12 +1,16 @@
-string confirmation_id
-string station_id
-string action
-string mission_id
-string operator_hint
-int32 timeout_sec
-string timeout_policy
+# @file RequestStationConfirmation.srv
+# @brief 发起一次站点人工确认（如装卸/开门），等待操作员确认或按超时策略处理。
+# @details 所属包：robot_interfaces_facility
+#
+string confirmation_id  # 确认事件标识，由调用方生成；重复提交同一 ID 会被拒绝
+string station_id  # 发生确认的站点 ID
+string action  # 需要确认的动作名（如 load / unload / open_door）
+string mission_id  # 发起确认的任务 ID，用于关联与恢复
+string operator_hint  # 给操作员的提示文本
+int32 timeout_sec  # 等待超时时间，单位 s；<=0 表示不超时
+string timeout_policy  # 超时策略：retry / skip / return_to_dock / manual；为空或非法时按 manual 处理
 ---
-bool success
-string message
-string confirmation_id
-string state
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string confirmation_id  # 确认事件标识（回显）
+string state  # 确认状态：PENDING / CONFIRMED / REJECTED / SKIPPED

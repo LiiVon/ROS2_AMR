@@ -1,15 +1,19 @@
-string order_id
-string frame_id
-float64 pickup_x
-float64 pickup_y
-float64 pickup_yaw
-float64 dropoff_x
-float64 dropoff_y
-float64 dropoff_yaw
-int32 priority
-bool start_if_idle
+# @file SubmitTransportOrder.srv
+# @brief 提交自由坐标运输订单：按取货/放货位姿生成任务（不需要站点配置）。
+# @details 所属包：robot_interfaces_business
+#
+string order_id  # 订单号，由调用方保证唯一
+string frame_id  # 坐标所在坐标系，默认 map
+float64 pickup_x  # 取货点 x 坐标，单位 m
+float64 pickup_y  # 取货点 y 坐标，单位 m
+float64 pickup_yaw  # 取货点朝向，单位 rad
+float64 dropoff_x  # 放货点 x 坐标，单位 m
+float64 dropoff_y  # 放货点 y 坐标，单位 m
+float64 dropoff_yaw  # 放货点朝向，单位 rad
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
 ---
-bool success
-string message
-string mission_id
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string mission_id  # 本次创建/命中的任务 ID；失败时为空
+int32 queue_size  # 本次操作后，任务队列中的任务总数

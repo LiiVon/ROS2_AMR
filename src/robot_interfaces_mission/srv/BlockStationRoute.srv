@@ -1,7 +1,11 @@
-string from_station
-string to_station
-string reason
+# @file BlockStationRoute.srv
+# @brief 阻断某条站点间路段（交通管制），阻断后相关任务不能再预约该路段。
+# @details 所属包：robot_interfaces_mission
+#
+string from_station  # 路段起点站点 ID
+string to_station  # 路段终点站点 ID
+string reason  # 原因说明，用于审计与事件日志
 ---
-bool success
-string message
-string resource_id
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string resource_id  # 被阻断的路段资源 ID，用于后续解除阻塞

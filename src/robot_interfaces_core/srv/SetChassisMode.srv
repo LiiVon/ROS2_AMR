@@ -1,4 +1,8 @@
-string mode
+# @file SetChassisMode.srv
+# @brief 切换底盘运动学模型（diff_drive / mecanum），立即生效并用于后续轮速换算。
+# @details 所属包：robot_interfaces_core
+#
+string mode  # 目标运动学模型：diff_drive 或 mecanum；其它取值返回失败
 ---
-bool success
-string message
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因

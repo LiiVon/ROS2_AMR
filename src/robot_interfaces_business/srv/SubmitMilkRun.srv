@@ -1,12 +1,16 @@
-string run_id
-string tote_id
-string[] station_ids
-int32 priority
-bool start_if_idle
+# @file SubmitMilkRun.srv
+# @brief 提交巡回配送（奶瓶式）任务：按站点顺序多次停靠，共用一个料箱。
+# @details 所属包：robot_interfaces_business
+#
+string run_id  # 巡回任务标识；为空时由实现生成
+string tote_id  # 周转箱/料箱标识
+string[] station_ids  # 停靠站点序列，按数组顺序执行
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
 ---
-bool success
-string message
-string fulfillment_id
-string state
-string[] mission_ids
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string fulfillment_id  # 履约单 ID
+string state  # 履约状态：ACCEPTED / DUPLICATE / SHORT_PICK 等
+string[] mission_ids  # 为本次巡回生成的任务 ID 列表
+int32 queue_size  # 本次操作后，任务队列中的任务总数

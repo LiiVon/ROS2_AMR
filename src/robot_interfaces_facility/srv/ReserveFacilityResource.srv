@@ -1,10 +1,14 @@
-string resource_id
-string holder_id
-string mission_id
-bool release_existing_for_holder
+# @file ReserveFacilityResource.srv
+# @brief 独占预约一个设施资源（充电桩/门/电梯），成功后其他任务不能再占用。
+# @details 所属包：robot_interfaces_facility
+#
+string resource_id  # 设施资源 ID（见 ListFacilityResources）
+string holder_id  # 占用者标识（通常是任务 ID 或设备 ID）
+string mission_id  # 发起预约的任务 ID，用于释放时校验
+bool release_existing_for_holder  # true 表示先释放该 holder 之前持有的其它资源
 ---
-bool success
-string message
-string resource_id
-string holder_id
-string status
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string resource_id  # 设施资源 ID（回显）
+string holder_id  # 当前占用者标识
+string status  # 预约结果状态：reserved / available / disabled

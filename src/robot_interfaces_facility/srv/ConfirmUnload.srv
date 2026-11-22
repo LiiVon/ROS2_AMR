@@ -1,8 +1,12 @@
-string payload_id
-string station_id
+# @file ConfirmUnload.srv
+# @brief 确认卸载完成：清空载荷并置为未载货状态。
+# @details 所属包：robot_interfaces_facility
+#
+string payload_id  # 要卸载的载荷标识；为空时清除当前载荷
+string station_id  # 卸载发生的站点 ID（用于审计；为空表示不校验）
 ---
-bool success
-string message
-string payload_id
-string state
-bool loaded
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string payload_id  # 被清除的载荷标识
+string state  # 更新后的载荷状态：EMPTY / LOADED / TOP_MODULE_ACTION
+bool loaded  # 是否处于载货状态（卸载后应为 false）

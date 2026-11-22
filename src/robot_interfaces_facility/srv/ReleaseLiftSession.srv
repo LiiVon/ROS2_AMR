@@ -1,8 +1,12 @@
-string session_id
-string lift_id
+# @file ReleaseLiftSession.srv
+# @brief 结束一次电梯会话，释放电梯资源。
+# @details 所属包：robot_interfaces_facility
+#
+string session_id  # 要结束的会话标识
+string lift_id  # 电梯资源 ID
 ---
-bool success
-string message
-string session_id
-string lift_id
-string status
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string session_id  # 会话标识（回显）
+string lift_id  # 电梯资源 ID（回显）
+string status  # 释放后电梯状态：available / reserved / occupied / disabled

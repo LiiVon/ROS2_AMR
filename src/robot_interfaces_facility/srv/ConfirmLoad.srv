@@ -1,10 +1,14 @@
-string payload_id
-float64 weight_kg
-string station_id
+# @file ConfirmLoad.srv
+# @brief 确认装载完成：登记载荷与重量，并把载荷状态置为已装载。
+# @details 所属包：robot_interfaces_facility
+#
+string payload_id  # 载荷标识；为空时沿用当前载荷
+float64 weight_kg  # 实测重量，单位 kg；<=0 时沿用当前记录
+string station_id  # 装载发生的站点 ID（用于审计；为空表示不校验）
 ---
-bool success
-string message
-string payload_id
-string state
-bool loaded
-float64 weight_kg
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string payload_id  # 当前载荷标识
+string state  # 更新后的载荷状态：EMPTY / LOADED / TOP_MODULE_ACTION
+bool loaded  # 是否处于载货状态
+float64 weight_kg  # 当前载荷重量，单位 kg

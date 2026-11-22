@@ -1,16 +1,20 @@
-string business_order_id
-string business_type
-int32 priority
-bool start_if_idle
-bool preempt_current
+# @file SubmitBusinessOrder.srv
+# @brief 提交业务订单：按 business_type 查到场景与工作流后展开成任务链。
+# @details 所属包：robot_interfaces_business
+#
+string business_order_id  # 业务订单号，由调用方保证唯一
+string business_type  # 业务类型：warehouse_inbound / campus_mail / hospital_round / laboratory_samples（取自业务类型目录）
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
+bool preempt_current  # true 时抢占当前正在执行的任务
 ---
-bool success
-string message
-string business_order_id
-string business_type
-string routed_service
-string routed_scenario_id
-string routed_workflow_id
-string[] mission_ids
-int32 queued_count
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string business_order_id  # 业务订单号（回显）
+string business_type  # 业务类型（回显）
+string routed_service  # 命中的业务对应服务/处理器名称
+string routed_scenario_id  # 命中的场景 ID
+string routed_workflow_id  # 命中的工作流 ID
+string[] mission_ids  # 展开后生成的任务 ID 列表
+int32 queued_count  # 实际入队的任务数
+int32 queue_size  # 本次操作后，任务队列中的任务总数

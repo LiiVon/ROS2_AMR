@@ -1,12 +1,16 @@
-int32 limit
-string state_filter
-string mission_id_filter
+# @file ListMissionEvents.srv
+# @brief 查询任务事件日志（状态迁移记录），可按状态与任务 ID 过滤。
+# @details 所属包：robot_interfaces_mission
+#
+int32 limit  # 最多返回多少条（从最新往前取）；<=0 表示使用默认条数
+string state_filter  # 只返回该状态的事件；为空表示不过滤
+string mission_id_filter  # 只返回该任务的事件；为空表示不过滤
 ---
-bool success
-string message
-string[] stamp
-string[] mission_ids
-string[] states
-string[] previous_states
-string[] messages
-bool[] recoverable
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] stamp  # 事件时间戳字符串列表
+string[] mission_ids  # 事件所属任务 ID，与 stamp 一一对应
+string[] states  # 事件发生后的状态（如 QUEUED/RUNNING/FINISHED/FAILED）
+string[] previous_states  # 事件发生前的状态
+string[] messages  # 事件说明文本
+bool[] recoverable  # 该事件对应失败是否可恢复

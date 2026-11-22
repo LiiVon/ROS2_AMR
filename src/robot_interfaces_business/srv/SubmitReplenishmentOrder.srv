@@ -1,15 +1,19 @@
-string order_id
-string sku_id
-string tote_id
-string source_station
-string line_station
-int32 quantity
-int32 priority
-bool start_if_idle
+# @file SubmitReplenishmentOrder.srv
+# @brief 提交补货订单：从库区站点取货送到产线站点。
+# @details 所属包：robot_interfaces_business
+#
+string order_id  # 补货单号，由调用方保证唯一
+string sku_id  # 商品/SKU 标识
+string tote_id  # 料箱标识
+string source_station  # 补货来源站点 ID（库区）
+string line_station  # 补货目标站点 ID（产线）
+int32 quantity  # 补货数量；<=0 时按 1 处理
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
 ---
-bool success
-string message
-string fulfillment_id
-string state
-string[] mission_ids
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string fulfillment_id  # 履约单 ID
+string state  # 履约状态：ACCEPTED / DUPLICATE / SHORT_PICK 等
+string[] mission_ids  # 为本次补货生成的任务 ID 列表
+int32 queue_size  # 本次操作后，任务队列中的任务总数

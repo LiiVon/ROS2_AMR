@@ -1,36 +1,40 @@
-int32 event_limit
+# @file GetOperatorSnapshot.srv
+# @brief 操作员总览快照：任务/队列、车队、远程任务、设施、业务目录与最近事件。
+# @details 所属包：robot_interfaces_business
+#
+int32 event_limit  # 最多返回多少条最近事件；<=0 表示使用默认条数
 ---
-bool success
-string message
-string mission_state
-string previous_mission_state
-string active_mission_id
-string mission_message
-bool recoverable
-bool mission_active
-bool paused
-int32 queue_size
-string[] queued_mission_ids
-int32[] queued_priorities
-string[] paused_workflow_order_ids
-string[] fleet_robot_ids
-bool[] fleet_enabled
-string[] fleet_states
-float64[] fleet_battery_voltage
-string[] fleet_current_station_ids
-string[] fleet_capabilities
-string[] remote_task_ids
-string[] remote_task_robot_ids
-string[] remote_task_states
-string[] facility_resource_ids
-string[] facility_resource_types
-string[] facility_station_ids
-bool[] facility_available
-string[] facility_status
-string[] business_types
-string[] business_scenario_ids
-string[] business_workflow_ids
-string[] recent_event_stamp
-string[] recent_event_mission_ids
-string[] recent_event_states
-string[] recent_event_messages
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string mission_state  # 运行器当前状态（与 /mission/state 一致）
+string previous_mission_state  # 运行器上一个状态
+string active_mission_id  # 当前执行中的任务 ID；空闲时为空
+string mission_message  # 运行器状态说明或最近失败原因
+bool recoverable  # 当前失败是否可恢复
+bool mission_active  # 是否有任务正在执行
+bool paused  # 任务执行是否处于暂停状态
+int32 queue_size  # 本次操作后，任务队列中的任务总数
+string[] queued_mission_ids  # 排队中的任务 ID 列表
+int32[] queued_priorities  # 排队任务的优先级，与 queued_mission_ids 一一对应
+string[] paused_workflow_order_ids  # 处于暂停状态的工作流对应订单号列表
+string[] fleet_robot_ids  # 车队机器人 ID 列表
+bool[] fleet_enabled  # 机器人是否启用，与 fleet_robot_ids 一一对应
+string[] fleet_states  # 机器人状态字符串
+float64[] fleet_battery_voltage  # 机器人电池电压，单位 V
+string[] fleet_current_station_ids  # 机器人当前所在站点 ID
+string[] fleet_capabilities  # 机器人能力标签（逗号分隔）
+string[] remote_task_ids  # 远程任务 ID 列表
+string[] remote_task_robot_ids  # 远程任务承接机器人 ID，与 remote_task_ids 一一对应
+string[] remote_task_states  # 远程任务状态字符串
+string[] facility_resource_ids  # 设施资源 ID 列表
+string[] facility_resource_types  # 设施资源类型（charger/door/elevator）
+string[] facility_station_ids  # 设施资源所在站点 ID
+bool[] facility_available  # 设施资源是否可用
+string[] facility_status  # 设施资源状态：available / reserved / occupied / disabled
+string[] business_types  # 可用业务类型列表
+string[] business_scenario_ids  # 对应场景 ID 列表
+string[] business_workflow_ids  # 对应工作流 ID 列表
+string[] recent_event_stamp  # 最近事件时间戳列表
+string[] recent_event_mission_ids  # 最近事件所属任务 ID
+string[] recent_event_states  # 最近事件状态
+string[] recent_event_messages  # 最近事件说明文本

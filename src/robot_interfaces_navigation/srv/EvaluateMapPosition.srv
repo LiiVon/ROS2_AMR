@@ -1,9 +1,13 @@
-string map_name
-geometry_msgs/Point point
+# @file EvaluateMapPosition.srv
+# @brief 判断某个地图坐标点是否可通行，并返回命中的区域及其限速。
+# @details 所属包：robot_interfaces_navigation
+#
+string map_name  # 地图名称；为空时使用当前激活地图
+geometry_msgs/Point point  # 待判定的坐标（x/y，单位 m；z 忽略）
 ---
-bool success
-string message
-bool allowed
-float64 speed_limit_mps
-string[] matched_zone_ids
-string[] matched_zone_types
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+bool allowed  # 是否允许通行（命中 keepout 区域时为 false）
+float64 speed_limit_mps  # 该点生效的区域限速，单位 m/s；0 表示无区域限速
+string[] matched_zone_ids  # 命中的区域 ID 列表
+string[] matched_zone_types  # 命中区域对应的类型列表（与 matched_zone_ids 一一对应）

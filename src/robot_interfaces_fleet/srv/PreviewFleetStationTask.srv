@@ -1,12 +1,16 @@
-string required_capability
-string pickup_station
-string dropoff_station
+# @file PreviewFleetStationTask.srv
+# @brief 预览车队派单结果：选出最合适的机器人并估算距离，但不真正下发任务。
+# @details 所属包：robot_interfaces_fleet
+#
+string required_capability  # 任务要求的机器人能力；为空表示不限
+string pickup_station  # 取货站点 ID
+string dropoff_station  # 放货站点 ID
 ---
-bool success
-string message
-string assigned_robot_id
-bool local_robot
-float64 approach_distance_m
-float64 task_distance_m
-float64 estimated_total_distance_m
-float64 battery_voltage
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string assigned_robot_id  # 被选中的机器人 ID；无可用机器人时为空
+bool local_robot  # 被选中的是否是本机（true 表示由本地任务中枢执行）
+float64 approach_distance_m  # 机器人当前位置到取货站点的预估距离，单位 m
+float64 task_distance_m  # 取货站点到放货站点的预估距离，单位 m
+float64 estimated_total_distance_m  # 预估总里程，单位 m
+float64 battery_voltage  # 被选中机器人的电池电压，单位 V

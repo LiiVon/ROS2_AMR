@@ -1,7 +1,11 @@
-string mission_file
-int32 priority
-bool start_if_idle
+# @file EnqueueMission.srv
+# @brief 把任务文件加入任务队列（不抢占），可指定优先级与是否空闲即启动。
+# @details 所属包：robot_interfaces_mission
+#
+string mission_file  # 任务描述 YAML 路径（含 waypoints 等字段）
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
 ---
-bool success
-string message
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+int32 queue_size  # 本次操作后，任务队列中的任务总数

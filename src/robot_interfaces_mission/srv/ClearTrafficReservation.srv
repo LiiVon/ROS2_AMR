@@ -1,5 +1,9 @@
-string resource_id
+# @file ClearTrafficReservation.srv
+# @brief 强制清除一条交通资源预约（释放路段占用），用于死锁解除等运维操作。
+# @details 所属包：robot_interfaces_mission
+#
+string resource_id  # 要释放的资源 ID
 ---
-bool success
-string message
-string owner_id
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string owner_id  # 清除前持有该预约的 owner；无预约时为空

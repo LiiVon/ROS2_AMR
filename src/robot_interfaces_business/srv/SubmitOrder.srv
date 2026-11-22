@@ -1,12 +1,15 @@
-string order_id
-string order_type
-int32 priority
-string payload_json
-string[] tags
+# @file SubmitOrder.srv
+# @brief 统一订单入口：按 order_type 路由到对应任务链，成功后任务进入队列（唯一合法下单入口）。
+# @details 所属包：robot_interfaces_business
+#
+string order_id  # 订单号；可被 payload_json 中的 order_id 覆盖
+string order_type  # 订单类型：transport / station_transport / station_order_batch / station_sequence / fleet_station / business / scenario_task / scenario_workflow / vda5050 / picking_wave / replenishment / milk_run（允许连字符、大小写差异）
+int32 priority  # 优先级，数值越大越先执行；可被 payload_json 中的 priority 覆盖
+string payload_json  # 订单载荷，格式 key=value;key=value。常用键：order_id、priority、start_if_idle、preempt_current、frame_id、pickup_*/dropoff_*（坐标或站点）、station_ids、business_type、scenario_id、task_id、workflow_id、sku_id、tote_id、quantity 等
 ---
-bool accepted
-string reject_reason
-string mission_id
-string[] mission_ids
-int32 queue_size
-string message
+bool accepted  # 是否受理成功
+string reject_reason  # 拒绝原因；受理成功时为空
+string mission_id  # 单任务订单生成的任务 ID；多任务时取第一个
+string[] mission_ids  # 本次生成的全部任务 ID
+int32 queue_size  # 本次操作后，任务队列中的任务总数
+string message  # 结果说明；失败时为失败原因

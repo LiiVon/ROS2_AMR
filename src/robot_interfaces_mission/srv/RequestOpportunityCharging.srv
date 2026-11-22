@@ -1,17 +1,21 @@
-string request_id
-string charger_id
-float64 battery_voltage
-float64 opportunity_threshold_voltage
-float64 critical_threshold_voltage
-int32 priority
-bool start_if_idle
-bool preempt_current
-bool require_idle_queue
+# @file RequestOpportunityCharging.srv
+# @brief 机会充电：按当前电压与阈值判断是否值得充电，满足条件才排队。
+# @details 所属包：robot_interfaces_mission
+#
+string request_id  # 调用方请求标识，用于关联日志与事件
+string charger_id  # 期望使用的充电桩资源 ID；为空时由实现选择
+float64 battery_voltage  # 当前电池电压，单位 V；传 0 时使用当前状态中的电压
+float64 opportunity_threshold_voltage  # 机会充电阈值，单位 V；低于该值才排队充电；传 0 使用参数默认值
+float64 critical_threshold_voltage  # 严重低电阈值，单位 V；低于该值直接排队（不看队列空闲）；传 0 使用参数默认值
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
+bool preempt_current  # true 时抢占当前正在执行的任务
+bool require_idle_queue  # true 表示仅当队列空闲时才做机会充电（严重低电除外）
 ---
-bool success
-bool charging_queued
-string message
-string mission_id
-string charger_id
-float64 evaluated_battery_voltage
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+bool charging_queued  # 是否真的排入了充电任务
+string message  # 结果说明；失败时为失败原因
+string mission_id  # 排入的充电任务 ID；未排队时为空
+string charger_id  # 实际选用的充电桩资源 ID；未排队时为空
+float64 evaluated_battery_voltage  # 本次判定实际使用的电压，单位 V
+int32 queue_size  # 本次操作后，任务队列中的任务总数

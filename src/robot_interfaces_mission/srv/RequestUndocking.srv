@@ -1,8 +1,12 @@
-string dock_id
-string request_id
-bool release_charger
+# @file RequestUndocking.srv
+# @brief 请求离开停靠点（解除对接），可选同时释放充电资源。
+# @details 所属包：robot_interfaces_mission
+#
+string dock_id  # 要离开的停靠点 ID
+string request_id  # 调用方请求标识，用于关联日志与事件
+bool release_charger  # true 表示同时释放该停靠点占用的充电资源
 ---
-bool success
-string message
-string dock_id
-string state
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string dock_id  # 目标停靠点 ID（回显）
+string state  # 离站后的停靠状态

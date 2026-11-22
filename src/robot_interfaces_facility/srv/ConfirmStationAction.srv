@@ -1,8 +1,12 @@
-string confirmation_id
-string operator_id
-string note
+# @file ConfirmStationAction.srv
+# @brief 操作员确认某个待处理站点动作。
+# @details 所属包：robot_interfaces_facility
+#
+string confirmation_id  # 待确认事件 ID
+string operator_id  # 操作员标识（审计用）
+string note  # 备注文本，仅记录
 ---
-bool success
-string message
-string confirmation_id
-string state
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string confirmation_id  # 确认事件标识（回显）
+string state  # 确认状态：CONFIRMED / REJECTED / SKIPPED / PENDING

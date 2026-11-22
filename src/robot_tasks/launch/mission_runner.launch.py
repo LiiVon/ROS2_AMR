@@ -100,7 +100,7 @@ def generate_launch_description():
             DeclareLaunchArgument("preflight_map_name", default_value="indoor_room"),
             DeclareLaunchArgument("autostart", default_value="false"),
             DeclareLaunchArgument("server_timeout_ms", default_value="5000"),
-            DeclareLaunchArgument("action_name", default_value="/navigate_sequence"),
+            DeclareLaunchArgument("action_name", default_value="/mission/navigate_sequence"),
             DeclareLaunchArgument("pause_service_name", default_value="/mission/pause"),
             DeclareLaunchArgument("resume_service_name", default_value="/mission/resume"),
             DeclareLaunchArgument("cancel_service_name", default_value="/mission/cancel"),

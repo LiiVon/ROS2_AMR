@@ -1,10 +1,14 @@
-string station_id_filter
+# @file GetPendingConfirmations.srv
+# @brief 查询待处理/历史确认事件（可按站点过滤），返回操作员视角的表格化数据。
+# @details 所属包：robot_interfaces_facility
+#
+string station_id_filter  # 只看该站点的事件；为空表示全部站点
 ---
-bool success
-string message
-string[] confirmation_ids
-string[] station_ids
-string[] actions
-string[] mission_ids
-string[] operator_hints
-string[] states
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] confirmation_ids  # 确认事件 ID 列表
+string[] station_ids  # 事件所在站点 ID，与 confirmation_ids 一一对应
+string[] actions  # 需要确认的动作名
+string[] mission_ids  # 发起确认的任务 ID
+string[] operator_hints  # 给操作员的提示文本
+string[] states  # 确认状态：PENDING / CONFIRMED / REJECTED / SKIPPED

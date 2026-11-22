@@ -1,17 +1,21 @@
-string robot_id
-bool enabled
-string state
-float64 battery_voltage
-string current_station_id
-bool update_enabled
-bool update_state
-bool update_battery_voltage
-bool update_current_station_id
+# @file UpdateFleetRobotState.srv
+# @brief 更新车队中某机器人的状态快照；各 update_* 标志决定哪些字段真正生效。
+# @details 所属包：robot_interfaces_fleet
+#
+string robot_id  # 要更新的机器人 ID
+bool enabled  # 目标启用状态（仅 update_enabled=true 时生效）
+string state  # 目标状态字符串（仅 update_state=true 时生效）
+float64 battery_voltage  # 目标电池电压，单位 V（仅 update_battery_voltage=true 时生效）
+string current_station_id  # 目标当前站点 ID（仅 update_current_station_id=true 时生效）
+bool update_enabled  # 是否更新 enabled 字段
+bool update_state  # 是否更新 state 字段
+bool update_battery_voltage  # 是否更新 battery_voltage 字段
+bool update_current_station_id  # 是否更新 current_station_id 字段
 ---
-bool success
-string message
-string robot_id
-bool enabled
-string state
-float64 battery_voltage
-string current_station_id
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string robot_id  # 机器人 ID（回显）
+bool enabled  # 更新后的启用状态
+string state  # 更新后的状态字符串
+float64 battery_voltage  # 更新后的电池电压，单位 V
+string current_station_id  # 更新后的当前站点 ID

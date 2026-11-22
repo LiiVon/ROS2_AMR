@@ -1,16 +1,20 @@
-string request_id
-string resource_id
-string resource_type
-string action
-int32 priority
-bool start_if_idle
-bool preempt_current
-bool hold_after_action
+# @file ExecuteFacilityAction.srv
+# @brief 对设施资源执行一个动作（如开门/呼梯），以内置任务方式排队执行。
+# @details 所属包：robot_interfaces_facility
+#
+string request_id  # 调用方请求标识，用于关联日志与事件
+string resource_id  # 目标设施资源 ID
+string resource_type  # 资源类型：charger / door / elevator
+string action  # 要执行的动作名（由设施能力决定，如 open / close / call）
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
+bool preempt_current  # true 时抢占当前正在执行的任务
+bool hold_after_action  # true 表示动作完成后继续占用该资源，不自动释放
 ---
-bool success
-string message
-string mission_id
-string resource_id
-string action
-string status
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string mission_id  # 为本次动作创建的任务 ID
+string resource_id  # 目标设施资源 ID（回显）
+string action  # 实际执行的动作名（回显）
+string status  # 任务/资源状态字符串
+int32 queue_size  # 本次操作后，任务队列中的任务总数

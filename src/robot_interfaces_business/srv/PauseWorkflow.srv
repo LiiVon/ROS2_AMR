@@ -1,8 +1,12 @@
-string order_id
-bool pause_active
+# @file PauseWorkflow.srv
+# @brief 暂停某个订单的工作流：暂停排队步骤，可选同时暂停正在执行的任务。
+# @details 所属包：robot_interfaces_business
+#
+string order_id  # 订单号
+bool pause_active  # true 表示连正在执行的任务一并暂停；false 仅暂停排队步骤
 ---
-bool success
-string message
-string[] affected_mission_ids
-bool active_pause_requested
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] affected_mission_ids  # 受影响的（被暂停的）任务 ID 列表
+bool active_pause_requested  # 是否已请求暂停当前执行中的任务
+int32 queue_size  # 本次操作后，任务队列中的任务总数

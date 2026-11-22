@@ -474,7 +474,7 @@
     robot_interfaces_navigation::msg::SafetyState state;
     state.header.stamp = now();
     state.obstacle_blocked = safety_obstacle_blocked_;
-    state.safety_stop = safety_obstacle_blocked_;
+    state.safety_stop = safety_obstacle_blocked_ || !safety_stop_reason_.empty();
     state.state = SafetyStateName();
     state.runtime_speed_limit_mps = safety_runtime_speed_limit_mps_;
     state.zone_speed_limit_mps = safety_zone_speed_limit_mps_;

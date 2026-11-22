@@ -260,6 +260,11 @@ std::optional<std::string> ValidateZone(const MapZone& zone) {
   if (zone.frame_id.empty()) {
     return "frame_id is required for zone " + zone.zone_id;
   }
+  if (zone.frame_id != "map") {
+    // 当前实现不做坐标变换，非 map 坐标系会让多边形与地图对不上，必须显式拒收。
+    return "unsupported frame_id for zone " + zone.zone_id + ": " + zone.frame_id +
+           "（当前仅支持 map）";
+  }
   if (zone.polygon_x.size() != zone.polygon_y.size() || zone.polygon_x.size() < 3U) {
     return "polygon requires at least 3 points for zone " + zone.zone_id;
   }

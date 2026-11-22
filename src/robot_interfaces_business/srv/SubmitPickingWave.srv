@@ -1,15 +1,19 @@
-string wave_id
-string sku_id
-string tote_id
-string pick_station
-string dropoff_station
-int32 quantity
-int32 priority
-bool start_if_idle
+# @file SubmitPickingWave.srv
+# @brief 提交拣货波次：到一个拣货位取货，再送到放货位，形成一条履约单。
+# @details 所属包：robot_interfaces_business
+#
+string wave_id  # 波次标识；为空时使用订单号
+string sku_id  # 商品/SKU 标识
+string tote_id  # 料箱标识
+string pick_station  # 拣货站点 ID
+string dropoff_station  # 放货站点 ID
+int32 quantity  # 请求拣货数量；<=0 时按 1 处理
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
 ---
-bool success
-string message
-string fulfillment_id
-string state
-string[] mission_ids
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string fulfillment_id  # 履约单 ID（用于后续确认/查询）
+string state  # 履约状态：ACCEPTED / DUPLICATE / SHORT_PICK 等
+string[] mission_ids  # 为本次波次生成的任务 ID 列表
+int32 queue_size  # 本次操作后，任务队列中的任务总数

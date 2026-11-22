@@ -1,12 +1,16 @@
-string session_id
-string lift_id
-string requester_id
-string from_station
-string to_station
-bool release_existing_for_requester
+# @file RequestLiftSession.srv
+# @brief 申请一次电梯使用会话（乘梯跨层），可指定起点/终点并抢占同持有者的旧会话。
+# @details 所属包：robot_interfaces_facility
+#
+string session_id  # 会话标识，由调用方生成
+string lift_id  # 电梯资源 ID
+string requester_id  # 申请者标识（任务 ID 或设备 ID）
+string from_station  # 起始站点 ID（进入电梯的位置）
+string to_station  # 目标站点 ID（离开电梯的位置）
+bool release_existing_for_requester  # true 表示先释放该申请者已持有的其它电梯会话
 ---
-bool success
-string message
-string session_id
-string lift_id
-string status
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string session_id  # 会话标识（回显）
+string lift_id  # 电梯资源 ID（回显）
+string status  # 申请结果状态：reserved / occupied / available / disabled

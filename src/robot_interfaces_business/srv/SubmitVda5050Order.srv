@@ -1,14 +1,18 @@
-string order_id
-string serial_number
-string pickup_node_id
-string dropoff_node_id
-int32 priority
-bool start_if_idle
-bool preempt_current
+# @file SubmitVda5050Order.srv
+# @brief 提交 VDA5050 风格订单：用节点 ID 表示取货/放货点，映射为站点运输任务。
+# @details 所属包：robot_interfaces_business
+#
+string order_id  # VDA5050 订单号，由调用方保证唯一
+string serial_number  # 车辆序列号（VDA5050 字段）
+string pickup_node_id  # 取货节点 ID（映射为取货站点）
+string dropoff_node_id  # 放货节点 ID（映射为放货站点）；不能与取货节点相同
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
+bool preempt_current  # true 时抢占当前正在执行的任务
 ---
-bool success
-string message
-string order_id
-string serial_number
-string mission_id
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string order_id  # VDA5050 订单号（回显）
+string serial_number  # 车辆序列号（回显）
+string mission_id  # 映射后生成的任务 ID
+int32 queue_size  # 本次操作后，任务队列中的任务总数

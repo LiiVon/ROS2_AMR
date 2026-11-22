@@ -1,11 +1,15 @@
-string order_id
-string pickup_station
-string dropoff_station
-int32 priority
-bool start_if_idle
-bool preempt_current
+# @file SubmitStationTransportOrder.srv
+# @brief 提交站点间运输任务：从取货站点导航到放货站点，生成一个任务入队。
+# @details 所属包：robot_interfaces_mission
+#
+string order_id  # 业务侧订单号，用于关联与去重
+string pickup_station  # 取货站点 ID（须存在于站点目录）
+string dropoff_station  # 放货站点 ID（须存在于站点目录，且不能与取货站点相同）
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
+bool preempt_current  # true 时抢占当前正在执行的任务
 ---
-bool success
-string message
-string mission_id
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string mission_id  # 本次创建/命中的任务 ID；失败时为空
+int32 queue_size  # 本次操作后，任务队列中的任务总数

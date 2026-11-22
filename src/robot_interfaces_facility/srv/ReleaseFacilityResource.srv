@@ -1,7 +1,11 @@
-string resource_id
-string holder_id
+# @file ReleaseFacilityResource.srv
+# @brief 释放设施资源占用；holder_id 不匹配时拒绝，避免误释放他人资源。
+# @details 所属包：robot_interfaces_facility
+#
+string resource_id  # 设施资源 ID
+string holder_id  # 占用者标识；须与预约时一致（为空表示不校验）
 ---
-bool success
-string message
-string resource_id
-string status
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string resource_id  # 设施资源 ID（回显）
+string status  # 释放后状态：available / reserved / occupied / disabled

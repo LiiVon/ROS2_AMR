@@ -11,8 +11,7 @@
       const std::shared_ptr<ResponseT>& response) {
     const auto route_result = robot_tasks::TickSubmitOrderBehaviorTree(
         robot_tasks::SubmitOrderBehaviorTreeInput{robot_tasks::SubmitOrderInput{
-            request->order_id, request->order_type, request->priority, request->payload_json,
-            request->tags}});
+            request->order_id, request->order_type, request->priority, request->payload_json}});
     if (!route_result.success || !route_result.route.has_value()) {
       RejectSubmitOrder(
           response,

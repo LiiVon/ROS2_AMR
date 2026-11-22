@@ -1,8 +1,12 @@
+# @file ListStations.srv
+# @brief 列出站点目录中的全部站点及其坐标（站点是任务的导航目标）。
+# @details 所属包：robot_interfaces_mission
+#
 ---
-bool success
-string message
-string[] station_ids
-string[] frame_ids
-float64[] x
-float64[] y
-float64[] yaw
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] station_ids  # 站点 ID 列表
+string[] frame_ids  # 各站点所在坐标系，与 station_ids 一一对应
+float64[] x  # 站点 x 坐标，单位 m
+float64[] y  # 站点 y 坐标，单位 m
+float64[] yaw  # 站点朝向，单位 rad

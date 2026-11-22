@@ -39,7 +39,6 @@ struct SubmitOrderInput {
   std::string order_type;
   int priority{0};
   std::string payload_json;
-  std::vector<std::string> tags;
 };
 
 /**

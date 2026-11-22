@@ -1,6 +1,10 @@
-string from_station
-string to_station
+# @file UnblockStationRoute.srv
+# @brief 解除站点间路段的阻断状态。
+# @details 所属包：robot_interfaces_mission
+#
+string from_station  # 路段起点站点 ID
+string to_station  # 路段终点站点 ID
 ---
-bool success
-string message
-string resource_id
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string resource_id  # 被解除的路段资源 ID

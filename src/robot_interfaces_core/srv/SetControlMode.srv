@@ -1,4 +1,8 @@
-string mode
+# @file SetControlMode.srv
+# @brief 设置速度控制源：仲裁节点用于切换生效输入通道，安全闸门用于记录来源提示。
+# @details 所属包：robot_interfaces_core
+#
+string mode  # 控制源名称。仲裁节点：取 twist_mux 配置中的输入名（nav2 / tracking / teleop）；安全闸门：nav2 / tracking / teleop / twist_mux
 ---
-bool success
-string message
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因

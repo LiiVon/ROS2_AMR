@@ -1,13 +1,17 @@
-string order_id
+# @file GetWorkflowStatus.srv
+# @brief 查询某个订单对应工作流的执行进度（步骤数、运行中/排队中/已完成任务）。
+# @details 所属包：robot_interfaces_business
+#
+string order_id  # 订单号
 ---
-bool success
-string message
-string order_id
-string state
-int32 total_steps
-int32 finished_steps
-int32 queued_steps
-string running_mission_id
-string[] queued_mission_ids
-string[] finished_mission_ids
-bool paused
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string order_id  # 订单标识，由调用方保证唯一
+string state  # 工作流状态字符串（如 RUNNING / PAUSED / FINISHED / FAILED）
+int32 total_steps  # 工作流总步骤数
+int32 finished_steps  # 已完成步骤数
+int32 queued_steps  # 仍在排队的步骤数
+string running_mission_id  # 当前正在执行的任务 ID；无则为空
+string[] queued_mission_ids  # 排队中的任务 ID 列表
+string[] finished_mission_ids  # 已完成的任务 ID 列表
+bool paused  # 工作流是否处于暂停状态

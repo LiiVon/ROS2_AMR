@@ -1,9 +1,13 @@
-string scenario_id
+# @file ListScenarioWorkflows.srv
+# @brief 列出某个场景下的预定义工作流（由多个任务组成）。
+# @details 所属包：robot_interfaces_business
+#
+string scenario_id  # 场景 ID；为空表示列出全部场景的工作流
 ---
-bool success
-string message
-string[] scenario_ids
-string[] workflow_ids
-string[] labels
-string[] task_ids_csv
-int32[] default_priorities
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] scenario_ids  # 工作流所属场景 ID 列表
+string[] workflow_ids  # 工作流 ID 列表
+string[] labels  # 工作流可读名称
+string[] task_ids_csv  # 工作流包含的任务 ID 序列（逗号分隔字符串）
+int32[] default_priorities  # 工作流默认优先级

@@ -1,13 +1,17 @@
-string mission_file
-float64 nominal_speed_mps
-float64 battery_voltage
+# @file EstimateMissionCost.srv
+# @brief 估算任务代价：里程、预计耗时与电池压降，并判断电量是否足够。
+# @details 所属包：robot_interfaces_mission
+#
+string mission_file  # 任务描述 YAML 路径
+float64 nominal_speed_mps  # 规划速度，单位 m/s；传 0 时使用参数 estimate_nominal_speed_mps（默认 0.35）
+float64 battery_voltage  # 起始电池电压，单位 V；传 0 时使用当前状态中的电压
 ---
-bool success
-string message
-string mission_id
-int32 waypoint_count
-float64 distance_m
-float64 eta_sec
-float64 battery_drop_v
-float64 projected_battery_voltage
-bool battery_sufficient
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string mission_id  # 由任务文件推导出的任务标识
+int32 waypoint_count  # 任务中的路点数量
+float64 distance_m  # 估算总里程，单位 m
+float64 eta_sec  # 预计耗时，单位 s
+float64 battery_drop_v  # 预计电池压降，单位 V
+float64 projected_battery_voltage  # 预计完成时电压，单位 V
+bool battery_sufficient  # 预计电压是否仍高于安全阈值

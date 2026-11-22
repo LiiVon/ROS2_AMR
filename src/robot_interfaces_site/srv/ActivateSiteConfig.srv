@@ -1,10 +1,14 @@
-string bundle_dir
-string version_id
-bool require_valid
+# @file ActivateSiteConfig.srv
+# @brief 激活一份站点配置包，记录上一个版本以便回滚。
+# @details 所属包：robot_interfaces_site
+#
+string bundle_dir  # 配置包目录；为空表示使用最近一次校验通过的包
+string version_id  # 要激活的版本标识
+bool require_valid  # true 表示校验不通过则拒绝激活
 ---
-bool success
-string message
-string active_version_id
-string active_bundle_dir
-string previous_version_id
-string diff_report
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string active_version_id  # 激活后生效的版本标识
+string active_bundle_dir  # 激活后生效的配置包目录
+string previous_version_id  # 激活前的版本标识（用于回滚）
+string diff_report  # 本次激活相对上一版本的差异摘要

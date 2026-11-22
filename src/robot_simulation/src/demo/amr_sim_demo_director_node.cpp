@@ -856,7 +856,6 @@ class AmrSimDemoDirectorNode final : public rclcpp::Node {
                             ";start_if_idle=" + (start_if_idle ? std::string{"true"} : "false") +
                             ";preempt_current=" +
                             (preempt_current ? std::string{"true"} : "false");
-    request->tags = {"amr_sim_demo_director"};
     request_pending_ = true;
     station_order_client_->async_send_request(
         request,

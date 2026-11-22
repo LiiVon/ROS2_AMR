@@ -1,6 +1,10 @@
+# @file ListTrafficReservations.srv
+# @brief 列出当前所有交通资源预约（谁占用了哪条路段/资源）。
+# @details 所属包：robot_interfaces_mission
+#
 ---
-bool success
-string message
-string[] resource_ids
-string[] owner_ids
-string[] reservation_types
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] resource_ids  # 被占用的资源 ID 列表
+string[] owner_ids  # 持有者标识列表，与 resource_ids 一一对应
+string[] reservation_types  # 预约类型列表（如 route / mission 等，与 resource_ids 一一对应）

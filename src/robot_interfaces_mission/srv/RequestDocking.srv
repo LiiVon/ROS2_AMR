@@ -1,13 +1,17 @@
-string dock_id
-string request_id
-int32 priority
-bool start_if_idle
-bool preempt_current
-bool simulate_contact_success
+# @file RequestDocking.srv
+# @brief 请求前往停靠点并执行停靠动作（可等待对接完成）。
+# @details 所属包：robot_interfaces_mission
+#
+string dock_id  # 目标停靠点 ID
+string request_id  # 调用方请求标识，用于关联日志与事件
+int32 priority  # 优先级，数值越大越先执行
+bool start_if_idle  # 队列空闲时立即启动，否则仅入队
+bool preempt_current  # true 时抢占当前正在执行的任务
+bool simulate_contact_success  # 测试/仿真用：true 表示直接按对接成功处理，跳过接触检测
 ---
-bool success
-string message
-string dock_id
-string mission_id
-string state
-int32 queue_size
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string dock_id  # 目标停靠点 ID（回显）
+string mission_id  # 为本次停靠创建的任务 ID
+string state  # 停靠状态：APPROACHING / CHARGING / FAILED / REJECTED
+int32 queue_size  # 本次操作后，任务队列中的任务总数

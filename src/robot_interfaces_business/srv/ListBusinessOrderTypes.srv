@@ -1,7 +1,11 @@
+# @file ListBusinessOrderTypes.srv
+# @brief 列出支持的业务类型及其对应场景与工作流（来自业务类型目录）。
+# @details 所属包：robot_interfaces_business
+#
 ---
-bool success
-string message
-string[] business_types
-string[] scenario_ids
-string[] workflow_ids
-string[] labels
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string[] business_types  # 业务类型列表（如 warehouse_inbound / campus_mail）
+string[] scenario_ids  # 对应场景 ID，与 business_types 一一对应
+string[] workflow_ids  # 对应工作流 ID，与 business_types 一一对应
+string[] labels  # 人类可读名称，与 business_types 一一对应

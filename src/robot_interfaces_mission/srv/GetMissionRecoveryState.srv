@@ -1,10 +1,14 @@
+# @file GetMissionRecoveryState.srv
+# @brief 查询任务恢复策略的运行状态（开关、策略、重试次数与最近一次失败信息）。
+# @details 所属包：robot_interfaces_mission
+#
 ---
-bool success
-string message
-bool enabled
-string policy
-int32 retry_limit
-int32 retry_count
-string last_failed_mission_id
-string last_failure_message
-string last_recovery_action
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+bool enabled  # 恢复机制是否启用
+string policy  # 恢复策略：retry / retry_only / retry_then_dock 等
+int32 retry_limit  # 同一任务允许的最大重试次数
+int32 retry_count  # 当前已重试次数
+string last_failed_mission_id  # 最近一次失败的任务 ID
+string last_failure_message  # 最近一次失败原因
+string last_recovery_action  # 最近一次执行的恢复动作描述

@@ -1,10 +1,14 @@
-string action
-string payload_id
-float64 weight_kg
+# @file ExecuteTopModuleAction.srv
+# @brief 执行顶部模块动作（顶升/放下等），动作是否合法取决于 top_module_type。
+# @details 所属包：robot_interfaces_facility
+#
+string action  # 顶部模块动作名（如 lift / lower；manual_load 类型只接受人工上料相关动作）
+string payload_id  # 载荷标识（动作作用于该载荷）
+float64 weight_kg  # 动作涉及的重量，单位 kg
 ---
-bool success
-string message
-string action
-string state
-bool loaded
-string payload_id
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string action  # 实际执行的动作名（回显）
+string state  # 动作后的载荷状态：EMPTY / LOADED / TOP_MODULE_ACTION
+bool loaded  # 动作后是否载货
+string payload_id  # 载荷标识（回显）

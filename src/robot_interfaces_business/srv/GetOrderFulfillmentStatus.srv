@@ -1,16 +1,20 @@
-string fulfillment_id
+# @file GetOrderFulfillmentStatus.srv
+# @brief 查询履约单详情（商品/料箱/站点/数量/关联任务与确认）。
+# @details 所属包：robot_interfaces_business
+#
+string fulfillment_id  # 履约单 ID
 ---
-bool success
-string message
-string fulfillment_id
-string order_type
-string sku_id
-string tote_id
-string state
-string pick_station
-string dropoff_station
-int32 requested_quantity
-int32 picked_quantity
-int32 short_quantity
-string[] mission_ids
-string[] confirmation_ids
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string fulfillment_id  # 履约单 ID（回显）
+string order_type  # 来源订单类型（picking_wave / milk_run / replenishment 等）
+string sku_id  # 商品/SKU 标识
+string tote_id  # 料箱标识
+string state  # 履约状态：ACCEPTED / DUPLICATE / SHORT_PICK 等
+string pick_station  # 拣货站点 ID
+string dropoff_station  # 放货站点 ID
+int32 requested_quantity  # 请求数量
+int32 picked_quantity  # 已拣数量
+int32 short_quantity  # 缺口数量
+string[] mission_ids  # 关联的任务 ID 列表
+string[] confirmation_ids  # 关联的站点确认事件 ID 列表

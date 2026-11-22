@@ -190,7 +190,7 @@ class TestMockBringup(unittest.TestCase):
         node = rclpy.create_node("mock_bringup_action_test", context=context)
         executor = SingleThreadedExecutor(context=context)
         executor.add_node(node)
-        client = ActionClient(node, NavigateSequence, "/navigate_sequence")
+        client = ActionClient(node, NavigateSequence, "/mission/navigate_sequence")
         try:
             self.assertTrue(client.wait_for_server(timeout_sec=10.0))
             goal = NavigateSequence.Goal()

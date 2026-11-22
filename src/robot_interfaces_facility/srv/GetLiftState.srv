@@ -1,9 +1,13 @@
-string lift_id
+# @file GetLiftState.srv
+# @brief 查询单个电梯资源的可用状态与占用者。
+# @details 所属包：robot_interfaces_facility
+#
+string lift_id  # 电梯资源 ID
 ---
-bool success
-string message
-string lift_id
-string station_id
-bool available
-string holder_id
-string status
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string lift_id  # 电梯资源 ID（回显）
+string station_id  # 电梯所在站点 ID
+bool available  # 当前是否可被占用
+string holder_id  # 当前占用者标识；空闲时为空
+string status  # 状态：available / reserved / occupied / disabled

@@ -1,11 +1,15 @@
-string fulfillment_id
-string operator_id
-int32 picked_quantity
-string note
+# @file ConfirmPick.srv
+# @brief 确认拣货结果：登记实拣数量，不足部分记为短拣。
+# @details 所属包：robot_interfaces_business
+#
+string fulfillment_id  # 履约单 ID
+string operator_id  # 操作员标识（审计用）
+int32 picked_quantity  # 实际拣到的数量；<0 视为无效
+string note  # 备注文本，仅记录
 ---
-bool success
-string message
-string fulfillment_id
-string state
-int32 picked_quantity
-int32 short_quantity
+bool success  # 是否成功；false 时原因见 message
+string message  # 结果说明；失败时为失败原因
+string fulfillment_id  # 履约单 ID（回显）
+string state  # 更新后的履约状态：ACCEPTED / DUPLICATE / SHORT_PICK 等
+int32 picked_quantity  # 已登记的实拣数量
+int32 short_quantity  # 相对请求数量的缺口
