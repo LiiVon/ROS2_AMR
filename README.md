@@ -151,7 +151,7 @@ python3 tools/check_conventions.py            # 命名/行数规范
 python3 tools/check_conventions.py --strict   # 发布门禁（行数超限也算失败）
 ```
 
-当前基线：**534 个测试、0 失败、1 跳过**（跳过的为 Gazebo 运行时用例，需要 3D 显示）。
+当前基线：**535 个测试、0 失败、1 跳过**（跳过的为 Gazebo 运行时用例，需要 3D 显示）。
 命名规范检查已作为 `conventions` 用例接入 `colcon test`，无需单独执行也可被门禁覆盖。
 
 业务链路端到端冒烟（mock 底盘 + 任务中枢）：
@@ -159,6 +159,20 @@ python3 tools/check_conventions.py --strict   # 发布门禁（行数超限也�
 ```bash
 tools/smoke_mission.sh          # 提交订单→暂停→恢复→操作员快照，末尾输出 SMOKE PASSED
 ```
+
+### 已验证的行为约束
+
+以下约束都有测试或脚本守护，改动代码时不要破坏：
+
+| 约束 | 说明 |
+|---|---|
+| `/cmd_vel` 唯一发布者 | 只有 `cmd_vel_safety_gate_node`（未启用 twist_mux 时由 `cmd_vel_mux_node` 兼任） |
+| `odom→base_footprint` 单一 TF 源 | 驱动 `publish_tf:=true` 与 EKF 二选一 |
+| 限速只降速 | `/navigation/set_speed_limit` 不产生 `safety_stop` |
+| 急停/解除严格分离 | `enable_emergency_stop`、`clear_emergency_stop` 只接受 `data=true` |
+| 遥控 deadman | 超过 `command_timeout_ms`（200 ms）未收到新指令即发零速 |
+| 导航必须真移动 | mock 下启用 `/odom` 反馈仿真；无里程计反馈宁可失败也不假成功 |
+| 里程计清零需下发 | `/chassis/clear_odometry` 发 `CLEAR`（文本）或 `0xA2` 帧（Mick）到底盘 |
 
 ## 6. 操作台（前端 + HTTP 网关）
 
@@ -236,6 +250,8 @@ src/
 | 文档 | 内容 |
 |---|---|
 | `docs/需求文档.md` | 需求基线：命名规则、分层、94 个接口、FR/TR/Gate、交付物与风险 |
+| `docs/问题清单.md` | 代码级缺陷清单（P0/P1/P2）与修复验收记录 |
 | `docs/审计报告.md` | 工程审计结论与遗留项 |
+| `18包学习与复刻顺序.md` | 逐包学习/复刻顺序与复刻时必须遵守的硬约束 |
 | 各包 `README.md` | 该包职责、分层表、接口、启动方式、约束与测试 |
 

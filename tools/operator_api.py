@@ -10,7 +10,7 @@
   GET  /                          -> 返回 front_end.html（同目录）
   GET  /api/health                -> 网关与 ROS 连接状态
   GET  /api/operator/snapshot     -> /business/get_operator_snapshot
-  POST /api/business_orders       -> /business/submit_business_order
+  POST /api/business_orders       -> /business/submit_order（order_type=business）
   POST /api/workflows/pause       -> /business/pause_workflow
   POST /api/workflows/resume      -> /business/resume_workflow
   POST /api/workflows/cancel      -> /business/cancel_workflow
@@ -62,6 +62,14 @@ class RosBridge:
         self.executor.shutdown()
         self.node.destroy_node()
         rclpy.shutdown()
+
+    def service_ready(self, name: str, srv_type) -> bool:
+        """服务是否已就绪（非阻塞，供 /api/health 使用）。"""
+        try:
+            client = self._client(name, srv_type)
+            return bool(client.service_is_ready())
+        except Exception:  # noqa: BLE001 - 健康检查不应抛异常
+            return False
 
     def _client(self, name: str, srv_type):
         client = self._clients.get(name)
@@ -285,7 +293,23 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, HTML_PATH.read_bytes(), "text/html; charset=utf-8")
             return
         if path == "/api/health":
-            self._json(200, {"success": True, "ros": True, "html": HTML_PATH.exists()})
+            bridge = self.bridge
+            ros_ok = bool(rclpy.ok())
+            snapshot_ready = bridge.service_ready(
+                "/business/get_operator_snapshot", GetOperatorSnapshot
+            )
+            submit_ready = bridge.service_ready("/business/submit_order", SubmitOrder)
+            self._json(
+                200,
+                {
+                    "success": True,
+                    "ros": ros_ok,
+                    "services_ready": snapshot_ready and submit_ready,
+                    "snapshot_service": snapshot_ready,
+                    "submit_service": submit_ready,
+                    "html": HTML_PATH.exists(),
+                },
+            )
             return
         if path == "/api/operator/snapshot":
             limit = 20
@@ -305,7 +329,11 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/business_orders":
             order_id = str(body.get("business_order_id") or body.get("order_id") or "")
             business_type = str(body.get("business_type") or "")
-            priority = int(body.get("priority") or 50)
+            try:
+                priority = int(body.get("priority") or 50)
+            except (TypeError, ValueError):
+                self._json(400, {"success": False, "message": "priority must be an integer"})
+                return
             if not business_type:
                 self._json(400, {"success": False, "message": "business_type is required"})
                 return
