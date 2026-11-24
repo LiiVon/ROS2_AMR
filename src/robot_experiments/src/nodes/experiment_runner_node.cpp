@@ -17,6 +17,10 @@
 #include "robot_interfaces_core/msg/navigation_statistics.hpp"
 #include "robot_interfaces_core/msg/tracking_error.hpp"
 
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
+
 using namespace std::chrono_literals;
 
 class ExperimentRunnerNode final : public rclcpp::Node {
@@ -27,14 +31,14 @@ class ExperimentRunnerNode final : public rclcpp::Node {
     controller_name_ = declare_parameter<std::string>("controller_name", "unknown");
     scenario_name_ = declare_parameter<std::string>("scenario_name", "tracking_benchmark");
     path_file_ = declare_parameter<std::string>("path_file", "");
-    odom_topic_ = declare_parameter<std::string>("odom_topic", "/odom");
+    odom_topic_ = declare_parameter<std::string>("odom_topic", topics::kOdom);
     csv_.open(output_csv_, std::ios::out | std::ios::trunc);
     if (!csv_) {
       throw std::runtime_error("failed to open experiment output: " + output_csv_);
     }
     csv_ << "stamp,controller,lateral_error,heading_error,target_speed,actual_speed,nearest_path_index\n";
     tracking_subscription_ = create_subscription<robot_interfaces_core::msg::TrackingError>(
-        "/tracking/error", 50,
+        topics::kTrackingError, 50,
         [this](robot_interfaces_core::msg::TrackingError::SharedPtr msg) { OnTrackingError(*msg); });
     // 里程必须来自真实位姿变化，不能用“误差累加”冒充。
     odom_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
@@ -51,7 +55,7 @@ class ExperimentRunnerNode final : public rclcpp::Node {
           last_odom_y_ = y;
         });
     stats_publisher_ = create_publisher<robot_interfaces_core::msg::NavigationStatistics>(
-        "/experiment/statistics", 10);
+        topics::kExperimentStatistics, 10);
     timer_ = create_wall_timer(1s, [this]() { PublishStatistics(); });
   }
 

@@ -38,6 +38,10 @@
 #include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
+
 using namespace std::chrono_literals;
 
 namespace {
@@ -128,10 +132,10 @@ class AmrSimVisualizerNode final : public rclcpp::Node {
  public:
   AmrSimVisualizerNode() : Node("amr_sim_visualizer_node") {
     frame_id_ = declare_parameter<std::string>("frame_id", "odom");
-    marker_topic_ = declare_parameter<std::string>("marker_topic", "/sim/markers");
-    odom_topic_ = declare_parameter<std::string>("odom_topic", "/model/mobile_robot/odometry");
+    marker_topic_ = declare_parameter<std::string>("marker_topic", topics::kSimMarkers);
+    odom_topic_ = declare_parameter<std::string>("odom_topic", topics::kGazeboOdom);
     timeline_topic_ =
-        declare_parameter<std::string>("timeline_topic", "/sim/timeline");
+        declare_parameter<std::string>("timeline_topic", topics::kSimTimeline);
 
     InitLayout();
     marker_publisher_ =
@@ -146,14 +150,14 @@ class AmrSimVisualizerNode final : public rclcpp::Node {
           have_robot_pose_ = true;
         });
     current_goal_subscription_ = create_subscription<geometry_msgs::msg::PoseStamped>(
-        "/navigation/current_goal", rclcpp::QoS(1).transient_local(),
+        topics::kNavigationCurrentGoal, rclcpp::QoS(1).transient_local(),
         [this](geometry_msgs::msg::PoseStamped::SharedPtr msg) {
           current_goal_x_ = msg->pose.position.x;
           current_goal_y_ = msg->pose.position.y;
           have_current_goal_ = true;
         });
     payload_subscription_ = create_subscription<robot_interfaces_facility::msg::PayloadState>(
-        "/facility/payload_state", 10, [this](robot_interfaces_facility::msg::PayloadState::SharedPtr msg) {
+        topics::kFacilityPayloadState, 10, [this](robot_interfaces_facility::msg::PayloadState::SharedPtr msg) {
           payload_loaded_ = msg->loaded;
           payload_id_ = msg->payload_id.empty() ? "payload_box" : msg->payload_id;
           payload_state_ = msg->state;
@@ -161,7 +165,7 @@ class AmrSimVisualizerNode final : public rclcpp::Node {
           payload_action_ = msg->last_action;
         });
     localization_subscription_ = create_subscription<robot_interfaces_navigation::msg::LocalizationHealth>(
-        "/navigation/localization_health", 10, [this](robot_interfaces_navigation::msg::LocalizationHealth::SharedPtr msg) {
+        topics::kNavigationLocalizationHealth, 10, [this](robot_interfaces_navigation::msg::LocalizationHealth::SharedPtr msg) {
           localization_state_ = msg->state.empty() ? (msg->localized ? "LOCALIZED" : "LOST") : msg->state;
           localization_station_ = msg->station_id;
           localization_covariance_xy_ = msg->covariance_xy;
@@ -169,7 +173,7 @@ class AmrSimVisualizerNode final : public rclcpp::Node {
           localized_ = msg->localized;
         });
     safety_subscription_ = create_subscription<robot_interfaces_navigation::msg::SafetyState>(
-        "/navigation/safety_state", 10, [this](robot_interfaces_navigation::msg::SafetyState::SharedPtr msg) {
+        topics::kNavigationSafetyState, 10, [this](robot_interfaces_navigation::msg::SafetyState::SharedPtr msg) {
           safety_state_ = msg->state;
           safety_stop_ = msg->safety_stop;
           obstacle_blocked_ = msg->obstacle_blocked;

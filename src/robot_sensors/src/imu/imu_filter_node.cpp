@@ -12,11 +12,15 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
+
 class ImuFilterNode final : public rclcpp::Node {
  public:
   ImuFilterNode() : Node("imu_filter_node"), diagnostics_(this) {
-    input_topic_ = declare_parameter<std::string>("input_topic", "/sim/imu");
-    output_topic_ = declare_parameter<std::string>("output_topic", "/imu/data");
+    input_topic_ = declare_parameter<std::string>("input_topic", topics::kSimImu);
+    output_topic_ = declare_parameter<std::string>("output_topic", topics::kImu);
     frame_id_ = declare_parameter<std::string>("frame_id", "imu_link");
     subscription_ = create_subscription<sensor_msgs::msg::Imu>(
         input_topic_, 10, [this](sensor_msgs::msg::Imu::SharedPtr msg) { Filter(*msg); });

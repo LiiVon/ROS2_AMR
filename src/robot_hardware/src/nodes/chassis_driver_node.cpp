@@ -27,6 +27,10 @@
 #include "std_srvs/srv/empty.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
+
 using namespace std::chrono_literals;
 using namespace robot_hardware::protocol;
 using namespace robot_hardware::transport;
@@ -64,8 +68,8 @@ public:
         requested_backend_ = declare_parameter<std::string>("backend", "mock");
         publish_tf_ = declare_parameter<bool>("publish_tf", true);
         publish_odom_ = declare_parameter<bool>("publish_odom", true);
-        wheel_odom_topic_ = declare_parameter<std::string>("wheel_odom_topic", "/wheel/odom");
-        odom_topic_ = declare_parameter<std::string>("odom_topic", "/odom");
+        wheel_odom_topic_ = declare_parameter<std::string>("wheel_odom_topic", topics::kWheelOdom);
+        odom_topic_ = declare_parameter<std::string>("odom_topic", topics::kOdom);
 
         // 声明底盘后端的相关参数，包括串口设备路径、波特率、UDP目标主机和端口，以及协议类型
         backend_config_.serial_device = declare_parameter<std::string>("serial_device", "/dev/ttyUSB0");
@@ -114,7 +118,7 @@ public:
         imu_source_ = declare_parameter<std::string>("imu_source", "auto");
         publish_synthetic_imu_ = ShouldPublishSyntheticImu();
         cmd_subscription_ = create_subscription<geometry_msgs::msg::Twist>(
-            "/cmd_vel", 10, [this](geometry_msgs::msg::Twist::SharedPtr msg)
+            topics::kCmdVel, 10, [this](geometry_msgs::msg::Twist::SharedPtr msg)
             { HandleCommand(*msg); });
 
         wheel_odom_publisher_ = create_publisher<nav_msgs::msg::Odometry>(wheel_odom_topic_, 10);
@@ -124,9 +128,9 @@ public:
         }
         if (publish_synthetic_imu_)
         {
-            imu_publisher_ = create_publisher<sensor_msgs::msg::Imu>("/imu/data", 10);
+            imu_publisher_ = create_publisher<sensor_msgs::msg::Imu>(topics::kImu, 10);
         }
-        state_publisher_ = create_publisher<robot_interfaces_core::msg::ChassisState>("/chassis/state", 10);
+        state_publisher_ = create_publisher<robot_interfaces_core::msg::ChassisState>(topics::kChassisState, 10);
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
         clear_odom_service_ = create_service<std_srvs::srv::Empty>(
             "/chassis/clear_odometry", [this](const std::shared_ptr<std_srvs::srv::Empty::Request>,

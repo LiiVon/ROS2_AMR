@@ -24,6 +24,10 @@
 #include "robot_navigation/model/zone_catalog.hpp"
 #include "std_msgs/msg/string.hpp"
 
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
+
 using namespace std::chrono_literals;
 
 class MapManagerNode final : public rclcpp::Node {
@@ -44,9 +48,9 @@ class MapManagerNode final : public rclcpp::Node {
 
     catalog_ = std::make_unique<robot_navigation::MapCatalog>(maps_directory_);
     zone_catalog_ = std::make_unique<robot_navigation::ZoneCatalog>(zones_file_);
-    state_publisher_ = create_publisher<robot_interfaces_core::msg::RobotState>("/navigation/map_state", 10);
-    catalog_publisher_ = create_publisher<std_msgs::msg::String>("/navigation/map_catalog", 10);
-    zones_publisher_ = create_publisher<std_msgs::msg::String>("/navigation/map_zones", 10);
+    state_publisher_ = create_publisher<robot_interfaces_core::msg::RobotState>(topics::kNavigationMapState, 10);
+    catalog_publisher_ = create_publisher<std_msgs::msg::String>(topics::kNavigationMapCatalog, 10);
+    zones_publisher_ = create_publisher<std_msgs::msg::String>(topics::kNavigationMapZones, 10);
     list_maps_service_ = create_service<robot_interfaces_navigation::srv::ListMaps>(
         "/navigation/list_maps",
         [this](const std::shared_ptr<robot_interfaces_navigation::srv::ListMaps::Request>,

@@ -17,23 +17,27 @@
 #include "std_msgs/msg/string.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
+
 using namespace std::chrono_literals;
 
 class CmdVelSafetyGateNode final : public rclcpp::Node {
  public:
   CmdVelSafetyGateNode() : Node("cmd_vel_safety_gate_node") {
-    input_topic_ = declare_parameter<std::string>("input_topic", "/cmd_vel/muxed");
+    input_topic_ = declare_parameter<std::string>("input_topic", topics::kCmdVelMuxed);
     active_source_hint_ = declare_parameter<std::string>("default_source", "twist_mux");
     watchdog_timeout_ms_ = declare_parameter<int>("watchdog_timeout_ms", 500);
     dynamic_angular_limit_radps_ =
         declare_parameter<double>("dynamic_angular_limit_radps", 0.6);
 
-    cmd_publisher_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
-    active_publisher_ = create_publisher<std_msgs::msg::String>("/teleop/active_source", 10);
-    estop_state_publisher_ = create_publisher<std_msgs::msg::Bool>("/system/emergency_stop", 10);
-    takeover_state_publisher_ = create_publisher<std_msgs::msg::Bool>("/teleop/takeover", 10);
+    cmd_publisher_ = create_publisher<geometry_msgs::msg::Twist>(topics::kCmdVel, 10);
+    active_publisher_ = create_publisher<std_msgs::msg::String>(topics::kTeleopActiveSource, 10);
+    estop_state_publisher_ = create_publisher<std_msgs::msg::Bool>(topics::kSystemEmergencyStop, 10);
+    takeover_state_publisher_ = create_publisher<std_msgs::msg::Bool>(topics::kTeleopTakeover, 10);
     takeover_lock_publisher_ =
-        create_publisher<std_msgs::msg::Bool>("/teleop/takeover_lock", 10);
+        create_publisher<std_msgs::msg::Bool>(topics::kTeleopTakeoverLock, 10);
 
     cmd_subscription_ = create_subscription<geometry_msgs::msg::Twist>(
         input_topic_, 10, [this](geometry_msgs::msg::Twist::SharedPtr msg) {
@@ -42,10 +46,10 @@ class CmdVelSafetyGateNode final : public rclcpp::Node {
           received_ = true;
         });
     takeover_subscription_ = create_subscription<std_msgs::msg::Bool>(
-        "/teleop/manual_state", 10,
+        topics::kTeleopManualState, 10,
         [this](std_msgs::msg::Bool::SharedPtr msg) { manual_takeover_ = msg->data; });
     safety_subscription_ = create_subscription<robot_interfaces_navigation::msg::SafetyState>(
-        "/navigation/safety_state", 10, [this](robot_interfaces_navigation::msg::SafetyState::SharedPtr msg) {
+        topics::kNavigationSafetyState, 10, [this](robot_interfaces_navigation::msg::SafetyState::SharedPtr msg) {
           runtime_safety_stop_ = msg->safety_stop;
           dynamic_speed_limit_mps_ = msg->effective_speed_limit_mps;
         });

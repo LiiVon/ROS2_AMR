@@ -16,6 +16,7 @@
   <depend>std_srvs</depend>
   <depend>robot_interfaces_core</depend>
   <depend>robot_interfaces_navigation</depend>
+  <depend>robot_utils</depend>
   <exec_depend>twist_mux</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>

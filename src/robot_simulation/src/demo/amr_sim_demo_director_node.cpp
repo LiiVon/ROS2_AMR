@@ -35,6 +35,10 @@
 #include "robot_interfaces_fleet/srv/update_fleet_robot_state.hpp"
 #include "std_msgs/msg/string.hpp"
 
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
+
 using namespace std::chrono_literals;
 
 class AmrSimDemoDirectorNode final : public rclcpp::Node {
@@ -44,8 +48,8 @@ class AmrSimDemoDirectorNode final : public rclcpp::Node {
     start_delay_s_ = declare_parameter<double>("start_delay_s", 4.0);
     startup_drive_enabled_ = declare_parameter<bool>("startup_drive_enabled", true);
     startup_odom_topic_ =
-        declare_parameter<std::string>("startup_odom_topic", "/model/mobile_robot/odometry");
-    startup_cmd_topic_ = declare_parameter<std::string>("startup_cmd_topic", "/cmd_vel/virtual_rc");
+        declare_parameter<std::string>("startup_odom_topic", topics::kGazeboOdom);
+    startup_cmd_topic_ = declare_parameter<std::string>("startup_cmd_topic", topics::kVirtualRcCmdVel);
     startup_drive_duration_s_ = declare_parameter<double>("startup_drive_duration_s", 8.0);
     startup_drive_linear_mps_ = declare_parameter<double>("startup_drive_linear_mps", 0.45);
     startup_drive_angular_radps_ = declare_parameter<double>("startup_drive_angular_radps", 0.0);
@@ -62,7 +66,7 @@ class AmrSimDemoDirectorNode final : public rclcpp::Node {
     recovery_drive_duration_s_ = declare_parameter<double>("recovery_drive_duration_s", 4.0);
     tick_period_s_ = declare_parameter<double>("tick_period_s", 0.2);
     timeline_topic_ =
-        declare_parameter<std::string>("timeline_topic", "/sim/timeline");
+        declare_parameter<std::string>("timeline_topic", topics::kSimTimeline);
 
     load_client_ = create_client<robot_interfaces_facility::srv::ConfirmLoad>("/facility/confirm_load");
     unload_client_ = create_client<robot_interfaces_facility::srv::ConfirmUnload>("/facility/confirm_unload");

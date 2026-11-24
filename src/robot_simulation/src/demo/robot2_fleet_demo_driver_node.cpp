@@ -19,6 +19,10 @@
 #include "robot_interfaces_mission/srv/list_stations.hpp"
 #include "robot_interfaces_fleet/srv/update_fleet_robot_state.hpp"
 
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
+
 using namespace std::chrono_literals;
 
 namespace {
@@ -57,9 +61,9 @@ class Robot2FleetDemoDriverNode final : public rclcpp::Node {
     fleet_service_ = declare_parameter<std::string>("fleet_service", "/fleet/list_robots");
     update_fleet_service_ =
         declare_parameter<std::string>("update_fleet_service", "/fleet/update_robot_state");
-    odom_topic_ = declare_parameter<std::string>("odom_topic", "/robot_2/odom");
-    main_odom_topic_ = declare_parameter<std::string>("main_odom_topic", "/odom");
-    cmd_vel_topic_ = declare_parameter<std::string>("cmd_vel_topic", "/robot_2/cmd_vel");
+    odom_topic_ = declare_parameter<std::string>("odom_topic", topics::kRobot2Odom);
+    main_odom_topic_ = declare_parameter<std::string>("main_odom_topic", topics::kOdom);
+    cmd_vel_topic_ = declare_parameter<std::string>("cmd_vel_topic", topics::kRobot2CmdVel);
     max_linear_mps_ = declare_parameter<double>("max_linear_mps", 0.72);
     max_angular_radps_ = declare_parameter<double>("max_angular_radps", 1.25);
     goal_tolerance_m_ = declare_parameter<double>("goal_tolerance_m", 0.22);

@@ -20,6 +20,10 @@
 #include "std_msgs/msg/string.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
+
 using namespace std::chrono_literals;
 
 namespace {
@@ -37,19 +41,19 @@ class CmdVelMuxNode final : public rclcpp::Node {
     watchdog_timeout_ms_ = declare_parameter<int>("watchdog_timeout_ms", 500);
     dynamic_angular_limit_radps_ = declare_parameter<double>("dynamic_angular_limit_radps", 0.6);
 
-    cmd_publisher_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
-    active_publisher_ = create_publisher<std_msgs::msg::String>("/teleop/active_source", 10);
-    estop_state_publisher_ = create_publisher<std_msgs::msg::Bool>("/system/emergency_stop", 10);
-    takeover_state_publisher_ = create_publisher<std_msgs::msg::Bool>("/teleop/takeover", 10);
+    cmd_publisher_ = create_publisher<geometry_msgs::msg::Twist>(topics::kCmdVel, 10);
+    active_publisher_ = create_publisher<std_msgs::msg::String>(topics::kTeleopActiveSource, 10);
+    estop_state_publisher_ = create_publisher<std_msgs::msg::Bool>(topics::kSystemEmergencyStop, 10);
+    takeover_state_publisher_ = create_publisher<std_msgs::msg::Bool>(topics::kTeleopTakeover, 10);
 
-    AddInput("nav2", "/cmd_vel/nav2");
-    AddInput("tracking", "/cmd_vel/tracking");
-    AddInput("teleop", "/cmd_vel/teleop");
+    AddInput("nav2", topics::kNav2CmdVel);
+    AddInput("tracking", topics::kTrackingCmdVel);
+    AddInput("teleop", topics::kTeleopCmdVel);
     takeover_subscription_ = create_subscription<std_msgs::msg::Bool>(
-        "/teleop/manual_state", 10,
+        topics::kTeleopManualState, 10,
         [this](std_msgs::msg::Bool::SharedPtr msg) { manual_takeover_ = msg->data; });
     safety_subscription_ = create_subscription<robot_interfaces_navigation::msg::SafetyState>(
-        "/navigation/safety_state", 10, [this](robot_interfaces_navigation::msg::SafetyState::SharedPtr msg) {
+        topics::kNavigationSafetyState, 10, [this](robot_interfaces_navigation::msg::SafetyState::SharedPtr msg) {
           runtime_safety_stop_ = msg->safety_stop;
           dynamic_speed_limit_mps_ = msg->effective_speed_limit_mps;
         });
