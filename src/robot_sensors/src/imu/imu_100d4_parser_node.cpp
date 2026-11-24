@@ -17,6 +17,10 @@
 #include "std_msgs/msg/u_int8_multi_array.hpp"
 #include "std_srvs/srv/trigger.hpp"
 
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
+
 namespace {
 
 constexpr std::size_t kMaxFrameLength = 256U;
@@ -51,15 +55,15 @@ geometry_msgs::msg::Quaternion QuaternionFromEuler(
 class Imu100d4ParserNode final : public rclcpp::Node {
  public:
   Imu100d4ParserNode() : Node("imu_100d4_parser_node") {
-    input_topic_ = declare_parameter<std::string>("input_topic", "/imu/raw_bytes");
-    output_topic_ = declare_parameter<std::string>("output_topic", "/imu/data");
+    input_topic_ = declare_parameter<std::string>("input_topic", topics::kImuRawBytes);
+    output_topic_ = declare_parameter<std::string>("output_topic", topics::kImu);
     frame_id_ = declare_parameter<std::string>("frame_id", "imu_link");
     gravity_ = declare_parameter<double>("gravity", 9.80665);
     subscription_ = create_subscription<std_msgs::msg::UInt8MultiArray>(
         input_topic_, 10,
         [this](std_msgs::msg::UInt8MultiArray::SharedPtr msg) { Parse(msg->data); });
     imu_publisher_ = create_publisher<sensor_msgs::msg::Imu>(output_topic_, 10);
-    state_publisher_ = create_publisher<std_msgs::msg::String>("/imu/calibration_state", 10);
+    state_publisher_ = create_publisher<std_msgs::msg::String>(topics::kImuCalibrationState, 10);
     start_calib_service_ = create_service<std_srvs::srv::Trigger>(
         "/sensors/imu/start_calibration",
         [this](const std::shared_ptr<std_srvs::srv::Trigger::Request>,

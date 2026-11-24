@@ -13,12 +13,16 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
+
 using namespace std::chrono_literals;
 
 class FakeScanNode final : public rclcpp::Node {
  public:
   FakeScanNode() : Node("fake_scan_node") {
-    topic_ = declare_parameter<std::string>("topic", "/scan");
+    topic_ = declare_parameter<std::string>("topic", topics::kScan);
     frame_id_ = declare_parameter<std::string>("frame_id", "lidar_link");
     publisher_ = create_publisher<sensor_msgs::msg::LaserScan>(topic_, 10);
     timer_ = create_wall_timer(100ms, [this]() { Publish(); });

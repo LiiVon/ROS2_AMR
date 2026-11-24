@@ -11,20 +11,21 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(robot_interfaces_core REQUIRED)
 find_package(robot_interfaces_navigation REQUIRED)
+find_package(robot_utils REQUIRED)
 
 include_directories(include)
 
 add_executable(cmd_vel_mux_node src/mux/cmd_vel_mux_node.cpp)
-ament_target_dependencies(cmd_vel_mux_node robot_interfaces_navigation rclcpp geometry_msgs std_msgs std_srvs  robot_interfaces_core)
+ament_target_dependencies(cmd_vel_mux_node robot_interfaces_navigation rclcpp geometry_msgs std_msgs std_srvs  robot_interfaces_core robot_utils)
 
 add_executable(cmd_vel_safety_gate_node src/safety/cmd_vel_safety_gate_node.cpp)
-ament_target_dependencies(cmd_vel_safety_gate_node robot_interfaces_navigation rclcpp geometry_msgs std_msgs std_srvs  robot_interfaces_core)
+ament_target_dependencies(cmd_vel_safety_gate_node robot_interfaces_navigation rclcpp geometry_msgs std_msgs std_srvs  robot_interfaces_core robot_utils)
 
 add_executable(virtual_rc_node src/input/virtual_rc_node.cpp)
-ament_target_dependencies(virtual_rc_node robot_interfaces_core robot_interfaces_navigation rclcpp geometry_msgs sensor_msgs std_msgs std_srvs)
+ament_target_dependencies(virtual_rc_node robot_interfaces_core robot_interfaces_navigation rclcpp geometry_msgs sensor_msgs std_msgs std_srvs robot_utils)
 
 add_executable(keyboard_teleop_node src/input/keyboard_teleop_node.cpp)
-ament_target_dependencies(keyboard_teleop_node robot_interfaces_core robot_interfaces_navigation rclcpp geometry_msgs)
+ament_target_dependencies(keyboard_teleop_node robot_interfaces_core robot_interfaces_navigation rclcpp geometry_msgs robot_utils)
 
 install(TARGETS cmd_vel_mux_node cmd_vel_safety_gate_node virtual_rc_node keyboard_teleop_node
   DESTINATION lib/${PROJECT_NAME})

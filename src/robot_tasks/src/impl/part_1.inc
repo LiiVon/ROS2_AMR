@@ -113,15 +113,15 @@
     cancel_client_ = create_client<std_srvs::srv::Trigger>(cancel_service_name_);
     state_publisher_ = create_publisher<robot_interfaces_core::msg::RobotState>("/mission/state", 10);
     payload_state_publisher_ =
-        create_publisher<robot_interfaces_facility::msg::PayloadState>("/facility/payload_state", 10);
+        create_publisher<robot_interfaces_facility::msg::PayloadState>(topics::kFacilityPayloadState, 10);
     localization_health_publisher_ =
-        create_publisher<robot_interfaces_navigation::msg::LocalizationHealth>("/navigation/localization_health", 10);
+        create_publisher<robot_interfaces_navigation::msg::LocalizationHealth>(topics::kNavigationLocalizationHealth, 10);
     safety_state_publisher_ =
-        create_publisher<robot_interfaces_navigation::msg::SafetyState>("/navigation/safety_state", 10);
+        create_publisher<robot_interfaces_navigation::msg::SafetyState>(topics::kNavigationSafetyState, 10);
     initial_pose_publisher_ =
         create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/initialpose", 10);
     chassis_subscription_ = create_subscription<robot_interfaces_core::msg::ChassisState>(
-        "/chassis/state", 10,
+        topics::kChassisState, 10,
         [this](robot_interfaces_core::msg::ChassisState::SharedPtr msg) { HandleChassisState(*msg); });
     amcl_pose_subscription_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
         "/amcl_pose", 10,

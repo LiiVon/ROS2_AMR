@@ -1,59 +1,86 @@
+# 机器人几何参数（单一事实源）
+#
+# 该文件是整机几何、质量与惯量的**唯一来源**：
+#   * URDF / xacro 通过 `geometry_file` 参数加载它（见 urdf/robot.urdf.xacro）；
+#   * 底盘驱动、运动学与 ros2_control 插件通过 chassis_calibration.yaml 取同一组数值。
+# 因此修改尺寸后无需改代码，重新编译并重启即可生效。
+#
+# 单位约定：长度 = 米(m)，质量 = 千克(kg)，惯量 = kg·m²，角度 = 弧度(rad)。
+# 坐标系约定：x 向前、y 向左、z 向上；原点在 base_footprint（地面投影点）。
+
+# 配置结构版本。xacro 会校验，只有 1 被接受；改结构时必须同步升级版本号与加载代码。
 schema_version: 1
+
+# 参数集名称，仅用于日志/审计识别，不参与计算。
 profile: reference_amr_v1
 
+# TF 坐标系名称与基准高度。
 frames:
   base_footprint: base_footprint
   base_link: base_link
+  # base_link 相对 base_footprint 的高度（m）。
+  # 不变量：必须等于 drive_wheels.radius_m，保证轮子恰好接触地面。
   base_link_height_m: 0.075
 
+# 车体外壳（长方体）的尺寸、质量与转动惯量。
 base:
-  length_m: 0.55
-  width_m: 0.38
-  height_m: 0.18
-  mass_kg: 12.0
+  length_m: 0.55        # 车体长度（x 方向，m）
+  width_m: 0.38         # 车体宽度（y 方向，m）
+  height_m: 0.18        # 车体高度（z 方向，m）
+  mass_kg: 12.0         # 车体质量（kg），不含轮子与传感器
+  # 车体在自身质心坐标系下的主惯量张量（对角元），非对角元按 0 处理。
   inertia_kg_m2:
-    ixx: 0.18
-    iyy: 0.28
-    izz: 0.36
+    ixx: 0.18           # 绕 x 轴（俯仰）
+    iyy: 0.28           # 绕 y 轴（横滚）
+    izz: 0.36           # 绕 z 轴（偏航），差速转向主要依赖它
 
+# 两个驱动轮（左/右对称，此处只描述单轮的公共参数）。
 drive_wheels:
-  radius_m: 0.075
-  width_m: 0.045
+  radius_m: 0.075             # 轮半径（m），决定轮速与线速度的换算关系
+  width_m: 0.045              # 轮宽（m），影响与地面的接触面积
+  # 两轮中心的横向间距（m），即差速模型的轮距；越大转向越迟缓但更稳。
   center_separation_m: 0.43
-  joint_x_m: 0.0
-  joint_z_m: 0.0
-  mass_kg: 0.7
-  inertia_kg_m2: 0.002
+  joint_x_m: 0.0              # 轮轴相对 base_link 的前后偏移（m），0 表示位于车体中线
+  joint_z_m: 0.0              # 轮轴相对 base_link 的高度偏移（m）
+                              # 不变量：必须为 0，否则轮子悬空或陷入地面
+  mass_kg: 0.7                # 单轮质量（kg）
+  inertia_kg_m2: 0.002        # 单轮转动惯量（kg·m²，简化为各向同性）
 
+# 万向随动轮（支撑前部，不参与驱动）。
 caster:
-  radius_m: 0.04
-  xyz_m: [-0.20, 0.0, -0.035]
-  mass_kg: 0.2
-  inertia_kg_m2: 0.0002
+  radius_m: 0.04                          # 球半径（m）
+  xyz_m: [-0.20, 0.0, -0.035]             # 相对 base_link 的位置 [x, y, z]（m）
+                                          # z 为负值，使球面恰好接触地面
+  mass_kg: 0.2                            # 质量（kg）
+  inertia_kg_m2: 0.0002                   # 转动惯量（kg·m²）
 
+# 传感器安装位置与外参：frame_id 决定 TF 名称，xyz/rpy 决定相对父坐标系的安装姿态。
 sensors:
+  # 2D 激光雷达：圆柱体外壳
   lidar:
-    frame_id: lidar_link
-    parent_frame: base_link
-    xyz_m: [0.18, 0.0, 0.27]
-    rpy_rad: [0.0, 0.0, 0.0]
-    radius_m: 0.055
-    height_m: 0.055
-    mass_kg: 0.25
-    inertia_kg_m2: 0.0004
+    frame_id: lidar_link            # 该传感器在 TF 树中的坐标系名
+    parent_frame: base_link         # 挂载父坐标系
+    xyz_m: [0.18, 0.0, 0.27]        # 相对父坐标系的位置（m）
+    rpy_rad: [0.0, 0.0, 0.0]        # 相对父坐标系的姿态（rad：roll/pitch/yaw）
+    radius_m: 0.055                 # 外观圆柱半径（m）
+    height_m: 0.055                 # 外观圆柱高度（m）
+    mass_kg: 0.25                   # 质量（kg）
+    inertia_kg_m2: 0.0004           # 转动惯量（kg·m²）
+  # 惯性测量单元：小方盒
   imu:
     frame_id: imu_link
     parent_frame: base_link
-    xyz_m: [0.0, 0.0, 0.22]
+    xyz_m: [0.0, 0.0, 0.22]         # 位于车体上方中心
     rpy_rad: [0.0, 0.0, 0.0]
-    size_m: [0.05, 0.04, 0.02]
+    size_m: [0.05, 0.04, 0.02]      # 外观尺寸 [长, 宽, 高]（m）
     mass_kg: 0.05
     inertia_kg_m2: 0.00005
+  # 前视相机
   camera:
     frame_id: camera_link
     parent_frame: base_link
-    xyz_m: [0.28, 0.0, 0.20]
+    xyz_m: [0.28, 0.0, 0.20]        # 位于车头前方
     rpy_rad: [0.0, 0.0, 0.0]
-    size_m: [0.07, 0.035, 0.035]
+    size_m: [0.07, 0.035, 0.035]    # 外观尺寸 [长, 宽, 高]（m）
     mass_kg: 0.12
     inertia_kg_m2: 0.0001

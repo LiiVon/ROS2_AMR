@@ -12,18 +12,19 @@ find_package(diagnostic_updater REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(robot_utils REQUIRED)
 
 add_executable(laser_filter_node src/laser/laser_filter_node.cpp)
-ament_target_dependencies(laser_filter_node rclcpp sensor_msgs diagnostic_msgs diagnostic_updater)
+ament_target_dependencies(laser_filter_node rclcpp sensor_msgs diagnostic_msgs diagnostic_updater robot_utils)
 
 add_executable(imu_filter_node src/imu/imu_filter_node.cpp)
-ament_target_dependencies(imu_filter_node rclcpp sensor_msgs diagnostic_msgs diagnostic_updater)
+ament_target_dependencies(imu_filter_node rclcpp sensor_msgs diagnostic_msgs diagnostic_updater robot_utils)
 
 add_executable(fake_scan_node src/sim/fake_scan_node.cpp)
-ament_target_dependencies(fake_scan_node rclcpp sensor_msgs)
+ament_target_dependencies(fake_scan_node rclcpp sensor_msgs robot_utils)
 
 add_executable(imu_100d4_parser_node src/imu/imu_100d4_parser_node.cpp)
-ament_target_dependencies(imu_100d4_parser_node rclcpp sensor_msgs std_msgs std_srvs)
+ament_target_dependencies(imu_100d4_parser_node rclcpp sensor_msgs std_msgs std_srvs robot_utils)
 
 install(TARGETS laser_filter_node imu_filter_node fake_scan_node imu_100d4_parser_node
   DESTINATION lib/${PROJECT_NAME})

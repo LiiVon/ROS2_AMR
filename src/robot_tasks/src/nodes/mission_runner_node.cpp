@@ -138,6 +138,10 @@
 #include "robot_tasks/report/operator_snapshot.hpp"
 #include "robot_tasks/workflow/payload_workflow.hpp"
 #include "robot_tasks/behavior/queued_mission_start_behavior_tree.hpp"
+
+#include "robot_utils/config/topic_names.hpp"
+
+namespace topics = robot_utils::topics;
 #include "robot_tasks/model/scenario_catalog.hpp"
 #include "robot_tasks/workflow/station_confirmation_workflow.hpp"
 #include "robot_tasks/workflow/station_sequence_workflow.hpp"
