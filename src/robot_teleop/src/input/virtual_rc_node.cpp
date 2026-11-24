@@ -16,10 +16,6 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 
-#include "robot_utils/config/topic_names.hpp"
-
-namespace topics = robot_utils::topics;
-
 using namespace std::chrono_literals;
 
 class VirtualRcNode final : public rclcpp::Node {
@@ -49,11 +45,11 @@ class VirtualRcNode final : public rclcpp::Node {
       command_timeout_ms_ = 200;
     }
 
-    joy_publisher_ = create_publisher<sensor_msgs::msg::Joy>(topics::kTeleopJoy, 10);
-    takeover_publisher_ = create_publisher<std_msgs::msg::Bool>(topics::kTeleopManualState, 10);
-    teleop_publisher_ = create_publisher<geometry_msgs::msg::Twist>(topics::kTeleopCmdVel, 10);
+    joy_publisher_ = create_publisher<sensor_msgs::msg::Joy>("/teleop/joy", 10);
+    takeover_publisher_ = create_publisher<std_msgs::msg::Bool>("/teleop/manual_state", 10);
+    teleop_publisher_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel/teleop", 10);
     cmd_subscription_ = create_subscription<geometry_msgs::msg::Twist>(
-        topics::kVirtualRcCmdVel, 10,
+        "/cmd_vel/virtual_rc", 10,
         [this](geometry_msgs::msg::Twist::SharedPtr msg) {
           if (!IsFinite(*msg)) {
             RCLCPP_WARN_THROTTLE(

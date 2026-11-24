@@ -29,10 +29,6 @@
 #include "robot_interfaces_core/srv/get_statistics.hpp"
 #include "std_srvs/srv/trigger.hpp"
 
-#include "robot_utils/config/topic_names.hpp"
-
-namespace topics = robot_utils::topics;
-
 using namespace std::chrono_literals;
 
 using NavigateSequence = robot_interfaces_navigation::action::NavigateSequence;
@@ -57,18 +53,18 @@ class NavigateSequenceServerNode final : public rclcpp::Node {
     nav2_server_timeout_ms_ = declare_parameter<int>("nav2_server_timeout_ms", 3000);
     simulated_motion_enabled_ = declare_parameter<bool>("simulated_motion_enabled", false);
     simulated_cmd_vel_topic_ =
-        declare_parameter<std::string>("simulated_cmd_vel_topic", topics::kVirtualRcCmdVel);
+        declare_parameter<std::string>("simulated_cmd_vel_topic", "/cmd_vel/virtual_rc");
     simulated_odom_topic_ =
-        declare_parameter<std::string>("simulated_odom_topic", topics::kGazeboOdom);
+        declare_parameter<std::string>("simulated_odom_topic", "/model/mobile_robot/odometry");
     simulated_goal_tolerance_m_ = declare_parameter<double>("simulated_goal_tolerance_m", 0.22);
     simulated_goal_timeout_s_ = declare_parameter<double>("simulated_goal_timeout_s", 45.0);
     simulated_max_linear_mps_ = declare_parameter<double>("simulated_max_linear_mps", 0.45);
     simulated_max_angular_radps_ = declare_parameter<double>("simulated_max_angular_radps", 1.0);
     current_goal_topic_ =
-        declare_parameter<std::string>("current_goal_topic", topics::kNavigationCurrentGoal);
+        declare_parameter<std::string>("current_goal_topic", "/navigation/current_goal");
     current_path_topic_ =
-        declare_parameter<std::string>("current_path_topic", topics::kNavigationCurrentPath);
-    odom_topic_ = declare_parameter<std::string>("odom_topic", topics::kOdom);
+        declare_parameter<std::string>("current_path_topic", "/navigation/current_path");
+    odom_topic_ = declare_parameter<std::string>("odom_topic", "/odom");
 
     waypoint_follower_client_ =
         rclcpp_action::create_client<FollowWaypoints>(this, waypoint_follower_action_name_);
@@ -94,8 +90,8 @@ class NavigateSequenceServerNode final : public rclcpp::Node {
           }
           AccumulateTravelDistance(msg->pose.pose.position.x, msg->pose.pose.position.y);
         });
-    state_publisher_ = create_publisher<robot_interfaces_core::msg::RobotState>(topics::kNavigationTaskState, 10);
-    task_publisher_ = create_publisher<robot_interfaces_core::msg::TaskStatus>(topics::kNavigationTaskStatus, 10);
+    state_publisher_ = create_publisher<robot_interfaces_core::msg::RobotState>("/navigation/task_state", 10);
+    task_publisher_ = create_publisher<robot_interfaces_core::msg::TaskStatus>("/navigation/task_status", 10);
     stats_service_ = create_service<robot_interfaces_core::srv::GetStatistics>(
         "/navigation/get_statistics",
         [this](const std::shared_ptr<robot_interfaces_core::srv::GetStatistics::Request>,

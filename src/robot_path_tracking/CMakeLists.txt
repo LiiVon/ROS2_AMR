@@ -10,18 +10,17 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(robot_utils REQUIRED)
 
 include_directories(include)
 
 add_executable(path_publisher_node src/nodes/path_publisher_node.cpp)
-ament_target_dependencies(path_publisher_node robot_interfaces_core rclcpp geometry_msgs nav_msgs robot_utils)
+ament_target_dependencies(path_publisher_node robot_interfaces_core rclcpp geometry_msgs nav_msgs)
 
 add_executable(pure_pursuit_controller_node src/nodes/pure_pursuit_controller_node.cpp)
-ament_target_dependencies(pure_pursuit_controller_node robot_interfaces_core rclcpp geometry_msgs nav_msgs tf2 tf2_geometry_msgs robot_utils)
+ament_target_dependencies(pure_pursuit_controller_node robot_interfaces_core rclcpp geometry_msgs nav_msgs tf2 tf2_geometry_msgs )
 
 add_executable(stanley_controller_node src/nodes/stanley_controller_node.cpp)
-ament_target_dependencies(stanley_controller_node robot_interfaces_core rclcpp geometry_msgs nav_msgs tf2 tf2_geometry_msgs robot_utils)
+ament_target_dependencies(stanley_controller_node robot_interfaces_core rclcpp geometry_msgs nav_msgs tf2 tf2_geometry_msgs )
 
 install(TARGETS
   path_publisher_node

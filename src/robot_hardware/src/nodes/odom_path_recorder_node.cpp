@@ -15,15 +15,11 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_srvs/srv/empty.hpp"
 
-#include "robot_utils/config/topic_names.hpp"
-
-namespace topics = robot_utils::topics;
-
 class OdomPathRecorderNode final : public rclcpp::Node {
  public:
   OdomPathRecorderNode() : Node("odom_path_recorder_node") {
-    input_topic_ = declare_parameter<std::string>("input_topic", topics::kOdom);
-    output_topic_ = declare_parameter<std::string>("output_topic", topics::kChassisOdomPath);
+    input_topic_ = declare_parameter<std::string>("input_topic", "/odom");
+    output_topic_ = declare_parameter<std::string>("output_topic", "/chassis/odom_path");
     max_poses_ = declare_parameter<int>("max_poses", 2000);
     min_distance_m_ = declare_parameter<double>("min_distance_m", 0.02);
     publish_period_ms_ = declare_parameter<int>("publish_period_ms", 200);

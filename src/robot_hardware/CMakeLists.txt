@@ -20,7 +20,6 @@ find_package(robot_interfaces_core REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
-find_package(robot_utils REQUIRED)
 
 add_library(robot_hardware_backends SHARED
   src/protocol/packet.cpp
@@ -46,14 +45,14 @@ pluginlib_export_plugin_description_file(hardware_interface robot_hardware_plugi
 add_executable(chassis_driver_node src/nodes/chassis_driver_node.cpp)
 target_link_libraries(chassis_driver_node robot_hardware_backends)
 ament_target_dependencies(chassis_driver_node
-  rclcpp geometry_msgs nav_msgs sensor_msgs std_srvs tf2_ros  robot_interfaces_core robot_utils)
+  rclcpp geometry_msgs nav_msgs sensor_msgs std_srvs tf2_ros  robot_interfaces_core)
 
 add_executable(chassis_simulator_node src/nodes/chassis_simulator_node.cpp)
 target_link_libraries(chassis_simulator_node robot_hardware_backends)
 ament_target_dependencies(chassis_simulator_node rclcpp)
 
 add_executable(odom_path_recorder_node src/nodes/odom_path_recorder_node.cpp)
-ament_target_dependencies(odom_path_recorder_node rclcpp nav_msgs std_srvs robot_utils)
+ament_target_dependencies(odom_path_recorder_node rclcpp nav_msgs std_srvs)
 
 install(TARGETS robot_hardware_backends robot_chassis_hardware
   EXPORT export_robot_hardware_backends

@@ -14,7 +14,6 @@
   <depend>robot_interfaces_core</depend>
   <depend>robot_interfaces_navigation</depend>
   <depend>std_msgs</depend>
-  <depend>robot_utils</depend>
 
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>nav2_amcl</exec_depend>

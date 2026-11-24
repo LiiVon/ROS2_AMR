@@ -26,11 +26,9 @@ install(TARGETS robot_utils
 
 add_executable(system_monitor_node src/nodes/system_monitor_node.cpp)
 ament_target_dependencies(system_monitor_node robot_interfaces_core rclcpp diagnostic_msgs diagnostic_updater nav_msgs  sensor_msgs std_msgs)
-target_link_libraries(system_monitor_node robot_utils)
 
 add_executable(fault_supervisor_node src/nodes/fault_supervisor_node.cpp)
 ament_target_dependencies(fault_supervisor_node robot_interfaces_core rclcpp  std_srvs)
-target_link_libraries(fault_supervisor_node robot_utils)
 
 install(TARGETS system_monitor_node fault_supervisor_node
   DESTINATION lib/${PROJECT_NAME})

@@ -16,10 +16,6 @@
 #include "nav_msgs/msg/path.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include "robot_utils/config/topic_names.hpp"
-
-namespace topics = robot_utils::topics;
-
 using namespace std::chrono_literals;
 
 namespace {
@@ -40,7 +36,7 @@ class PathPublisherNode final : public rclcpp::Node {
     frame_id_ = declare_parameter<std::string>("frame_id", "map");
     publish_rate_hz_ = declare_parameter<double>("publish_rate_hz", 2.0);
     LoadPath();
-    publisher_ = create_publisher<nav_msgs::msg::Path>(topics::kReferencePath, 1);
+    publisher_ = create_publisher<nav_msgs::msg::Path>("/tracking/reference_path", 1);
     const auto period = std::chrono::duration<double>(1.0 / publish_rate_hz_);
     timer_ = create_wall_timer(std::chrono::duration_cast<std::chrono::milliseconds>(period),
                                [this]() { Publish(); });

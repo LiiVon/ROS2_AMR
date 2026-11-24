@@ -31,10 +31,6 @@
 #include "ros_gz_interfaces/srv/set_entity_pose.hpp"
 #include "std_msgs/msg/bool.hpp"
 
-#include "robot_utils/config/topic_names.hpp"
-
-namespace topics = robot_utils::topics;
-
 using namespace std::chrono_literals;
 
 namespace {
@@ -99,8 +95,8 @@ class AmrSimGazeboEntityBridgeNode final : public rclcpp::Node {
   AmrSimGazeboEntityBridgeNode() : Node("amr_sim_gazebo_entity_bridge_node") {
     set_pose_service_ =
         declare_parameter<std::string>("set_pose_service", "/world/indoor_room/set_pose");
-    odom_topic_ = declare_parameter<std::string>("odom_topic", topics::kGazeboOdom);
-    robot2_odom_topic_ = declare_parameter<std::string>("robot2_odom_topic", topics::kRobot2Odom);
+    odom_topic_ = declare_parameter<std::string>("odom_topic", "/model/mobile_robot/odometry");
+    robot2_odom_topic_ = declare_parameter<std::string>("robot2_odom_topic", "/robot_2/odom");
     robot2_pose_bridge_enabled_ = declare_parameter<bool>("robot2_pose_bridge_enabled", false);
     update_period_s_ = declare_parameter<double>("update_period_s", 0.5);
     robot2_speed_mps_ = declare_parameter<double>("robot2_speed_mps", 0.45);
@@ -143,7 +139,7 @@ class AmrSimGazeboEntityBridgeNode final : public rclcpp::Node {
           robot2_pose_.yaw = YawFromQuaternion(msg->pose.pose.orientation);
         });
     payload_subscription_ = create_subscription<robot_interfaces_facility::msg::PayloadState>(
-        topics::kFacilityPayloadState, 10, [this](robot_interfaces_facility::msg::PayloadState::SharedPtr msg) {
+        "/facility/payload_state", 10, [this](robot_interfaces_facility::msg::PayloadState::SharedPtr msg) {
           const bool was_loaded = payload_loaded_;
           const std::string previous_action = payload_last_action_;
           payload_loaded_ = msg->loaded;
@@ -164,13 +160,13 @@ class AmrSimGazeboEntityBridgeNode final : public rclcpp::Node {
           }
         });
     localization_subscription_ = create_subscription<robot_interfaces_navigation::msg::LocalizationHealth>(
-        topics::kNavigationLocalizationHealth, 10,
+        "/navigation/localization_health", 10,
         [this](robot_interfaces_navigation::msg::LocalizationHealth::SharedPtr msg) {
           localization_state_ = msg->state;
           localization_localized_ = msg->localized;
         });
     safety_subscription_ = create_subscription<robot_interfaces_navigation::msg::SafetyState>(
-        topics::kNavigationSafetyState, 10, [this](robot_interfaces_navigation::msg::SafetyState::SharedPtr msg) {
+        "/navigation/safety_state", 10, [this](robot_interfaces_navigation::msg::SafetyState::SharedPtr msg) {
           obstacle_blocked_ = msg->obstacle_blocked || msg->safety_stop;
           if (obstacle_blocked_) {
             obstacle_block_visible_until_s_ = now().seconds() + kShowcaseReviewHoldSeconds;
@@ -190,7 +186,7 @@ class AmrSimGazeboEntityBridgeNode final : public rclcpp::Node {
           }
         });
     manual_takeover_subscription_ = create_subscription<std_msgs::msg::Bool>(
-        topics::kTeleopManualState, 10,
+        "/teleop/manual_state", 10,
         [this](std_msgs::msg::Bool::SharedPtr msg) { manual_takeover_active_ = msg->data; });
 
     robot2_pose_ = {-3.9, -3.8, 0.0};

@@ -15,15 +15,11 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 
-#include "robot_utils/config/topic_names.hpp"
-
-namespace topics = robot_utils::topics;
-
 class LaserFilterNode final : public rclcpp::Node {
  public:
   LaserFilterNode() : Node("laser_filter_node"), diagnostics_(this) {
-    input_topic_ = declare_parameter<std::string>("input_topic", topics::kSimScan);
-    output_topic_ = declare_parameter<std::string>("output_topic", topics::kScan);
+    input_topic_ = declare_parameter<std::string>("input_topic", "/sim/scan");
+    output_topic_ = declare_parameter<std::string>("output_topic", "/scan");
     frame_id_ = declare_parameter<std::string>("frame_id", "lidar_link");
     range_min_ = declare_parameter<double>("range_min", 0.08);
     range_max_ = declare_parameter<double>("range_max", 12.0);

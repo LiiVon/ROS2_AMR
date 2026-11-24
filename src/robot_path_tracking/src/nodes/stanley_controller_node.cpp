@@ -18,10 +18,6 @@
 #include "tf2/utils.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
-#include "robot_utils/config/topic_names.hpp"
-
-namespace topics = robot_utils::topics;
-
 class StanleyControllerNode final : public rclcpp::Node {
  public:
   StanleyControllerNode() : Node("stanley_controller_node") {
@@ -38,15 +34,15 @@ class StanleyControllerNode final : public rclcpp::Node {
     }
     odom_timeout_ms_ = declare_parameter<int>("odom_timeout_ms", 300);
     odom_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
-        topics::kOdom, 10, [this](nav_msgs::msg::Odometry::SharedPtr msg) {
+        "/odom", 10, [this](nav_msgs::msg::Odometry::SharedPtr msg) {
           odom_ = msg;
           last_odom_stamp_ = now();
           have_odom_ = true;
         });
     path_subscription_ = create_subscription<nav_msgs::msg::Path>(
-        topics::kReferencePath, 1, [this](nav_msgs::msg::Path::SharedPtr msg) { path_ = msg; });
-    cmd_publisher_ = create_publisher<geometry_msgs::msg::Twist>(topics::kTrackingCmdVel, 10);
-    error_publisher_ = create_publisher<robot_interfaces_core::msg::TrackingError>(topics::kTrackingError, 10);
+        "/tracking/reference_path", 1, [this](nav_msgs::msg::Path::SharedPtr msg) { path_ = msg; });
+    cmd_publisher_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel/tracking", 10);
+    error_publisher_ = create_publisher<robot_interfaces_core::msg::TrackingError>("/tracking/error", 10);
     timer_ = create_wall_timer(std::chrono::milliseconds(50), [this]() { Tick(); });
   }
 

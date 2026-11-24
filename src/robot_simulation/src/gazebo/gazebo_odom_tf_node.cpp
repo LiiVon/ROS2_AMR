@@ -13,15 +13,11 @@
 #include "robot_simulation/core/planar_odometry.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
-#include "robot_utils/config/topic_names.hpp"
-
-namespace topics = robot_utils::topics;
-
 class GazeboOdomTfNode final : public rclcpp::Node {
  public:
   GazeboOdomTfNode() : Node("gazebo_odom_tf_node") {
-    input_topic_ = declare_parameter<std::string>("input_topic", topics::kGazeboOdom);
-    output_topic_ = declare_parameter<std::string>("output_topic", topics::kOdom);
+    input_topic_ = declare_parameter<std::string>("input_topic", "/model/mobile_robot/odometry");
+    output_topic_ = declare_parameter<std::string>("output_topic", "/odom");
     odom_frame_ = declare_parameter<std::string>("odom_frame", "odom");
     base_frame_ = declare_parameter<std::string>("base_frame", "base_footprint");
 

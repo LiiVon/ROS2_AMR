@@ -9,7 +9,6 @@ find_package(rclcpp REQUIRED)
 find_package(robot_interfaces_core REQUIRED)
 find_package(robot_interfaces_navigation REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(robot_utils REQUIRED)
 
 add_library(robot_navigation_map_catalog
   src/model/map_catalog.cpp)
@@ -35,7 +34,7 @@ add_executable(map_manager_node src/nodes/map_manager_node.cpp)
 target_link_libraries(map_manager_node
   robot_navigation_map_catalog
   robot_navigation_zone_catalog)
-ament_target_dependencies(map_manager_node robot_interfaces_core ament_index_cpp rclcpp  robot_interfaces_navigation std_msgs robot_utils)
+ament_target_dependencies(map_manager_node robot_interfaces_core ament_index_cpp rclcpp  robot_interfaces_navigation std_msgs)
 
 add_executable(export_zone_filter_masks src/nodes/export_zone_filter_masks.cpp)
 target_link_libraries(export_zone_filter_masks

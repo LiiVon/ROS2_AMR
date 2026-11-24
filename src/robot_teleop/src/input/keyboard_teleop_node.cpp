@@ -16,10 +16,6 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include "robot_utils/config/topic_names.hpp"
-
-namespace topics = robot_utils::topics;
-
 using namespace std::chrono_literals;
 
 namespace {
@@ -65,7 +61,7 @@ double Clamp(const double value, const double low, const double high) {
 class KeyboardTeleopNode final : public rclcpp::Node {
  public:
   KeyboardTeleopNode() : Node("keyboard_teleop_node") {
-    topic_ = declare_parameter<std::string>("topic", topics::kVirtualRcCmdVel);
+    topic_ = declare_parameter<std::string>("topic", "/cmd_vel/virtual_rc");
     max_linear_mps_ = declare_parameter<double>("max_linear_mps", 0.6);
     max_angular_radps_ = declare_parameter<double>("max_angular_radps", 1.4);
     linear_step_mps_ = declare_parameter<double>("linear_step_mps", 0.1);

@@ -1,51 +1,19 @@
 <?xml version="1.0"?>
-<!--
-  robot.urdf.xacro —— 参考 AMR 整机模型（唯一模型定义）
-
-  结构：
-    1. 参数声明        —— 开关与外部文件路径
-    2. 几何参数加载    —— 从 robot_geometry.yaml 读取尺寸/质量/惯量/传感器外参
-    3. 参数校验        —— 版本、正数性、坐标系名、接地不变量
-    4. 材质与坐标      —— base_footprint / base_link
-    5. 车体与轮系      —— 车体长方体、左右驱动轮、万向轮
-    6. 传感器          —— 激光、IMU、相机（frame 与安装位姿全部来自 YAML）
-    7. ros2_control    —— 真机硬件插件（可选）
-    8. Gazebo          —— 仿真硬件插件与传感器（可选）
-
-  设计要点：
-    * 所有几何数值只从 YAML 读取，本文件不含硬编码尺寸；
-    * 真机链路（use_ros2_control_hardware）与仿真链路（use_gazebo）互斥使用，
-      两者会各自生成一个 ros2_control 硬件组件，同时开启会产生重复组件；
-    * 没有硬编码默认路径之外的假设，直接命令行调用时请传入绝对路径的 geometry_file。
--->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="mobile_robot">
-
-  <!-- ==================== 1. 参数声明 ==================== -->
-  <!-- 实际底盘硬件插件（robot_hardware），与 use_gazebo 二选一 -->
   <xacro:arg name="use_gazebo" default="false"/>
-  <!-- 通过 ros2_control 驱动真实底盘；开启时 calibration_file 必填 -->
   <xacro:arg name="use_ros2_control_hardware" default="false"/>
-  <!-- 几何参数文件；相对路径按“本 xacro 文件所在目录”解析 -->
   <xacro:arg name="geometry_file" default="../config/robot_geometry.yaml"/>
-  <!-- 仿真物理与传感器参数文件（use_gazebo=true 时必填） -->
   <xacro:arg name="simulation_physics_file" default=""/>
-  <!-- Gazebo 控制器参数文件（use_gazebo=true 时必填） -->
   <xacro:arg name="gazebo_controllers_file" default=""/>
-  <!-- 底盘标定文件（use_ros2_control_hardware=true 时必填） -->
   <xacro:arg name="calibration_file" default=""/>
-  <!-- 以下为 ros2_control 硬件插件的连接参数 -->
   <xacro:arg name="ros2_control_backend" default="mock"/>
   <xacro:arg name="ros2_control_serial_device" default="/dev/ttyUSB0"/>
   <xacro:arg name="ros2_control_serial_baud" default="115200"/>
   <xacro:arg name="ros2_control_udp_host" default="192.168.1.10"/>
   <xacro:arg name="ros2_control_udp_port" default="9000"/>
-  <!-- 底盘协议：text（文本帧）或 mick_binary（二进制帧） -->
   <xacro:arg name="ros2_control_protocol" default="text"/>
-  <!-- 底盘运动学类型：diff_drive 或 mecanum -->
   <xacro:arg name="ros2_control_chassis_type" default="diff_drive"/>
 
-  <!-- ==================== 2. 几何参数加载 ==================== -->
-  <!-- 载入 YAML 后逐段取出，下面所有尺寸都来自这里 -->
   <xacro:property name="geometry_file_path" value="$(arg geometry_file)"/>
   <xacro:property name="geometry" value="${xacro.load_yaml(geometry_file_path)}"/>
   <xacro:property name="frames" value="${geometry['frames']}"/>
@@ -70,51 +38,39 @@
   <xacro:property name="wheel_mass" value="${float(drive_wheels['mass_kg'])}"/>
   <xacro:property name="wheel_inertia" value="${float(drive_wheels['inertia_kg_m2'])}"/>
 
-  <!-- ==================== 3. 参数校验 ==================== -->
-  <!-- 版本不匹配时直接 fatal：避免用错误的结构继续生成模型 -->
   <xacro:if value="${int(geometry['schema_version']) != 1}">
     <xacro:property name="geometry_schema_error"
       value="${xacro.fatal('unsupported robot geometry schema_version', geometry['schema_version'])}"
       lazy_eval="false"/>
   </xacro:if>
-  <!-- 尺寸、质量、惯量必须是有限正数：否则 Gazebo 会得到非法惯性张量 -->
   <xacro:if value="${not python.all([math.isfinite(v) and v > 0.0 for v in [base_link_height, base_length, base_width, base_height, base_mass, float(base_inertia['ixx']), float(base_inertia['iyy']), float(base_inertia['izz']), wheel_radius, wheel_width, wheel_separation, wheel_mass, wheel_inertia]])}">
     <xacro:property name="geometry_dimension_error"
       value="${xacro.fatal('robot geometry dimensions, mass and inertia must be finite positive values')}"
       lazy_eval="false"/>
   </xacro:if>
-  <!-- 坐标系名固定：导航栈、EKF 与任务中枢都按这两个名字拼 TF -->
   <xacro:if value="${base_footprint_frame != 'base_footprint' or base_link_frame != 'base_link'}">
     <xacro:property name="geometry_frame_error"
       value="${xacro.fatal('reference AMR requires base_footprint and base_link frame names')}"
       lazy_eval="false"/>
   </xacro:if>
-  <!-- 接地不变量：base_link 高度 = 轮半径，且轮轴高度偏移为 0，
-       保证模型不会出现“轮子悬空”或“车体插入地面” -->
   <xacro:if value="${math.fabs(base_link_height - wheel_radius) > 1.0e-9 or math.fabs(wheel_z) > 1.0e-9}">
     <xacro:property name="drive_wheel_ground_contact_error"
       value="${xacro.fatal('reference AMR ground-contact invariant requires base_link_height_m == drive_wheels.radius_m and drive_wheels.joint_z_m == 0')}"
       lazy_eval="false"/>
   </xacro:if>
 
-  <!-- ==================== 4. 材质与坐标系 ==================== -->
-  <!-- 仅用于 RViz/Gazebo 显示，不影响物理 -->
   <material name="body_blue"><color rgba="0.22 0.30 0.42 1.0"/></material>
   <material name="wheel_black"><color rgba="0.05 0.05 0.06 1.0"/></material>
   <material name="sensor_green"><color rgba="0.20 0.42 0.34 1.0"/></material>
 
-  <!-- base_footprint：地面投影点，作为整机 TF 根节点（无质量、无碰撞） -->
   <link name="${base_footprint_frame}"/>
 
-  <!-- 固定关节把 base_link 抬到轮半径高度；此关节是 odom→base_footprint 之外唯一的静态变换 -->
   <joint name="base_footprint_joint" type="fixed">
     <parent link="${base_footprint_frame}"/>
     <child link="${base_link_frame}"/>
     <origin xyz="0 0 ${base_link_height}" rpy="0 0 0"/>
   </joint>
 
-  <!-- ==================== 5. 车体与轮系 ==================== -->
-  <!-- 车体：visual/collision/inertial 三者共用同一长方体尺寸 -->
   <link name="${base_link_frame}">
     <visual>
       <origin xyz="0 0 ${base_height / 2.0}" rpy="0 0 0"/>
@@ -132,10 +88,6 @@
     </inertial>
   </link>
 
-  <!-- 驱动轮宏：prefix 决定 link/joint 名称（left_wheel/right_wheel），
-       y 为相对车体中线的横向偏移（左正右负）。
-       圆柱默认沿 z 轴，故绕 x 轴旋转 90° 使轮面朝外。
-       joint 类型 continuous：可无限旋转，由 ros2_control 下发速度。 -->
   <xacro:macro name="drive_wheel" params="prefix y">
     <link name="${prefix}_wheel">
       <visual>
@@ -163,7 +115,6 @@
   <xacro:drive_wheel prefix="left" y="${wheel_separation / 2.0}"/>
   <xacro:drive_wheel prefix="right" y="${-wheel_separation / 2.0}"/>
 
-  <!-- 万向随动轮：固定关节（不主动转向），只提供物理支撑 -->
   <link name="caster_wheel">
     <visual><geometry><sphere radius="${caster['radius_m']}"/></geometry><material name="wheel_black"/></visual>
     <collision><geometry><sphere radius="${caster['radius_m']}"/></geometry></collision>
@@ -175,8 +126,6 @@
     <origin xyz="${caster['xyz_m'][0]} ${caster['xyz_m'][1]} ${caster['xyz_m'][2]}" rpy="0 0 0"/>
   </joint>
 
-  <!-- ==================== 6. 传感器 ==================== -->
-  <!-- 激光雷达：frame_id / 安装位置 / 姿态 / 质量全部取自 YAML -->
   <link name="${sensors['lidar']['frame_id']}">
     <visual><geometry><cylinder radius="${sensors['lidar']['radius_m']}" length="${sensors['lidar']['height_m']}"/></geometry><material name="sensor_green"/></visual>
     <collision><geometry><cylinder radius="${sensors['lidar']['radius_m']}" length="${sensors['lidar']['height_m']}"/></geometry></collision>
@@ -188,7 +137,6 @@
     <origin xyz="${sensors['lidar']['xyz_m'][0]} ${sensors['lidar']['xyz_m'][1]} ${sensors['lidar']['xyz_m'][2]}" rpy="${sensors['lidar']['rpy_rad'][0]} ${sensors['lidar']['rpy_rad'][1]} ${sensors['lidar']['rpy_rad'][2]}"/>
   </joint>
 
-  <!-- IMU：EKF 的输入源之一，与底盘合成的 /imu/data 互为备份 -->
   <link name="${sensors['imu']['frame_id']}">
     <visual><geometry><box size="${sensors['imu']['size_m'][0]} ${sensors['imu']['size_m'][1]} ${sensors['imu']['size_m'][2]}"/></geometry><material name="sensor_green"/></visual>
     <collision><geometry><box size="${sensors['imu']['size_m'][0]} ${sensors['imu']['size_m'][1]} ${sensors['imu']['size_m'][2]}"/></geometry></collision>
@@ -200,7 +148,6 @@
     <origin xyz="${sensors['imu']['xyz_m'][0]} ${sensors['imu']['xyz_m'][1]} ${sensors['imu']['xyz_m'][2]}" rpy="${sensors['imu']['rpy_rad'][0]} ${sensors['imu']['rpy_rad'][1]} ${sensors['imu']['rpy_rad'][2]}"/>
   </joint>
 
-  <!-- 相机：当前仅用于可视化与仿真，未参与导航 -->
   <link name="${sensors['camera']['frame_id']}">
     <visual><geometry><box size="${sensors['camera']['size_m'][0]} ${sensors['camera']['size_m'][1]} ${sensors['camera']['size_m'][2]}"/></geometry><material name="sensor_green"/></visual>
     <collision><geometry><box size="${sensors['camera']['size_m'][0]} ${sensors['camera']['size_m'][1]} ${sensors['camera']['size_m'][2]}"/></geometry></collision>
@@ -212,9 +159,6 @@
     <origin xyz="${sensors['camera']['xyz_m'][0]} ${sensors['camera']['xyz_m'][1]} ${sensors['camera']['xyz_m'][2]}" rpy="${sensors['camera']['rpy_rad'][0]} ${sensors['camera']['rpy_rad'][1]} ${sensors['camera']['rpy_rad'][2]}"/>
   </joint>
 
-  <!-- ==================== 7. ros2_control（真机） ==================== -->
-  <!-- 由 robot_hardware 插件驱动真实底盘：串口/UDP/mock 三选一。
-       calibration_file 提供轮径、轮距、编码器缩放与方向符号。 -->
   <xacro:if value="$(arg use_ros2_control_hardware)">
     <xacro:property name="calibration_file_path" value="$(arg calibration_file)"/>
     <xacro:if value="${calibration_file_path == ''}">
@@ -256,9 +200,6 @@
     </ros2_control>
   </xacro:if>
 
-  <!-- ==================== 8. Gazebo（仿真） ==================== -->
-  <!-- 使用 gz_ros2_control 插件，物理与传感器参数由 simulation_physics_file 提供。
-       注意：本段的 ros2_control 组件与第 7 段同名，两者只能开启其一。 -->
   <xacro:if value="$(arg use_gazebo)">
     <xacro:property name="simulation_physics_file_path" value="$(arg simulation_physics_file)"/>
     <xacro:property name="gazebo_controllers_file_path" value="$(arg gazebo_controllers_file)"/>
