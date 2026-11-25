@@ -95,7 +95,7 @@ namespace robot_hardware::kinematics
     }
 
     // 根据机体坐标系速度积分机器人位姿。
-    // 使用区间中点的朝向估算位置变化，降低转弯时的积分误差。
+    // 使用区间起点的航向角积分（数值稳定，且与既有标定/实验数据一致）。
     Pose2D IntegratePose(
         const Pose2D &pose,
         const Command &command,

@@ -2,6 +2,9 @@
 
 底盘硬件抽象层：统一「协议 → 传输 → 运动学 → 系统适配 → ROS 接口」五级分层，同时提供 ros2_control 插件与独立驱动节点。
 
+> 零基础学习（底盘原理 → 运动学 → 里程计 → 协议 → ros2_control → 代码逐行）：
+> `docs/robot_hardware零基础教学.md`。
+
 ## 1. 分层结构
 
 ```text
@@ -50,15 +53,21 @@ ros2 launch robot_hardware hardware.launch.py backend:=udp
 ros2 launch robot_hardware ros2_control_hardware.launch.py backend:=mock
 ```
 
+> ros2_control 链路的控制器名为 `diff_drive_controller`：Jazzy 下它订阅
+> `/diff_drive_controller/cmd_vel`（`TwistStamped`），发布
+> `/diff_drive_controller/odom` 与 TF；与独立驱动链路的 `/cmd_vel`（`Twist`）
+> 不是同一个话题，当前 launch 未做类型转换/重映射。
+
 ## 4. 关键约束
 
 - `/cmd_vel` 不直接下发：驱动只接受仲裁后的最终指令，安全闸门是唯一发布者。
-- 协议解码必须容忍历史帧长（超限饱和、非法长度丢弃），不得抛异常退出。
+- 协议采用单一严格格式：非法帧长/字段数/校验直接丢弃并重同步，不做“历史格式兼容”。
 - `mock` 后端用于无硬件验证；`serial` 需要真实串口设备权限。
 
 ## 5. 测试
 
-`chassis_protocol_test`、`chassis_kinematics_test`、`chassis_adapter_test`（`colcon test --packages-select robot_hardware`）。
+`chassis_packet_test`、`chassis_system_adapter_test`、`chassis_hardware_interface_test`
+（`colcon test --packages-select robot_hardware`）。
 
 ---
 

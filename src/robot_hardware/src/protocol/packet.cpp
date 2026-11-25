@@ -178,7 +178,7 @@ namespace robot_hardware::protocol
 
     // 将里程计数据编码为文本
     // 内部数据结构  ---> 文本协议
-    // ODOM x y yaw vx vy wz [battery]\n
+    // ODOM x y yaw vx wz [battery]\n
     std::string EncodeOdometry(
         const OdometryPacket &odometry)
     {

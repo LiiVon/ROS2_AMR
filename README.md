@@ -253,6 +253,7 @@ src/
 | `docs/问题清单.md` | 代码级缺陷清单（P0/P1/P2）与修复验收记录 |
 | `docs/审计报告.md` | 工程审计结论与遗留项 |
 | `docs/robot_sensors零基础教学.md` | 从传感器原理到 `robot_sensors` 代码逐行的零基础教程 |
+| `docs/robot_hardware零基础教学.md` | 从底盘/运动学/协议到 `robot_hardware` 代码逐行的零基础教程 |
 | `18包学习与复刻顺序.md` | 逐包学习/复刻顺序与复刻时必须遵守的硬约束 |
 | 各包 `README.md` | 该包职责、分层表、接口、启动方式、约束与测试 |
 

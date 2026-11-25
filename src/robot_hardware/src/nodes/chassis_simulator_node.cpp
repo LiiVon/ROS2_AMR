@@ -153,6 +153,21 @@ private:
         {
             const std::string line = rx_buffer_.substr(0, newline);
             rx_buffer_.erase(0, newline + 1);
+
+            // 文本协议的里程计清零命令：必须同步清零模拟器位姿，
+            // 否则 driver 只是“清了本地”，下一帧 ODOM 又把旧位姿写回去。
+            std::string trimmed = line;
+            if (!trimmed.empty() && trimmed.back() == '\r')
+            {
+                trimmed.pop_back();
+            }
+            if (trimmed == "CLEAR")
+            {
+                pose_ = Pose2D{};
+                command_ = Command{};
+                continue;
+            }
+
             if (auto command = DecodeCommand(line))
             {
                 command_ = *command;
