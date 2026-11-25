@@ -31,6 +31,15 @@ class CmdVelSafetyGateNode final : public rclcpp::Node {
     watchdog_timeout_ms_ = declare_parameter<int>("watchdog_timeout_ms", 500);
     dynamic_angular_limit_radps_ =
         declare_parameter<double>("dynamic_angular_limit_radps", 0.6);
+    takeover_timeout_ms_ = declare_parameter<int>("takeover_timeout_ms", 500);
+    if (watchdog_timeout_ms_ <= 0) {
+      RCLCPP_WARN(get_logger(), "watchdog_timeout_ms must be > 0, using 500");
+      watchdog_timeout_ms_ = 500;
+    }
+    if (takeover_timeout_ms_ <= 0) {
+      RCLCPP_WARN(get_logger(), "takeover_timeout_ms must be > 0, using 500");
+      takeover_timeout_ms_ = 500;
+    }
 
     cmd_publisher_ = create_publisher<geometry_msgs::msg::Twist>(topics::kCmdVel, 10);
     active_publisher_ = create_publisher<std_msgs::msg::String>(topics::kTeleopActiveSource, 10);
@@ -47,7 +56,11 @@ class CmdVelSafetyGateNode final : public rclcpp::Node {
         });
     takeover_subscription_ = create_subscription<std_msgs::msg::Bool>(
         topics::kTeleopManualState, 10,
-        [this](std_msgs::msg::Bool::SharedPtr msg) { manual_takeover_ = msg->data; });
+        [this](std_msgs::msg::Bool::SharedPtr msg) {
+          manual_takeover_ = msg->data;
+          manual_takeover_stamp_ = now();
+          manual_takeover_received_ = true;
+        });
     safety_subscription_ = create_subscription<robot_interfaces_navigation::msg::SafetyState>(
         topics::kNavigationSafetyState, 10, [this](robot_interfaces_navigation::msg::SafetyState::SharedPtr msg) {
           runtime_safety_stop_ = msg->safety_stop;
@@ -122,12 +135,23 @@ class CmdVelSafetyGateNode final : public rclcpp::Node {
     return age_ms > watchdog_timeout_ms_;
   }
 
+  // 接管状态同样要看新鲜度：virtual_rc 异常退出后若继续心跳 takeover_lock，
+  // twist_mux 会永久压制 nav2/tracking（BUG-05 的回归路径）。
+  bool ManualTakeoverActive() const {
+    if (!manual_takeover_received_ || !manual_takeover_) {
+      return false;
+    }
+    const auto age_ms = (now() - manual_takeover_stamp_).nanoseconds() / 1000000;
+    return age_ms <= takeover_timeout_ms_;
+  }
+
   void PublishState() {
+    const bool takeover_active = ManualTakeoverActive();
     std_msgs::msg::String active_msg;
     const std::string state_hint =
         active_source_hint_ == "twist_mux" ? "twist_mux" : "twist_mux:" + active_source_hint_;
     active_msg.data = robot_teleop::DescribeCommandState(
-        emergency_stop_, runtime_safety_stop_, manual_takeover_, state_hint);
+        emergency_stop_, runtime_safety_stop_, takeover_active, state_hint);
     active_publisher_->publish(active_msg);
 
     std_msgs::msg::Bool estop_msg;
@@ -135,7 +159,7 @@ class CmdVelSafetyGateNode final : public rclcpp::Node {
     estop_state_publisher_->publish(estop_msg);
 
     std_msgs::msg::Bool takeover_msg;
-    takeover_msg.data = manual_takeover_;
+    takeover_msg.data = takeover_active;
     takeover_state_publisher_->publish(takeover_msg);
     takeover_lock_publisher_->publish(takeover_msg);
   }
@@ -168,13 +192,16 @@ class CmdVelSafetyGateNode final : public rclcpp::Node {
   std::string input_topic_;
   std::string active_source_hint_;
   int watchdog_timeout_ms_;
+  int takeover_timeout_ms_;
   bool emergency_stop_ = false;
   bool manual_takeover_ = false;
+  bool manual_takeover_received_ = false;
   bool runtime_safety_stop_ = false;
   bool received_ = false;
   double dynamic_speed_limit_mps_ = 0.0;
   double dynamic_angular_limit_radps_ = 0.6;
   rclcpp::Time last_stamp_;
+  rclcpp::Time manual_takeover_stamp_;
   geometry_msgs::msg::Twist last_twist_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_subscription_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr takeover_subscription_;

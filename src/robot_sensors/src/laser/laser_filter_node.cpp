@@ -53,6 +53,12 @@ class LaserFilterNode final : public rclcpp::Node {
     if (clockwise_) {
       // 反转数据的同时必须重写角度元数据，否则每个点的角度仍按下标递增，
       // 整幅扫描会被镜像（障碍物左右颠倒）。
+      //
+      // 推导：反转后下标 j 对应原下标 N-1-j，其物理角度为
+      //   -(old_angle_min + (N-1-j) * old_increment)
+      //   = -old_angle_max + j * old_increment
+      // 因此新序列是「从 -old_angle_max 开始、步长仍为 old_increment」，
+      // 而不是把步长取反（取反会让 angle_max 落到 [-π, π] 之外）。
       const double old_angle_min = scan.angle_min;
       const double old_increment = scan.angle_increment;
       const std::size_t count = scan.ranges.size();
@@ -64,8 +70,8 @@ class LaserFilterNode final : public rclcpp::Node {
         std::reverse(scan.intensities.begin(), scan.intensities.end());
       }
       scan.angle_min = -old_angle_max;
-      scan.angle_increment = -old_increment;
-      scan.angle_max = scan.angle_min + scan.angle_increment * static_cast<double>(count - 1U);
+      scan.angle_increment = old_increment;
+      scan.angle_max = -old_angle_min;
     }
     int invalid_count = 0;
     for (std::size_t i = 0; i < scan.ranges.size(); ++i) {

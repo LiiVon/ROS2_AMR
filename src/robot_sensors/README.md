@@ -2,6 +2,9 @@
 
 传感器数据标准化：激光过滤链、IMU 解析与滤波、无硬件时的扫描数据模拟。
 
+> 零基础学习（传感器原理 → ROS 2 基础 → 本包代码逐行 → 动手实验）：
+> `docs/robot_sensors零基础教学.md`。
+
 ## 1. 分层结构
 
 ```text
@@ -25,9 +28,9 @@ robot_sensors/
 
 | 类型 | 名称 | 说明 |
 |---|---|---|
-| 执行 | `laser_filter_node` | 扫描过滤，输出 `/scan_filtered` |
-| 执行 | `imu_filter_node` | IMU 平滑，输出 `/imu/data` |
-| 执行 | `imu_100d4_parser_node` | 串口帧解析为 `sensor_msgs/Imu` |
+| 执行 | `laser_filter_node` | 扫描过滤，`/sim/scan` → `/scan`（`input_topic`/`output_topic` 可配） |
+| 执行 | `imu_filter_node` | 坐标/`frame_id` 归一化后输出 `/imu/data`（当前不做数值平滑） |
+| 执行 | `imu_100d4_parser_node` | `/imu/raw_bytes` 帧解析为 `sensor_msgs/Imu`（发布到 `/imu/data`） |
 | 执行 | `fake_scan_node` | 模拟扫描数据（无硬件联调） |
 
 ## 3. 启动与使用

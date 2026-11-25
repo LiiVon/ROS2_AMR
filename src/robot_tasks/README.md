@@ -40,10 +40,12 @@ robot_tasks/
 | 服务 | `/business/submit_order` | **唯一**订单入口，内部路由到运输/拣选/补货等类型 |
 | 服务 | `/mission/enqueue`、`/mission/cancel`、`/mission/preempt` | 任务队列管控 |
 | 服务 | `/mission/pause`、`/mission/resume` | 运行中任务暂停/恢复 |
-| 服务 | `/station/submit_sequence`、`/station/submit_transport` | 站点序列与站点运输任务 |
+| 服务 | `/mission/submit_station_sequence`、`/mission/submit_station_transport` | 站点序列与站点运输任务 |
+| 服务 | `/mission/submit_station_batch`、`/mission/cancel_station_batch` | 站点订单批次提交/取消 |
 | 服务 | `/facility/*`、`/fleet/*`、`/site/*` | 设施动作、车队任务、站点配置 |
+| 服务 | `/business/get_operator_snapshot` | 操作员快照（REST `GET /api/operator/snapshot` 的数据源） |
 | Action | `/mission/navigate_sequence` | 由 `navigate_sequence_server_node` 提供多目标导航 |
-| 话题 | `/mission/state`、`/operator/snapshot` | 任务状态与操作员视图 |
+| 话题 | `/mission/state` | 任务状态 |
 | 执行 | `mission_runner_node` | 任务中枢主节点 |
 | 执行 | `navigate_sequence_server_node` | 多目标导航 action 服务端 |
 | 执行 | `site_config_manager_node` | 站点配置校验与激活 |
@@ -53,7 +55,7 @@ robot_tasks/
 ```bash
 ros2 launch robot_tasks mission_runner.launch.py
 ros2 service call /business/submit_order robot_interfaces_business/srv/SubmitOrder \
-  "{order_id: 'order_0', pickup_station: 'S1', dropoff_station: 'S2'}" 
+  "{order_id: 'order_0', order_type: 'station_transport', payload_json: 'pickup_station=receiving;dropoff_station=packing'}"
 ```
 
 ## 4. 关键约束

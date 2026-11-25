@@ -106,6 +106,26 @@ TEST(AdapterTest, ValidateCalibration_NonIdentityEncoderCorrection_FailsClearly)
   EXPECT_NE(error.find("raw wheel encoders"), std::string::npos);
 }
 
+TEST(AdapterTest, ValidateProtocol_UnknownValue_FailsClearly) {
+  Config config;
+  config.protocol = "mick_binray";  // 典型拼写错误
+  std::string error;
+
+  EXPECT_FALSE(ValidateConfig(config, &error));
+  EXPECT_NE(error.find("protocol"), std::string::npos);
+  EXPECT_THROW(
+      Adapter(std::make_unique<MockBackend>(), config), std::invalid_argument);
+}
+
+TEST(AdapterTest, ValidateProtocol_KnownValues_Succeed) {
+  std::string error;
+  for (const auto* protocol : {"text", "mick_binary"}) {
+    Config config;
+    config.protocol = protocol;
+    EXPECT_TRUE(ValidateConfig(config, &error)) << protocol;
+  }
+}
+
 TEST(AdapterTest, Write_ClosedBackend_ReturnsError) {
   Adapter adapter(std::make_unique<MockBackend>());
 

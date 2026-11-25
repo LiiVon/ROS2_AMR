@@ -31,9 +31,9 @@ robot_navigation/
 | 类型 | 名称 | 说明 |
 |---|---|---|
 | 服务 | `/navigation/list_maps`、`/navigation/set_active_map` | 地图枚举与切换 |
-| 服务 | `/navigation/list_map_zones`、`/navigation/evaluate_map_position` | 区域查询与位置判定 |
-| 服务 | `/navigation/set_initial_pose_from_station` | 按站点设定初始位姿 |
-| 服务 | `/navigation/set_dynamic_speed_limit` | 动态限速 |
+| 服务 | `/navigation/list_map_zones`、`/navigation/evaluate_position` | 区域查询与位置判定 |
+| 服务 | `/navigation/set_initial_pose` | 按站点设定初始位姿 |
+| 服务 | `/navigation/set_speed_limit` | 动态限速 |
 | 话题 | `/navigation/map_state`、`/navigation/localization_health`、`/navigation/safety_state` | 地图/定位/安全状态 |
 | 启动 | `nav.launch.py`、`navigation_no_docking.launch.py` | Nav2 栈（含/不含停靠行为） |
 | 启动 | `slam.launch.py` | SLAM Toolbox 建图 |

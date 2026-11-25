@@ -129,10 +129,15 @@
       return;
     }
 
+    std::size_t processed_count = 0U;
     for (const auto& item : plan.items) {
+      ++processed_count;
       if (!item.accepted) {
         response->rejected_order_ids.push_back(item.reject_order_id);
         response->rejected_messages.push_back(item.reject_message);
+        if (!request->continue_on_error) {
+          break;
+        }
         continue;
       }
       auto station_request =
@@ -156,6 +161,16 @@
       response->rejected_messages.push_back(station_response->message);
       if (!request->continue_on_error) {
         break;
+      }
+    }
+
+    // continue_on_error=false 是“遇错即停”，但剩余订单必须显式登记为 rejected：
+    // 之前的实现直接 break，调用方既看不到 accepted 也看不到 rejected，等同静默丢单。
+    if (!request->continue_on_error) {
+      for (std::size_t index = processed_count; index < request->order_ids.size(); ++index) {
+        response->rejected_order_ids.push_back(request->order_ids[index]);
+        response->rejected_messages.push_back(
+            "skipped because continue_on_error=false and an earlier order failed");
       }
     }
 

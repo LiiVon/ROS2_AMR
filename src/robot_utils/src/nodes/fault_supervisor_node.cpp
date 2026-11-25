@@ -50,6 +50,11 @@ class FaultSupervisorNode final : public rclcpp::Node {
     auto_clear_ = declare_parameter<bool>("auto_clear", true);
     command_cooldown_ms_ = declare_parameter<int>("command_cooldown_ms", 500);
     startup_grace_ms_ = declare_parameter<int>("startup_grace_ms", 2000);
+    health_timeout_ms_ = declare_parameter<int>("health_timeout_ms", 2000);
+    if (health_timeout_ms_ <= 0) {
+      RCLCPP_WARN(get_logger(), "health_timeout_ms must be > 0, using 2000");
+      health_timeout_ms_ = 2000;
+    }
     started_stamp_ = now();
 
     state_publisher_ = create_publisher<robot_interfaces_core::msg::RobotState>(topics::kSystemFaultState, 10);
@@ -57,6 +62,7 @@ class FaultSupervisorNode final : public rclcpp::Node {
         topics::kSystemHealth, 10, [this](robot_interfaces_core::msg::RobotState::SharedPtr msg) {
           last_health_ = *msg;
           health_seen_ = true;
+          last_health_stamp_ = now();
         });
     enable_estop_client_ =
         create_client<std_srvs::srv::SetBool>("/teleop/enable_emergency_stop");
@@ -87,8 +93,20 @@ class FaultSupervisorNode final : public rclcpp::Node {
       SetState("WAITING", "waiting for /system/health", true);
       return;
     }
-    if (InStartupGrace() && last_health_.state == "ERROR") {
+    if (InStartupGrace() && (last_health_.state == "ERROR" || HealthStale())) {
       SetState("ARMING", "startup grace active: " + last_health_.message, true);
+      return;
+    }
+    if (HealthStale()) {
+      // 监控节点死亡 / 断流：宁可急停，也不能把“没有结论”当成“健康”。
+      fault_active_ = true;
+      if (!emergency_stop_requested_ && CooldownReady()) {
+        RequestEmergencyStop();
+      }
+      SetState("FAULT",
+               "system health stale: no /system/health within " +
+                   std::to_string(health_timeout_ms_) + " ms",
+               false);
       return;
     }
     if (last_health_.state == "ERROR") {
@@ -157,6 +175,19 @@ class FaultSupervisorNode final : public rclcpp::Node {
   }
 
   /**
+   * @brief /system/health 是否已断流。
+   * @return 已收到过健康消息且超过 health_timeout_ms_ 未更新时返回 true
+   * @details 从未收到过返回 false：启动阶段由 WAITING 负责，不把“尚未开始”当成“断流”。
+   */
+  bool HealthStale() const {
+    if (!health_seen_) {
+      return false;
+    }
+    const auto age_ms = (now() - last_health_stamp_).nanoseconds() / 1000000;
+    return age_ms > health_timeout_ms_;
+  }
+
+  /**
    * @brief 当前健康状态是否允许解除急停。
    * @return 健康为 OK 时 true；健康为 WARN 且原因**只是**“急停激活”时也 true
    * @details 后者是必须的特例：急停激活会让 health 变成 WARN，
@@ -205,6 +236,7 @@ class FaultSupervisorNode final : public rclcpp::Node {
   bool auto_clear_ = true;
   int command_cooldown_ms_ = 500;
   int startup_grace_ms_ = 2000;
+  int health_timeout_ms_ = 2000;
   // ---- 运行状态 ----
   bool health_seen_ = false;
   bool fault_active_ = false;
@@ -216,6 +248,7 @@ class FaultSupervisorNode final : public rclcpp::Node {
   // ---- 输入快照与时间戳 ----
   robot_interfaces_core::msg::RobotState last_health_;
   rclcpp::Time started_stamp_;
+  rclcpp::Time last_health_stamp_;
   rclcpp::Time last_command_stamp_;
   rclcpp::Publisher<robot_interfaces_core::msg::RobotState>::SharedPtr state_publisher_;
   rclcpp::Subscription<robot_interfaces_core::msg::RobotState>::SharedPtr health_subscription_;

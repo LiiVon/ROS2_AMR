@@ -36,7 +36,7 @@ robot_hardware/
 | 话题 | `/chassis/state` | 连接状态、后端名称、错误计数 |
 | 话题 | `/odom`、`/wheel/odom`、`/chassis/odom_path` | 里程计与轨迹 |
 | 服务 | `/chassis/set_mode`、`/chassis/clear_odometry` | 控制模式切换、里程计清零 |
-| 参数 | `backend`（`mock`/`serial`/`udp`）、`port`、`bind_host` | 后端选择与链路配置 |
+| 参数 | `backend`（`mock`/`serial`/`udp`）、`serial_device`、`serial_baud`、`udp_host`、`udp_port`；模拟器用 `bind_host`、`port` | 后端选择与链路配置 |
 | 插件 | `robot_hardware::ChassisHardwareInterface` | ros2_control 系统插件（`robot_hardware_plugins.xml`） |
 | 执行 | `chassis_driver_node` | 独立驱动节点（非 ros2_control 链路） |
 | 执行 | `chassis_simulator_node` | UDP 底盘模拟器，用于无硬件联调 |

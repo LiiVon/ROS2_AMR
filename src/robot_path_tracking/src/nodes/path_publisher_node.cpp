@@ -39,6 +39,14 @@ class PathPublisherNode final : public rclcpp::Node {
     path_file_ = declare_parameter<std::string>("path_file", "");
     frame_id_ = declare_parameter<std::string>("frame_id", "map");
     publish_rate_hz_ = declare_parameter<double>("publish_rate_hz", 2.0);
+    // 参数防御：0/负值/非有限值会让定时器周期变成 inf 或 0ms（忙等）。
+    if (!std::isfinite(publish_rate_hz_) || publish_rate_hz_ < 0.1 ||
+        publish_rate_hz_ > 100.0) {
+      RCLCPP_WARN(get_logger(),
+                  "publish_rate_hz must be within [0.1, 100.0], got %f; using 2.0",
+                  publish_rate_hz_);
+      publish_rate_hz_ = 2.0;
+    }
     LoadPath();
     publisher_ = create_publisher<nav_msgs::msg::Path>(topics::kReferencePath, 1);
     const auto period = std::chrono::duration<double>(1.0 / publish_rate_hz_);

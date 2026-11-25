@@ -30,7 +30,7 @@ robot_interfaces_navigation/
 ## 3. 启动与使用
 
 ```bash
-ros2 interface show robot_interfaces_navigation/srv/NavigateSequence
+ros2 interface show robot_interfaces_navigation/action/NavigateSequence
 ```
 
 ## 4. 关键约束

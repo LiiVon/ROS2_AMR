@@ -43,8 +43,10 @@ ros2 run robot_teleop keyboard_teleop_node
 
 ## 4. 关键约束
 
-- 除 `cmd_vel_safety_gate_node` 外，任何节点不得发布 `/cmd_vel`。
+- `/cmd_vel` 的唯一发布者是 `cmd_vel_safety_gate_node`（`use_twist_mux:=false` 时由 `cmd_vel_mux_node` 直连发布）。
 - 急停、控制权未接管、输入超时三种情况必须输出零速。
+- `/teleop/manual_state` 超过 `takeover_timeout_ms`（默认 500 ms）未更新时视为“未接管”，
+  闸门会停止心跳 `takeover_lock`，避免遥控节点异常退出后导航被永久压制。
 
 ## 5. 测试
 

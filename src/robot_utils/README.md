@@ -26,7 +26,7 @@ robot_utils/
 | 类型 | 名称 | 说明 |
 |---|---|---|
 | 执行 | `system_monitor_node` | 底盘/电池/急停/传感器话题新鲜度 → `/system/health` + 6 个诊断项 |
-| 执行 | `fault_supervisor_node` | 把 `/system/health` 转成急停动作，并输出 `/system/fault_state` |
+| 执行 | `fault_supervisor_node` | 把 `/system/health` 转成急停动作，并输出 `/system/fault_state`；健康断流超过 `health_timeout_ms`（默认 2000 ms）按 FAULT 处理 |
 | 启动 | `diagnostics.launch.py` | 只启动诊断聚合器（配置见 `config/README.md`） |
 
 ## 3. 启动与使用

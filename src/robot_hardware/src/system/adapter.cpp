@@ -44,6 +44,15 @@ namespace robot_hardware::system
             return fail("Calibration profile name cannot be empty.");
         }
 
+        // 协议名必须显式受支持：拼错时不能静默回落到文本协议，否则现场表现为
+        // “命令发出去但底盘没反应”，排查成本极高。
+        if (config.protocol != "text" && config.protocol != "mick_binary")
+        {
+            return fail(
+                "protocol must be one of {text, mick_binary}, got '" + config.protocol +
+                "'");
+        }
+
         for (const auto &value : {
                  std::pair{"wheel_diameter_m", config.wheel_diameter_m},
                  std::pair{"wheel_base_m", config.wheel_base_m},

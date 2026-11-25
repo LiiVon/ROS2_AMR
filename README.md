@@ -151,7 +151,7 @@ python3 tools/check_conventions.py            # 命名/行数规范
 python3 tools/check_conventions.py --strict   # 发布门禁（行数超限也算失败）
 ```
 
-当前基线：**535 个测试、0 失败、1 跳过**（跳过的为 Gazebo 运行时用例，需要 3D 显示）。
+当前基线：**537 个测试、0 失败、1 跳过**（跳过的为 Gazebo 运行时用例，需要 3D 显示）。
 命名规范检查已作为 `conventions` 用例接入 `colcon test`，无需单独执行也可被门禁覆盖。
 
 业务链路端到端冒烟（mock 底盘 + 任务中枢）：
@@ -252,6 +252,7 @@ src/
 | `docs/需求文档.md` | 需求基线：命名规则、分层、94 个接口、FR/TR/Gate、交付物与风险 |
 | `docs/问题清单.md` | 代码级缺陷清单（P0/P1/P2）与修复验收记录 |
 | `docs/审计报告.md` | 工程审计结论与遗留项 |
+| `docs/robot_sensors零基础教学.md` | 从传感器原理到 `robot_sensors` 代码逐行的零基础教程 |
 | `18包学习与复刻顺序.md` | 逐包学习/复刻顺序与复刻时必须遵守的硬约束 |
 | 各包 `README.md` | 该包职责、分层表、接口、启动方式、约束与测试 |
 

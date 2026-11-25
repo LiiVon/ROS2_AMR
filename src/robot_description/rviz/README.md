@@ -7,7 +7,7 @@
 
 ```bash
 # 只显示模型（robot_state_publisher + joint_state_publisher）
-ros2 launch robot_description display.launch.py
+ros2 launch robot_bringup display.launch.py
 # 或手动指定配置
 rviz2 -d $(ros2 pkg prefix robot_description)/share/robot_description/rviz/display.rviz
 ```

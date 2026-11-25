@@ -25,13 +25,14 @@ robot_path_tracking/
 | 执行 | `pure_pursuit_controller_node` | 预瞄距离 + 曲率控制 |
 | 执行 | `stanley_controller_node` | 前视点 + 航向/横向误差控制 |
 | 话题 | `/cmd_vel/tracking` | 跟踪控制器输出（经仲裁与安全闸门） |
-| 参数 | `controller`（`pure_pursuit`/`stanley`）、`path_file` | 启动时选择控制器与路径 |
+| 参数 | 节点参数 `path_file`、`frame_id`、`publish_rate_hz`；`odom_timeout_ms`（默认 300） | 路径来源与新鲜度阈值 |
+| 启动参数 | `controller`（`pure_pursuit`/`stanley`）、`path_file`、`use_mock_chassis` | `robot_bringup/tracking.launch.py` 选择控制器与路径 |
 
 ## 3. 启动与使用
 
 ```bash
 ros2 launch robot_bringup tracking.launch.py controller:=pure_pursuit \
-  path_file:=$(ros2 pkg prefix robot_experiments)/share/robot_experiments/paths/loop.txt
+  path_file:=$(ros2 pkg prefix robot_experiments)/share/robot_experiments/paths/demo_path.txt
 ```
 
 ## 4. 关键约束

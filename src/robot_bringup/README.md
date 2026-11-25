@@ -21,7 +21,7 @@ robot_bringup/
 
 | 启动 | 用途 |
 |---|---|
-| `bringup.launch.py` | 全栈：硬件 + 传感器 + 仲裁 + 导航 + 任务 |
+| `bringup.launch.py` | 基础闭环：模型/TF + 底盘驱动 + 传感器（fake scan）+ 指令仲裁/安全闸门 + 导航 action 服务端 + 监控/故障监督（不含 Nav2 与任务中枢） |
 | `amr_demo.launch.py` | 仿真 + 可视化 + 任务演示 |
 | `display.launch.py` | 模型与 TF 可视化 |
 | `tracking.launch.py` | 路径跟踪评测链路 |
