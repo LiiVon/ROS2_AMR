@@ -23,6 +23,7 @@ def generate_launch_description():
     pause_service_name = LaunchConfiguration("pause_service_name")
     resume_service_name = LaunchConfiguration("resume_service_name")
     cancel_service_name = LaunchConfiguration("cancel_service_name")
+    use_sim_time = LaunchConfiguration("use_sim_time")
     auto_start_queue = LaunchConfiguration("auto_start_queue")
     return_to_dock_after_mission = LaunchConfiguration("return_to_dock_after_mission")
     return_to_dock_on_low_battery = LaunchConfiguration("return_to_dock_on_low_battery")
@@ -99,6 +100,7 @@ def generate_launch_description():
             DeclareLaunchArgument("preflight_zones_file", default_value=default_preflight_zones_file),
             DeclareLaunchArgument("preflight_map_name", default_value="indoor_room"),
             DeclareLaunchArgument("autostart", default_value="false"),
+            DeclareLaunchArgument("use_sim_time", default_value="false"),
             DeclareLaunchArgument("server_timeout_ms", default_value="5000"),
             DeclareLaunchArgument("action_name", default_value="/mission/navigate_sequence"),
             DeclareLaunchArgument("pause_service_name", default_value="/mission/pause"),
@@ -142,6 +144,7 @@ def generate_launch_description():
                 executable="mission_runner_node",
                 parameters=[
                     {
+                        "use_sim_time": use_sim_time,
                         "mission_file": mission_file,
                         "dock_mission_file": dock_mission_file,
                         "station_file": station_file,

@@ -2,7 +2,7 @@
 """代码规范与命名检查（对应需求文档 TR-10 / FR-CODE）。
 
 检查项：
-  1. 禁止出现 v2_ 前缀、/v2/ 路径、_srv_ 后缀、_pub/_sub 缩写、data_/tmp_ 占位名
+  1. 禁止版本号前缀式命名（标识符/路径）、_srv_ 后缀、_pub/_sub 缩写、data_/tmp_ 占位名
   2. 单个 C++ 源文件不超过 1500 行
   3. 目录分层：`include/<包名>/` 与 `src/` 根层不得堆放散装源文件
   4. 关键对外名字必须存在（topic / service 常量抽查）
@@ -17,8 +17,8 @@ import re
 import sys
 
 FORBIDDEN = [
-    (re.compile(r"\bv2_[a-z0-9_]+"), "v2_ 前缀标识符"),
-    (re.compile(r'"/v2/'), "/v2/ 服务名"),
+    (re.compile(r"\bv\d+_[a-z0-9_]+"), "版本号前缀标识符"),
+    (re.compile(r'"/v\d+/'), "版本号前缀服务名"),
     (re.compile(r"\b[a-z0-9_]+_srv_?\b"), "_srv 后缀（应改为 _service）"),
     (re.compile(r"\b[a-z0-9_]+_pub_?\b"), "_pub 缩写（应改为 _publisher）"),
     (re.compile(r"\b[a-z0-9_]+_sub_?\b"), "_sub 缩写（应改为 _subscription）"),

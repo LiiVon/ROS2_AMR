@@ -2,7 +2,7 @@ log/
 build/
 install/
 /robot/
-docs/
+# docs/
 experiment_results.*
 compile_commands.json
 

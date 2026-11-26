@@ -158,6 +158,7 @@ python3 tools/check_conventions.py --strict   # 发布门禁（行数超限也�
 
 ```bash
 tools/smoke_mission.sh          # 提交订单→暂停→恢复→操作员快照，末尾输出 SMOKE PASSED
+tools/smoke_operator_api.sh     # 14 个 REST 端点冒烟，末尾输出 OPERATOR API SMOKE PASSED
 ```
 
 ### 已验证的行为约束
@@ -195,11 +196,27 @@ xdg-open http://127.0.0.1:18080/
 | GET | `/` | 返回 `tools/front_end.html` |
 | GET | `/api/health` | 网关/ROS 就绪状态 |
 | GET | `/api/operator/snapshot?event_limit=N` | `/business/get_operator_snapshot` |
+| GET | `/api/missions/events` | `/mission/list_events` |
+| GET | `/api/fleet/robots` | `/fleet/list_robots` |
+| GET | `/api/facilities/resources` | `/facility/list_resources` |
+| GET | `/api/workflows/status?order_id=...` | `/business/get_workflow_status` |
 | POST | `/api/business_orders` | `/business/submit_order`（`order_type=business`） |
+| POST | `/api/station_order_batches` | `/mission/submit_station_batch` |
 | POST | `/api/workflows/pause`、`/resume`、`/cancel` | `/business/*_workflow` |
+| POST | `/api/missions/reprioritize`、`/reprioritize_batch` | `/mission/reprioritize*` |
+| POST | `/api/remote_tasks/state` | `/fleet/update_remote_task` |
 
 提交成功后返回 `workflow_order_id = business_<业务单号>`，页面会自动填入「工作流单号」，
 暂停/恢复/取消都用它。服务不可用时返回 503，缺参返回 400，业务拒绝原样回传 `message`。
+
+网关冒烟：
+
+```bash
+tools/smoke_operator_api.sh   # 健康/车队/设施/事件/批量下单/重排/400 校验
+```
+
+北向协议与设施适配器位于 `tools/adapters/`（VDA5050 file/MQTT/即时动作、PLC、外部回调），
+说明见 `tools/adapters/README.md`。
 
 ## 7. 接口约定
 
@@ -212,7 +229,8 @@ xdg-open http://127.0.0.1:18080/
 | 任务/业务 | `/mission/state`、`/facility/payload_state`、Action `/mission/navigate_sequence` |
 | 服务 | `/chassis/set_mode`、`/chassis/clear_odometry`、`/mission/enqueue`、`/facility/reserve_resource`、`/business/submit_order`、`/navigation/list_maps`、`/site/activate` |
 
-完整清单见 `需求文档.md` 附录 B/C。
+完整清单见 `docs/需求文档.md` 第 5 节、各包 `README.md` 与
+`robot_utils/include/robot_utils/config/topic_names.hpp`。
 
 ## 8. 目录速查
 
@@ -249,11 +267,10 @@ src/
 
 | 文档 | 内容 |
 |---|---|
-| `docs/需求文档.md` | 需求基线：命名规则、分层、94 个接口、FR/TR/Gate、交付物与风险 |
-| `docs/问题清单.md` | 代码级缺陷清单（P0/P1/P2）与修复验收记录 |
-| `docs/审计报告.md` | 工程审计结论与遗留项 |
+| `docs/需求文档.md` | 需求基线：命名规则、分层、94 个接口、FR/TR/Gate、交付物、参考项目功能对照与风险 |
+| `docs/问题清单.md` | 审计问题清单（P0/P1/P2/P3）、证据、修复建议与复测记录（原审计报告结论已并入） |
 | `docs/robot_sensors零基础教学.md` | 从传感器原理到 `robot_sensors` 代码逐行的零基础教程 |
 | `docs/robot_hardware零基础教学.md` | 从底盘/运动学/协议到 `robot_hardware` 代码逐行的零基础教程 |
-| `18包学习与复刻顺序.md` | 逐包学习/复刻顺序与复刻时必须遵守的硬约束 |
+| `docs/学习顺序.md` | 逐包学习/复刻顺序与复刻时必须遵守的硬约束 |
 | 各包 `README.md` | 该包职责、分层表、接口、启动方式、约束与测试 |
 

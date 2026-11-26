@@ -1,5 +1,6 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
@@ -18,6 +19,7 @@ def generate_launch_description():
     chassis_type = LaunchConfiguration("chassis_type")
     geometry_file = LaunchConfiguration("geometry_file")
     calibration_file = LaunchConfiguration("calibration_file")
+    use_fake_scan = LaunchConfiguration("use_fake_scan")
     robot_description_file = PathJoinSubstitution(
         [FindPackageShare("robot_description"), "urdf", "robot.urdf.xacro"]
     )
@@ -48,6 +50,7 @@ def generate_launch_description():
             DeclareLaunchArgument("protocol", default_value="text"),
             DeclareLaunchArgument("chassis_type", default_value="diff_drive"),
             DeclareLaunchArgument("use_twist_mux", default_value="true"),
+            DeclareLaunchArgument("use_fake_scan", default_value="true"),
             DeclareLaunchArgument("geometry_file", default_value=default_geometry_file),
             DeclareLaunchArgument("calibration_file", default_value=default_calibration_file),
             Node(
@@ -100,6 +103,7 @@ def generate_launch_description():
                 package="robot_sensors",
                 executable="fake_scan_node",
                 parameters=[{"topic": "/scan"}],
+                condition=IfCondition(use_fake_scan),
                 output="screen",
             ),
             Node(
@@ -113,6 +117,7 @@ def generate_launch_description():
                         # 若两者都不可用则明确失败，绝不静默判定成功。
                         "use_waypoint_follower": False,
                         "use_nav2_action": True,
+                        "nav2_server_timeout_ms": 300,
                         "simulate_without_nav2": True,
                         "simulated_motion_enabled": True,
                         "simulated_cmd_vel_topic": "/cmd_vel/nav2",

@@ -118,10 +118,21 @@ class VirtualRcNode final : public rclcpp::Node {
       return;
     }
     if (!fresh) {
-      RCLCPP_WARN_THROTTLE(
-          get_logger(), *get_clock(), 2000,
-          "virtual rc command stale (no /cmd_vel/virtual_rc within %d ms); publishing zero twist",
-          command_timeout_ms_);
+      if (!stale_warned_) {
+        RCLCPP_WARN(get_logger(),
+                    "virtual rc command stale (no /cmd_vel/virtual_rc within %d ms); "
+                    "publishing zero twist",
+                    command_timeout_ms_);
+        stale_warned_ = true;
+      } else {
+        RCLCPP_DEBUG_THROTTLE(
+            get_logger(), *get_clock(), 2000,
+            "virtual rc command stale (no /cmd_vel/virtual_rc within %d ms); "
+            "publishing zero twist",
+            command_timeout_ms_);
+      }
+    } else {
+      stale_warned_ = false;
     }
     geometry_msgs::msg::Twist limited = command;
     limited.linear.x = Clamp(command.linear.x, -max_linear_mps_, max_linear_mps_);
@@ -144,6 +155,7 @@ class VirtualRcNode final : public rclcpp::Node {
   bool manual_takeover_ = false;
   int command_timeout_ms_ = 200;
   bool have_command_ = false;
+  bool stale_warned_ = false;
   rclcpp::Time last_command_stamp_{0, 0, RCL_ROS_TIME};
   geometry_msgs::msg::Twist virtual_cmd_;
   rclcpp::Publisher<sensor_msgs::msg::Joy>::SharedPtr joy_publisher_;

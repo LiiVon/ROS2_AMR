@@ -33,15 +33,9 @@ def launch_slam_mode(context, *args, **kwargs):
             ),
         ]
     if slam_mode == "gmapping":
-        return [
-            Node(
-                package="slam_gmapping_sim",
-                executable="slam_gmapping_sim",
-                name="slam_gmapping",
-                parameters=[{"use_sim_time": use_sim_time}],
-                output="screen",
-            )
-        ]
+        raise RuntimeError(
+            "slam_mode:=gmapping is no longer supported; use slam_toolbox or cartographer"
+        )
 
     slam_params = LaunchConfiguration("slam_params_file")
     slam_launch = PathJoinSubstitution(

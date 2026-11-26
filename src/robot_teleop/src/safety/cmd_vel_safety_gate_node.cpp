@@ -178,13 +178,32 @@ class CmdVelSafetyGateNode final : public rclcpp::Node {
     const auto gate_decision = robot_teleop::EvaluateCmdVelSafetyGate(gate_request);
 
     if (gate_decision.stop_reason == robot_teleop::CmdVelStopReason::kInputUnavailable) {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000,
-                           "no muxed cmd_vel received on '%s'; publishing zero twist",
-                           input_topic_.c_str());
-    } else if (gate_decision.stop_reason == robot_teleop::CmdVelStopReason::kInputStale) {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000,
-                           "muxed cmd_vel on '%s' watchdog expired; publishing zero twist",
-                           input_topic_.c_str());
+      if (!input_unavailable_warned_) {
+        RCLCPP_WARN(get_logger(),
+                    "no muxed cmd_vel received on '%s'; publishing zero twist",
+                    input_topic_.c_str());
+        input_unavailable_warned_ = true;
+      } else {
+        RCLCPP_DEBUG_THROTTLE(get_logger(), *get_clock(), 2000,
+                              "no muxed cmd_vel received on '%s'; publishing zero twist",
+                              input_topic_.c_str());
+      }
+    } else {
+      input_unavailable_warned_ = false;
+    }
+    if (gate_decision.stop_reason == robot_teleop::CmdVelStopReason::kInputStale) {
+      if (!input_stale_warned_) {
+        RCLCPP_WARN(get_logger(),
+                    "muxed cmd_vel on '%s' watchdog expired; publishing zero twist",
+                    input_topic_.c_str());
+        input_stale_warned_ = true;
+      } else {
+        RCLCPP_DEBUG_THROTTLE(get_logger(), *get_clock(), 2000,
+                              "muxed cmd_vel on '%s' watchdog expired; publishing zero twist",
+                              input_topic_.c_str());
+      }
+    } else {
+      input_stale_warned_ = false;
     }
     cmd_publisher_->publish(gate_decision.output_twist);
   }
@@ -198,6 +217,8 @@ class CmdVelSafetyGateNode final : public rclcpp::Node {
   bool manual_takeover_received_ = false;
   bool runtime_safety_stop_ = false;
   bool received_ = false;
+  bool input_unavailable_warned_ = false;
+  bool input_stale_warned_ = false;
   double dynamic_speed_limit_mps_ = 0.0;
   double dynamic_angular_limit_radps_ = 0.6;
   rclcpp::Time last_stamp_;

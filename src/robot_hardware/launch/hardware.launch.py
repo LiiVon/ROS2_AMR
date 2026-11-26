@@ -1,6 +1,7 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -17,6 +18,7 @@ def generate_launch_description():
     publish_tf = LaunchConfiguration("publish_tf")
     publish_odom = LaunchConfiguration("publish_odom")
     imu_source = LaunchConfiguration("imu_source")
+    sensor_source = LaunchConfiguration("sensor_source")
     calibration_file = LaunchConfiguration("calibration_file")
     default_calibration_file = PathJoinSubstitution(
         [FindPackageShare("robot_hardware"), "config", "chassis_calibration.yaml"]
@@ -67,6 +69,9 @@ def generate_launch_description():
                 package="robot_sensors",
                 executable="fake_scan_node",
                 parameters=[{"topic": "/scan"}],
+                condition=IfCondition(
+                    PythonExpression(["'", sensor_source, "' == 'fake'"])
+                ),
                 output="screen",
             ),
         ]

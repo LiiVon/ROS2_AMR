@@ -70,6 +70,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource(mission_runner_launch),
                 launch_arguments={
                     "autostart": "false",
+                    "use_sim_time": "true",
                     "server_timeout_ms": "3000",
                     "return_to_dock_on_low_battery": "false",
                     "station_file": station_file,
@@ -81,6 +82,7 @@ def generate_launch_description():
                 executable="navigate_sequence_server_node",
                 parameters=[
                     {
+                        "use_sim_time": True,
                         "use_nav2_action": False,
                         "simulate_without_nav2": True,
                         "simulated_motion_enabled": True,

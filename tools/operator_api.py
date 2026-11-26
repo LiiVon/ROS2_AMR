@@ -10,10 +10,18 @@
   GET  /                          -> 返回 front_end.html（同目录）
   GET  /api/health                -> 网关与 ROS 连接状态
   GET  /api/operator/snapshot     -> /business/get_operator_snapshot
+  GET  /api/missions/events       -> /mission/list_events
+  GET  /api/fleet/robots          -> /fleet/list_robots
+  GET  /api/facilities/resources  -> /facility/list_resources
+  GET  /api/workflows/status      -> /business/get_workflow_status
   POST /api/business_orders       -> /business/submit_order（order_type=business）
+  POST /api/station_order_batches -> /mission/submit_station_batch
   POST /api/workflows/pause       -> /business/pause_workflow
   POST /api/workflows/resume      -> /business/resume_workflow
   POST /api/workflows/cancel      -> /business/cancel_workflow
+  POST /api/missions/reprioritize       -> /mission/reprioritize
+  POST /api/missions/reprioritize_batch -> /mission/reprioritize_batch
+  POST /api/remote_tasks/state    -> /fleet/update_remote_task
 
 用法：
   python3 tools/operator_api.py [--host 127.0.0.1] [--port 18080]
@@ -27,7 +35,7 @@ import pathlib
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
@@ -36,9 +44,18 @@ from rclpy.node import Node
 from robot_interfaces_business.srv import (
     CancelWorkflow,
     GetOperatorSnapshot,
+    GetWorkflowStatus,
     PauseWorkflow,
     ResumeWorkflow,
     SubmitOrder,
+)
+from robot_interfaces_facility.srv import ListFacilityResources
+from robot_interfaces_fleet.srv import ListFleetRobots, UpdateRemoteTaskState
+from robot_interfaces_mission.srv import (
+    ListMissionEvents,
+    ReprioritizeBatch,
+    ReprioritizeQueuedMission,
+    SubmitStationOrderBatch,
 )
 
 HTML_PATH = pathlib.Path(__file__).resolve().parent / "front_end.html"
@@ -243,6 +260,191 @@ class RosBridge:
             "active_cancel_requested": bool(response.active_cancel_requested),
         }
 
+    def mission_events(
+        self, limit: int = 20, state_filter: str = "", mission_id_filter: str = ""
+    ) -> dict:
+        request = ListMissionEvents.Request()
+        request.limit = int(limit)
+        request.state_filter = state_filter
+        request.mission_id_filter = mission_id_filter
+        response = self.call("/mission/list_events", ListMissionEvents, request)
+        events = [
+            {
+                "stamp": stamp,
+                "mission_id": mission_id,
+                "state": state,
+                "previous_state": previous_state,
+                "message": message,
+                "recoverable": bool(recoverable),
+            }
+            for stamp, mission_id, state, previous_state, message, recoverable in zip(
+                response.stamp,
+                response.mission_ids,
+                response.states,
+                response.previous_states,
+                response.messages,
+                response.recoverable,
+            )
+        ]
+        return {
+            "success": bool(response.success),
+            "message": response.message,
+            "events": events,
+        }
+
+    def fleet_robots(self, capability: str = "", include_disabled: bool = False) -> dict:
+        request = ListFleetRobots.Request()
+        request.capability = capability
+        request.include_disabled = bool(include_disabled)
+        response = self.call("/fleet/list_robots", ListFleetRobots, request)
+        robots = [
+            {
+                "robot_id": robot_id,
+                "enabled": bool(enabled),
+                "state": state,
+                "battery_voltage": battery_voltage,
+                "current_station_id": station_id,
+                "capabilities": capabilities,
+            }
+            for robot_id, enabled, state, battery_voltage, station_id, capabilities in zip(
+                response.robot_ids,
+                response.enabled,
+                response.states,
+                response.battery_voltage,
+                response.current_station_ids,
+                response.capabilities,
+            )
+        ]
+        return {
+            "success": bool(response.success),
+            "message": response.message,
+            "robots": robots,
+        }
+
+    def facility_resources(
+        self, resource_type: str = "", include_disabled: bool = False
+    ) -> dict:
+        request = ListFacilityResources.Request()
+        request.resource_type = resource_type
+        request.include_disabled = bool(include_disabled)
+        response = self.call("/facility/list_resources", ListFacilityResources, request)
+        resources = [
+            {
+                "resource_id": resource_id,
+                "resource_type": item_type,
+                "station_id": station_id,
+                "enabled": bool(enabled),
+                "available": bool(available),
+                "holder_id": holder_id,
+                "status": status,
+            }
+            for resource_id, item_type, station_id, enabled, available, holder_id, status in zip(
+                response.resource_ids,
+                response.resource_types,
+                response.station_ids,
+                response.enabled,
+                response.available,
+                response.holder_ids,
+                response.status,
+            )
+        ]
+        return {
+            "success": bool(response.success),
+            "message": response.message,
+            "resources": resources,
+        }
+
+    def workflow_status(self, order_id: str) -> dict:
+        request = GetWorkflowStatus.Request()
+        request.order_id = order_id
+        response = self.call(
+            "/business/get_workflow_status", GetWorkflowStatus, request
+        )
+        return {
+            "success": bool(response.success),
+            "message": response.message,
+            "order_id": response.order_id,
+            "state": response.state,
+            "total_steps": response.total_steps,
+            "finished_steps": response.finished_steps,
+            "queued_steps": response.queued_steps,
+            "running_mission_id": response.running_mission_id,
+            "queued_mission_ids": list(response.queued_mission_ids),
+            "finished_mission_ids": list(response.finished_mission_ids),
+            "paused": bool(response.paused),
+        }
+
+    def submit_station_batch(self, payload: dict) -> dict:
+        request = SubmitStationOrderBatch.Request()
+        request.batch_id = str(payload.get("batch_id") or "")
+        request.order_ids = [str(value) for value in payload.get("order_ids") or []]
+        request.pickup_station_ids = [
+            str(value) for value in payload.get("pickup_station_ids") or []
+        ]
+        request.dropoff_station_ids = [
+            str(value) for value in payload.get("dropoff_station_ids") or []
+        ]
+        request.priority = int(payload.get("priority") or 50)
+        request.start_if_idle = bool(payload.get("start_if_idle", True))
+        request.preempt_current = bool(payload.get("preempt_current", False))
+        request.continue_on_error = bool(payload.get("continue_on_error", True))
+        response = self.call(
+            "/mission/submit_station_batch", SubmitStationOrderBatch, request
+        )
+        return {
+            "success": bool(response.success),
+            "message": response.message,
+            "mission_ids": list(response.mission_ids),
+            "rejected_order_ids": list(response.rejected_order_ids),
+            "rejected_messages": list(response.rejected_messages),
+            "accepted_count": response.accepted_count,
+            "rejected_count": response.rejected_count,
+            "queue_size": response.queue_size,
+        }
+
+    def reprioritize(self, mission_id: str, priority: int) -> dict:
+        request = ReprioritizeQueuedMission.Request()
+        request.mission_id = mission_id
+        request.priority = int(priority)
+        response = self.call(
+            "/mission/reprioritize", ReprioritizeQueuedMission, request
+        )
+        return {
+            "success": bool(response.success),
+            "message": response.message,
+            "queue_size": response.queue_size,
+        }
+
+    def reprioritize_batch(self, mission_ids: list, priorities: list) -> dict:
+        request = ReprioritizeBatch.Request()
+        request.mission_ids = [str(value) for value in mission_ids]
+        request.priorities = [int(value) for value in priorities]
+        response = self.call(
+            "/mission/reprioritize_batch", ReprioritizeBatch, request
+        )
+        return {
+            "success": bool(response.success),
+            "message": response.message,
+            "updated_mission_ids": list(response.updated_mission_ids),
+            "queue_size": response.queue_size,
+        }
+
+    def remote_task_state(self, task_id: str, state: str, message: str = "") -> dict:
+        request = UpdateRemoteTaskState.Request()
+        request.task_id = task_id
+        request.state = state
+        request.message = message
+        response = self.call(
+            "/fleet/update_remote_task", UpdateRemoteTaskState, request
+        )
+        return {
+            "success": bool(response.success),
+            "message": response.message,
+            "task_id": response.task_id,
+            "assigned_robot_id": response.assigned_robot_id,
+            "state": response.state,
+        }
+
 
 class ServiceUnavailable(RuntimeError):
     """ROS 服务不可达或超时。"""
@@ -321,6 +523,54 @@ class Handler(BaseHTTPRequestHandler):
                     limit = 20
             self._guarded(lambda: self.bridge.snapshot(limit))
             return
+        if path == "/api/missions/events":
+            query = parse_qs(urlparse(self.path).query)
+            try:
+                limit = int(query.get("limit", ["20"])[0])
+            except ValueError:
+                limit = 20
+            self._guarded(
+                lambda: self.bridge.mission_events(
+                    limit,
+                    query.get("state", [""])[0],
+                    query.get("mission_id", [""])[0],
+                )
+            )
+            return
+        if path == "/api/fleet/robots":
+            query = parse_qs(urlparse(self.path).query)
+            include_disabled = query.get("include_disabled", ["false"])[0].lower() in (
+                "1",
+                "true",
+                "yes",
+            )
+            self._guarded(
+                lambda: self.bridge.fleet_robots(
+                    query.get("capability", [""])[0], include_disabled
+                )
+            )
+            return
+        if path == "/api/facilities/resources":
+            query = parse_qs(urlparse(self.path).query)
+            include_disabled = query.get("include_disabled", ["false"])[0].lower() in (
+                "1",
+                "true",
+                "yes",
+            )
+            self._guarded(
+                lambda: self.bridge.facility_resources(
+                    query.get("resource_type", [""])[0], include_disabled
+                )
+            )
+            return
+        if path == "/api/workflows/status":
+            query = parse_qs(urlparse(self.path).query)
+            order_id = query.get("order_id", [""])[0]
+            if not order_id:
+                self._json(400, {"success": False, "message": "order_id is required"})
+                return
+            self._guarded(lambda: self.bridge.workflow_status(order_id))
+            return
         self._json(404, {"success": False, "message": f"unknown path: {path}"})
 
     def do_POST(self) -> None:  # noqa: N802
@@ -360,6 +610,91 @@ class Handler(BaseHTTPRequestHandler):
             }[action]
             self._guarded(lambda: call(order_id))
             return
+        if path == "/api/station_order_batches":
+            order_ids = body.get("order_ids") or []
+            pickup_ids = body.get("pickup_station_ids") or []
+            dropoff_ids = body.get("dropoff_station_ids") or []
+            if not (
+                isinstance(order_ids, list)
+                and isinstance(pickup_ids, list)
+                and isinstance(dropoff_ids, list)
+            ):
+                self._json(
+                    400,
+                    {
+                        "success": False,
+                        "message": "order_ids/pickup_station_ids/dropoff_station_ids must be arrays",
+                    },
+                )
+                return
+            if not (len(order_ids) == len(pickup_ids) == len(dropoff_ids)):
+                self._json(
+                    400,
+                    {
+                        "success": False,
+                        "message": "order/pickup/dropoff arrays must have the same length",
+                    },
+                )
+                return
+            try:
+                body["priority"] = int(body.get("priority") or 50)
+            except (TypeError, ValueError):
+                self._json(400, {"success": False, "message": "priority must be an integer"})
+                return
+            self._guarded(lambda: self.bridge.submit_station_batch(body))
+            return
+        if path == "/api/missions/reprioritize":
+            mission_id = str(body.get("mission_id") or "")
+            if not mission_id:
+                self._json(400, {"success": False, "message": "mission_id is required"})
+                return
+            try:
+                priority = int(body.get("priority"))
+            except (TypeError, ValueError):
+                self._json(400, {"success": False, "message": "priority must be an integer"})
+                return
+            self._guarded(lambda: self.bridge.reprioritize(mission_id, priority))
+            return
+        if path == "/api/missions/reprioritize_batch":
+            mission_ids = body.get("mission_ids") or []
+            priorities = body.get("priorities") or []
+            if not (isinstance(mission_ids, list) and isinstance(priorities, list)):
+                self._json(
+                    400,
+                    {"success": False, "message": "mission_ids/priorities must be arrays"},
+                )
+                return
+            if len(mission_ids) != len(priorities):
+                self._json(
+                    400,
+                    {
+                        "success": False,
+                        "message": "mission_ids and priorities must have the same length",
+                    },
+                )
+                return
+            try:
+                priorities = [int(value) for value in priorities]
+            except (TypeError, ValueError):
+                self._json(400, {"success": False, "message": "priorities must be integers"})
+                return
+            self._guarded(lambda: self.bridge.reprioritize_batch(mission_ids, priorities))
+            return
+        if path == "/api/remote_tasks/state":
+            task_id = str(body.get("task_id") or "")
+            state = str(body.get("state") or "")
+            if not task_id or not state:
+                self._json(
+                    400,
+                    {"success": False, "message": "task_id and state are required"},
+                )
+                return
+            self._guarded(
+                lambda: self.bridge.remote_task_state(
+                    task_id, state, str(body.get("message") or "")
+                )
+            )
+            return
         self._json(404, {"success": False, "message": f"unknown path: {path}"})
 
     def _guarded(self, func) -> None:
@@ -382,7 +717,9 @@ def main() -> int:
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     print(
         f"[operator_api] serving http://{args.host}:{args.port}/ "
-        f"(REST: /api/operator/snapshot, /api/business_orders, /api/workflows/*)"
+        f"(REST: /api/operator/snapshot, /api/missions/*, /api/fleet/robots, "
+        f"/api/facilities/resources, /api/business_orders, /api/station_order_batches, "
+        f"/api/workflows/*, /api/remote_tasks/state)"
     )
     try:
         server.serve_forever()
