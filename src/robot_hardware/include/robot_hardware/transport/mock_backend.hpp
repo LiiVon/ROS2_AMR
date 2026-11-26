@@ -29,6 +29,7 @@ namespace robot_hardware::transport
         bool WriteRawFrame(const std::vector<std::uint8_t> &frame, std::string *error) override;
 
         Command LastCommand() const;
+
     private:
         bool open_ = false;
         Command last_command_;

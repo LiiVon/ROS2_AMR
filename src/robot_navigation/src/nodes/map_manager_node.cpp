@@ -30,9 +30,11 @@ namespace topics = robot_utils::topics;
 
 using namespace std::chrono_literals;
 
-class MapManagerNode final : public rclcpp::Node {
- public:
-  MapManagerNode() : Node("map_manager_node") {
+class MapManagerNode final : public rclcpp::Node
+{
+public:
+  MapManagerNode() : Node("map_manager_node")
+  {
     const auto default_maps_dir =
         std::filesystem::path(ament_index_cpp::get_package_share_directory("robot_navigation")) /
         "maps";
@@ -54,19 +56,22 @@ class MapManagerNode final : public rclcpp::Node {
     list_maps_service_ = create_service<robot_interfaces_navigation::srv::ListMaps>(
         "/navigation/list_maps",
         [this](const std::shared_ptr<robot_interfaces_navigation::srv::ListMaps::Request>,
-               std::shared_ptr<robot_interfaces_navigation::srv::ListMaps::Response> response) {
+               std::shared_ptr<robot_interfaces_navigation::srv::ListMaps::Response> response)
+        {
           HandleListMaps(response);
         });
     set_active_map_service_ = create_service<robot_interfaces_navigation::srv::SetActiveMap>(
         "/navigation/set_active_map",
         [this](const std::shared_ptr<robot_interfaces_navigation::srv::SetActiveMap::Request> request,
-               std::shared_ptr<robot_interfaces_navigation::srv::SetActiveMap::Response> response) {
+               std::shared_ptr<robot_interfaces_navigation::srv::SetActiveMap::Response> response)
+        {
           HandleSetActiveMap(request->name, response);
         });
     list_zones_service_ = create_service<robot_interfaces_navigation::srv::ListMapZones>(
         "/navigation/list_map_zones",
         [this](const std::shared_ptr<robot_interfaces_navigation::srv::ListMapZones::Request> request,
-               std::shared_ptr<robot_interfaces_navigation::srv::ListMapZones::Response> response) {
+               std::shared_ptr<robot_interfaces_navigation::srv::ListMapZones::Response> response)
+        {
           HandleListMapZones(request, response);
         });
     evaluate_position_service_ =
@@ -74,33 +79,39 @@ class MapManagerNode final : public rclcpp::Node {
             "/navigation/evaluate_position",
             [this](
                 const std::shared_ptr<robot_interfaces_navigation::srv::EvaluateMapPosition::Request> request,
-                std::shared_ptr<robot_interfaces_navigation::srv::EvaluateMapPosition::Response> response) {
+                std::shared_ptr<robot_interfaces_navigation::srv::EvaluateMapPosition::Response> response)
+            {
               HandleEvaluateMapPosition(request, response);
             });
     timer_ = create_wall_timer(
         std::chrono::milliseconds(std::max(200, publish_period_ms_)),
-        [this]() { PublishState(); });
+        [this]()
+        { PublishState(); });
   }
 
- private:
+private:
   std::vector<robot_navigation::MapInfo> Maps() const { return catalog_->Scan(); }
 
   template <typename ResponseT>
-  void HandleListMaps(std::shared_ptr<ResponseT> response) const {
+  void HandleListMaps(std::shared_ptr<ResponseT> response) const
+  {
     const auto maps = Maps();
     response->success = !maps.empty();
     response->message = maps.empty() ? "no valid maps found" : "ok";
     response->active_map = active_map_;
-    for (const auto& map : maps) {
+    for (const auto &map : maps)
+    {
       response->names.push_back(map.name);
       response->paths.push_back(map.yaml_path.string());
     }
   }
 
   template <typename ResponseT>
-  void HandleSetActiveMap(const std::string& name, std::shared_ptr<ResponseT> response) {
+  void HandleSetActiveMap(const std::string &name, std::shared_ptr<ResponseT> response)
+  {
     const auto map = catalog_->FindByName(name);
-    if (!map.has_value()) {
+    if (!map.has_value())
+    {
       response->success = false;
       response->active_map = active_map_;
       response->message = "map not found or invalid: " + name;
@@ -116,17 +127,22 @@ class MapManagerNode final : public rclcpp::Node {
 
   template <typename RequestT, typename ResponseT>
   void HandleListMapZones(
-      const std::shared_ptr<RequestT> request, std::shared_ptr<ResponseT> response) const {
-    try {
+      const std::shared_ptr<RequestT> request, std::shared_ptr<ResponseT> response) const
+  {
+    try
+    {
       const auto map_name = request->map_name.empty() ? active_map_ : request->map_name;
       const auto zones = zone_catalog_->ForMap(map_name, request->include_disabled);
       response->success = true;
       response->message = "loaded " + std::to_string(zones.size()) + " zone(s)";
-      for (const auto& zone : zones) {
+      for (const auto &zone : zones)
+      {
         using ZoneMessageT = typename std::decay_t<decltype(response->zones)>::value_type;
         response->zones.push_back(ToZoneMessage<ZoneMessageT>(zone));
       }
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception &error)
+    {
       response->success = false;
       response->message = error.what();
     }
@@ -134,8 +150,10 @@ class MapManagerNode final : public rclcpp::Node {
 
   template <typename RequestT, typename ResponseT>
   void HandleEvaluateMapPosition(
-      const std::shared_ptr<RequestT> request, std::shared_ptr<ResponseT> response) const {
-    try {
+      const std::shared_ptr<RequestT> request, std::shared_ptr<ResponseT> response) const
+  {
+    try
+    {
       const auto map_name = request->map_name.empty() ? active_map_ : request->map_name;
       const auto evaluation = zone_catalog_->EvaluatePoint(
           map_name, request->point.x, request->point.y, default_speed_limit_mps_);
@@ -143,11 +161,14 @@ class MapManagerNode final : public rclcpp::Node {
       response->message = evaluation.message;
       response->allowed = evaluation.allowed;
       response->speed_limit_mps = evaluation.speed_limit_mps;
-      for (const auto& zone : evaluation.matched_zones) {
+      for (const auto &zone : evaluation.matched_zones)
+      {
         response->matched_zone_ids.push_back(zone.zone_id);
         response->matched_zone_types.push_back(zone.type);
       }
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception &error)
+    {
       response->success = false;
       response->message = error.what();
       response->allowed = false;
@@ -155,7 +176,8 @@ class MapManagerNode final : public rclcpp::Node {
     }
   }
 
-  void PublishState() {
+  void PublishState()
+  {
     const auto maps = Maps();
     const auto active = catalog_->FindByName(active_map_);
     const auto zones_status = BuildZonesText();
@@ -165,14 +187,19 @@ class MapManagerNode final : public rclcpp::Node {
     state.previous_state = previous_state_;
     state.active_goal_id = "";
     state.recoverable = true;
-    if (maps.empty()) {
+    if (maps.empty())
+    {
       state.state = "ERROR";
       state.message = "no valid maps found in " + maps_directory_;
       state.recoverable = false;
-    } else if (!active.has_value()) {
+    }
+    else if (!active.has_value())
+    {
       state.state = "WARN";
       state.message = "active map is not valid: " + active_map_;
-    } else {
+    }
+    else
+    {
       state.state = "OK";
       state.message = "active_map=" + active_map_ + ", maps=" + std::to_string(maps.size());
     }
@@ -188,17 +215,20 @@ class MapManagerNode final : public rclcpp::Node {
     zones_publisher_->publish(zones_msg);
   }
 
-  std::string BuildCatalogText(const std::vector<robot_navigation::MapInfo>& maps) const {
+  std::string BuildCatalogText(const std::vector<robot_navigation::MapInfo> &maps) const
+  {
     std::ostringstream out;
     out << "active_map=" << active_map_ << "\n";
-    for (const auto& map : maps) {
+    for (const auto &map : maps)
+    {
       out << map.name << " " << map.yaml_path.string() << "\n";
     }
     return out.str();
   }
 
   template <typename ZoneMessageT>
-  ZoneMessageT ToZoneMessage(const robot_navigation::MapZone& zone) const {
+  ZoneMessageT ToZoneMessage(const robot_navigation::MapZone &zone) const
+  {
     ZoneMessageT message;
     message.zone_id = zone.zone_id;
     message.map_name = zone.map_name;
@@ -212,17 +242,22 @@ class MapManagerNode final : public rclcpp::Node {
     return message;
   }
 
-  std::string BuildZonesText() const {
+  std::string BuildZonesText() const
+  {
     std::ostringstream out;
     out << "zones_file=" << zones_file_ << "\n";
-    try {
+    try
+    {
       const auto zones = zone_catalog_->Load(true);
-      for (const auto& zone : zones) {
+      for (const auto &zone : zones)
+      {
         out << zone.map_name << " " << zone.zone_id << " " << zone.type << " enabled="
             << (zone.enabled ? "true" : "false") << " speed_limit_mps="
             << zone.speed_limit_mps << "\n";
       }
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception &error)
+    {
       out << "error=" << error.what() << "\n";
     }
     return out.str();
@@ -247,7 +282,8 @@ class MapManagerNode final : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<MapManagerNode>());
   rclcpp::shutdown();

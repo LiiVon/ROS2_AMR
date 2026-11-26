@@ -19,9 +19,11 @@
 
 namespace topics = robot_utils::topics;
 
-class OdomPathRecorderNode final : public rclcpp::Node {
- public:
-  OdomPathRecorderNode() : Node("odom_path_recorder_node") {
+class OdomPathRecorderNode final : public rclcpp::Node
+{
+public:
+  OdomPathRecorderNode() : Node("odom_path_recorder_node")
+  {
     input_topic_ = declare_parameter<std::string>("input_topic", topics::kOdom);
     output_topic_ = declare_parameter<std::string>("output_topic", topics::kChassisOdomPath);
     max_poses_ = declare_parameter<int>("max_poses", 2000);
@@ -29,42 +31,50 @@ class OdomPathRecorderNode final : public rclcpp::Node {
     publish_period_ms_ = declare_parameter<int>("publish_period_ms", 200);
 
     subscription_ = create_subscription<nav_msgs::msg::Odometry>(
-        input_topic_, 50, [this](nav_msgs::msg::Odometry::SharedPtr msg) { AddOdom(*msg); });
+        input_topic_, 50, [this](nav_msgs::msg::Odometry::SharedPtr msg)
+        { AddOdom(*msg); });
     publisher_ = create_publisher<nav_msgs::msg::Path>(output_topic_, 10);
     reset_service_ = create_service<std_srvs::srv::Empty>(
         "/chassis/reset_odom_path",
         [this](const std::shared_ptr<std_srvs::srv::Empty::Request>,
-               std::shared_ptr<std_srvs::srv::Empty::Response>) {
+               std::shared_ptr<std_srvs::srv::Empty::Response>)
+        {
           poses_.clear();
           have_last_pose_ = false;
           PublishPath();
         });
     timer_ =
-        create_wall_timer(std::chrono::milliseconds(publish_period_ms_), [this]() { PublishPath(); });
+        create_wall_timer(std::chrono::milliseconds(publish_period_ms_), [this]()
+                          { PublishPath(); });
   }
 
- private:
-  void AddOdom(const nav_msgs::msg::Odometry& odom) {
+private:
+  void AddOdom(const nav_msgs::msg::Odometry &odom)
+  {
     geometry_msgs::msg::PoseStamped pose;
     pose.header = odom.header;
     pose.pose = odom.pose.pose;
 
-    if (have_last_pose_) {
+    if (have_last_pose_)
+    {
       const double dx = pose.pose.position.x - last_pose_.pose.position.x;
       const double dy = pose.pose.position.y - last_pose_.pose.position.y;
-      if (std::hypot(dx, dy) < min_distance_m_) {
+      if (std::hypot(dx, dy) < min_distance_m_)
+      {
         return;
       }
     }
     have_last_pose_ = true;
     last_pose_ = pose;
     poses_.push_back(pose);
-    while (static_cast<int>(poses_.size()) > max_poses_) {
+    while (static_cast<int>(poses_.size()) > max_poses_)
+    {
       poses_.pop_front();
     }
   }
 
-  void PublishPath() {
+  void PublishPath()
+  {
     nav_msgs::msg::Path path;
     path.header.stamp = now();
     path.header.frame_id = poses_.empty() ? "odom" : poses_.back().header.frame_id;
@@ -86,7 +96,8 @@ class OdomPathRecorderNode final : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<OdomPathRecorderNode>());
   rclcpp::shutdown();

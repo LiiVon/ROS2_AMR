@@ -56,9 +56,7 @@ def generate_test_description():
 
 def _yaw(odometry):
     orientation = odometry.pose.pose.orientation
-    sin_yaw = 2.0 * (
-        orientation.w * orientation.z + orientation.x * orientation.y
-    )
+    sin_yaw = 2.0 * (orientation.w * orientation.z + orientation.x * orientation.y)
     cos_yaw = 1.0 - 2.0 * (
         orientation.y * orientation.y + orientation.z * orientation.z
     )
@@ -73,7 +71,9 @@ class TestSimulationModelRuntime(unittest.TestCase):
     def setUp(self):
         # Gazebo 需要可用的 3D 渲染上下文（GPU 或 VNC 虚拟桌面）。
         # 无显示环境（CI / 无显卡服务器）下跳过，可用 ROBOT_SIM_RUNTIME_TEST=1 强制运行。
-        if os.environ.get("ROBOT_SIM_RUNTIME_TEST", "auto") != "1" and not os.environ.get("DISPLAY"):
+        if os.environ.get(
+            "ROBOT_SIM_RUNTIME_TEST", "auto"
+        ) != "1" and not os.environ.get("DISPLAY"):
             self.skipTest(
                 "Gazebo runtime test requires a 3D display; "
                 "run with DISPLAY set (VNC) or ROBOT_SIM_RUNTIME_TEST=1"
@@ -185,9 +185,7 @@ class TestSimulationModelRuntime(unittest.TestCase):
             robot2_base = wait_for_transform(
                 "robot_2/base_footprint", "robot_2/base_link"
             )
-            robot2_lidar = wait_for_transform(
-                "robot_2/base_link", "robot_2/lidar_link"
-            )
+            robot2_lidar = wait_for_transform("robot_2/base_link", "robot_2/lidar_link")
             for transform in [main_base, robot2_base]:
                 self.assertAlmostEqual(
                     transform.transform.translation.z, 0.075, places=6
@@ -196,9 +194,7 @@ class TestSimulationModelRuntime(unittest.TestCase):
                 self.assertAlmostEqual(
                     transform.transform.translation.x, 0.18, places=6
                 )
-                self.assertAlmostEqual(
-                    transform.transform.translation.y, 0.0, places=6
-                )
+                self.assertAlmostEqual(transform.transform.translation.y, 0.0, places=6)
                 self.assertAlmostEqual(
                     transform.transform.translation.z, 0.27, places=6
                 )
@@ -283,11 +279,7 @@ class TestSimulationModelRuntime(unittest.TestCase):
                 0.02,
             )
             self.assertLess(
-                abs(
-                    _angle_delta(
-                        _yaw(main_after_robot2), _yaw(main_before_robot2)
-                    )
-                ),
+                abs(_angle_delta(_yaw(main_after_robot2), _yaw(main_before_robot2))),
                 0.02,
             )
         finally:

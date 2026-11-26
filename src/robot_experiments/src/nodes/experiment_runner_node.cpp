@@ -23,9 +23,11 @@ namespace topics = robot_utils::topics;
 
 using namespace std::chrono_literals;
 
-class ExperimentRunnerNode final : public rclcpp::Node {
- public:
-  ExperimentRunnerNode() : Node("experiment_runner_node") {
+class ExperimentRunnerNode final : public rclcpp::Node
+{
+public:
+  ExperimentRunnerNode() : Node("experiment_runner_node")
+  {
     output_csv_ = declare_parameter<std::string>("output_csv", "experiment_results.csv");
     output_json_ = declare_parameter<std::string>("output_json", "");
     controller_name_ = declare_parameter<std::string>("controller_name", "unknown");
@@ -33,16 +35,19 @@ class ExperimentRunnerNode final : public rclcpp::Node {
     path_file_ = declare_parameter<std::string>("path_file", "");
     odom_topic_ = declare_parameter<std::string>("odom_topic", topics::kOdom);
     csv_.open(output_csv_, std::ios::out | std::ios::trunc);
-    if (!csv_) {
+    if (!csv_)
+    {
       throw std::runtime_error("failed to open experiment output: " + output_csv_);
     }
     csv_ << "stamp,controller,lateral_error,heading_error,target_speed,actual_speed,nearest_path_index\n";
     tracking_subscription_ = create_subscription<robot_interfaces_core::msg::TrackingError>(
         topics::kTrackingError, 50,
-        [this](robot_interfaces_core::msg::TrackingError::SharedPtr msg) { OnTrackingError(*msg); });
+        [this](robot_interfaces_core::msg::TrackingError::SharedPtr msg)
+        { OnTrackingError(*msg); });
     // 里程必须来自真实位姿变化，不能用“误差累加”冒充。
     odom_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
-        odom_topic_, 20, [this](nav_msgs::msg::Odometry::SharedPtr msg) {
+        odom_topic_, 20, [this](nav_msgs::msg::Odometry::SharedPtr msg)
+        {
           const double x = msg->pose.pose.position.x;
           const double y = msg->pose.pose.position.y;
           if (samples_ == 0) {
@@ -52,47 +57,53 @@ class ExperimentRunnerNode final : public rclcpp::Node {
           }
           travelled_distance_m_ += std::hypot(x - last_odom_x_, y - last_odom_y_);
           last_odom_x_ = x;
-          last_odom_y_ = y;
-        });
+          last_odom_y_ = y; });
     stats_publisher_ = create_publisher<robot_interfaces_core::msg::NavigationStatistics>(
         topics::kExperimentStatistics, 10);
-    timer_ = create_wall_timer(1s, [this]() { PublishStatistics(); });
+    timer_ = create_wall_timer(1s, [this]()
+                               { PublishStatistics(); });
   }
 
   ~ExperimentRunnerNode() override { WriteJsonReport(); }
 
- private:
-  double RunDurationSeconds() const {
+private:
+  double RunDurationSeconds() const
+  {
     return samples_ == 0 || first_stamp_sec_ < 0.0
                ? 0.0
                : std::max(0.0, last_stamp_sec_ - first_stamp_sec_);
   }
 
-  static std::string JsonEscape(const std::string& value) {
+  static std::string JsonEscape(const std::string &value)
+  {
     std::ostringstream out;
-    for (const char c : value) {
-      switch (c) {
-        case '\\':
-          out << "\\\\";
-          break;
-        case '"':
-          out << "\\\"";
-          break;
-        case '\n':
-          out << "\\n";
-          break;
-        default:
-          out << c;
-          break;
+    for (const char c : value)
+    {
+      switch (c)
+      {
+      case '\\':
+        out << "\\\\";
+        break;
+      case '"':
+        out << "\\\"";
+        break;
+      case '\n':
+        out << "\\n";
+        break;
+      default:
+        out << c;
+        break;
       }
     }
     return out.str();
   }
 
-  void OnTrackingError(const robot_interfaces_core::msg::TrackingError& error) {
+  void OnTrackingError(const robot_interfaces_core::msg::TrackingError &error)
+  {
     ++samples_;
     last_stamp_sec_ = rclcpp::Time(error.header.stamp).seconds();
-    if (first_stamp_sec_ < 0.0) {
+    if (first_stamp_sec_ < 0.0)
+    {
       first_stamp_sec_ = last_stamp_sec_;
     }
     last_controller_name_ =
@@ -109,7 +120,8 @@ class ExperimentRunnerNode final : public rclcpp::Node {
          << error.nearest_path_index << '\n';
   }
 
-  void PublishStatistics() {
+  void PublishStatistics()
+  {
     robot_interfaces_core::msg::NavigationStatistics stats;
     stats.header.stamp = now();
     // 本节点跟踪的是“一次控制器运行”：有采样才计一次目标，
@@ -130,12 +142,15 @@ class ExperimentRunnerNode final : public rclcpp::Node {
     stats_publisher_->publish(stats);
   }
 
-  void WriteJsonReport() {
-    if (output_json_.empty()) {
+  void WriteJsonReport()
+  {
+    if (output_json_.empty())
+    {
       return;
     }
     std::ofstream json(output_json_, std::ios::out | std::ios::trunc);
-    if (!json) {
+    if (!json)
+    {
       RCLCPP_ERROR(get_logger(), "failed to open experiment json output: %s", output_json_.c_str());
       return;
     }
@@ -182,7 +197,8 @@ class ExperimentRunnerNode final : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<ExperimentRunnerNode>());
   rclcpp::shutdown();

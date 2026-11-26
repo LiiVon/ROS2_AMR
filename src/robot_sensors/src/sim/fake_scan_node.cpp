@@ -19,17 +19,21 @@ namespace topics = robot_utils::topics;
 
 using namespace std::chrono_literals;
 
-class FakeScanNode final : public rclcpp::Node {
- public:
-  FakeScanNode() : Node("fake_scan_node") {
+class FakeScanNode final : public rclcpp::Node
+{
+public:
+  FakeScanNode() : Node("fake_scan_node")
+  {
     topic_ = declare_parameter<std::string>("topic", topics::kScan);
     frame_id_ = declare_parameter<std::string>("frame_id", "lidar_link");
     publisher_ = create_publisher<sensor_msgs::msg::LaserScan>(topic_, 10);
-    timer_ = create_wall_timer(100ms, [this]() { Publish(); });
+    timer_ = create_wall_timer(100ms, [this]()
+                               { Publish(); });
   }
 
- private:
-  void Publish() {
+private:
+  void Publish()
+  {
     sensor_msgs::msg::LaserScan scan;
     scan.header.stamp = now();
     scan.header.frame_id = frame_id_;
@@ -41,7 +45,8 @@ class FakeScanNode final : public rclcpp::Node {
     scan.range_min = 0.08;
     scan.range_max = 10.0;
     scan.ranges.assign(360, 5.0F);
-    for (size_t i = 80; i < 110; ++i) {
+    for (size_t i = 80; i < 110; ++i)
+    {
       scan.ranges[i] = 1.5F;
     }
     publisher_->publish(scan);
@@ -53,7 +58,8 @@ class FakeScanNode final : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<FakeScanNode>());
   rclcpp::shutdown();

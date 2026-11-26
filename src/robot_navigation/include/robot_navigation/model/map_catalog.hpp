@@ -11,58 +11,61 @@
 #include <string>
 #include <vector>
 
-namespace robot_navigation {
-
-/**
- * @brief MapInfo 数据结构定义
- */
-struct MapInfo {
-  std::string name;
-  std::filesystem::path yaml_path;
-  std::filesystem::path image_path;
-  double resolution = 0.0;
-  bool valid = false;
-  std::string message;
-};
-
-/**
- * @brief 地图目录（MapCatalog）
- */
-class MapCatalog {
- public:
-  /**
-   * @brief 映射目录。
-   * @param maps_directory 参数
-   * @return 计算结果。
-   */
-  explicit MapCatalog(std::filesystem::path maps_directory);
+namespace robot_navigation
+{
 
   /**
-   * @brief MapsDirectory。
-   * @return 计算结果。
+   * @brief MapInfo 数据结构定义
    */
-  const std::filesystem::path& MapsDirectory() const;
+  struct MapInfo
+  {
+    std::string name;
+    std::filesystem::path yaml_path;
+    std::filesystem::path image_path;
+    double resolution = 0.0;
+    bool valid = false;
+    std::string message;
+  };
+
   /**
-   * @brief 扫描。
-   * @return 计算结果。
+   * @brief 地图目录（MapCatalog）
    */
-  std::vector<MapInfo> Scan() const;
+  class MapCatalog
+  {
+  public:
+    /**
+     * @brief 映射目录。
+     * @param maps_directory 参数
+     * @return 计算结果。
+     */
+    explicit MapCatalog(std::filesystem::path maps_directory);
+
+    /**
+     * @brief MapsDirectory。
+     * @return 计算结果。
+     */
+    const std::filesystem::path &MapsDirectory() const;
+    /**
+     * @brief 扫描。
+     * @return 计算结果。
+     */
+    std::vector<MapInfo> Scan() const;
+    /**
+     * @brief 查找 FindByName。
+     * @param name 字符串
+     * @return 计算结果。
+     */
+    std::optional<MapInfo> FindByName(const std::string &name) const;
+
+  private:
+    std::filesystem::path maps_directory_;
+  };
+
   /**
-   * @brief 查找 FindByName。
-   * @param name 字符串
+   * @brief 加载 LoadMapInfo。
+   * @param yaml_path 路径
    * @return 计算结果。
    */
-  std::optional<MapInfo> FindByName(const std::string& name) const;
+  std::optional<MapInfo> LoadMapInfo(const std::filesystem::path &yaml_path);
 
- private:
-  std::filesystem::path maps_directory_;
-};
-
-/**
- * @brief 加载 LoadMapInfo。
- * @param yaml_path 路径
- * @return 计算结果。
- */
-std::optional<MapInfo> LoadMapInfo(const std::filesystem::path& yaml_path);
-
-}  // namespace robot_navigation
+} // namespace robot_navigation

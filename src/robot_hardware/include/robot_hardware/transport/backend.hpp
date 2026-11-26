@@ -18,7 +18,6 @@ namespace robot_hardware::transport
 {
     using protocol::Command;
 
-
     // 底盘后端配置。
     // SerialBackend 使用串口相关配置；UdpBackend 使用 UDP 相关配置。
     // protocol 供底盘数据协议解析层使用。

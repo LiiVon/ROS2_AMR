@@ -37,7 +37,6 @@ using namespace robot_hardware::transport;
 using namespace robot_hardware::kinematics;
 using namespace robot_hardware::system;
 
-
 namespace
 {
     // 把机器人在平面上的旋转角度 yaw，转换成 ROS2 使用的四元数 Quaternion
@@ -134,7 +133,7 @@ public:
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
         clear_odom_service_ = create_service<std_srvs::srv::Empty>(
             "/chassis/clear_odometry", [this](const std::shared_ptr<std_srvs::srv::Empty::Request>,
-                                      std::shared_ptr<std_srvs::srv::Empty::Response>)
+                                              std::shared_ptr<std_srvs::srv::Empty::Response>)
             { ResetOdometry(); });
         set_mode_service_ = create_service<robot_interfaces_core::srv::SetChassisMode>(
             "/chassis/set_mode",
@@ -447,47 +446,47 @@ private:
     }
 
 private:
-    std::string control_mode_{"velocity"};                                                            // 控制模式，当前仅实现速度控制
-    std::string chassis_type_;                                                            // 启动时配置的物理底盘类型
-    std::string kinematics_model_;                                                        // 当前软件实际使用的运动学模型
-    std::string requested_backend_;                                                       // 用户请求的底盘后端类型
+    std::string control_mode_{"velocity"}; // 控制模式，当前仅实现速度控制
+    std::string chassis_type_;             // 启动时配置的物理底盘类型
+    std::string kinematics_model_;         // 当前软件实际使用的运动学模型
+    std::string requested_backend_;        // 用户请求的底盘后端类型
     std::string backend_name_;
-    BackendKind backend_kind_ = BackendKind::kMock;                                                            // 实际使用的底盘后端类型
-    BackendConfig backend_config_;                                 // 底盘后端配置，包括串口和UDP的相关参数
-    std::unique_ptr<Adapter> chassis_adapter_;               // 底盘系统适配器，用于处理底盘运动指令和读取底盘状态
-    Snapshot system_state_;                                     // 当前底盘系统状态，包括位置、速度、轮子转速、电池电压等信息
-    std::string wheel_odom_topic_;                                                        // 轮子里程计话题名称
-    std::string odom_topic_;                                                              // 里程计话题名称
-    std::string imu_source_;                                                              // IMU 数据来源，如 "auto"、"synthetic"、"none" 等
-    int io_timeout_ms_;                                                                   // 底盘通信的超时时间，单位为毫秒
-    bool publish_tf_;                                                                     // 是否发布 TF 坐标变换
-    bool publish_odom_;                                                                   // 是否发布里程计数据
-    bool publish_synthetic_imu_ = false;                                                  // 是否发布合成的 IMU 数据
-    bool backend_open_ = false;                                                           // 是否打开了底盘后端
-    bool connected_ = false;                                                              // 底盘是否已连接
-    double wheel_x_ = 0.0;                                                                // 轮子的X坐标
-    double wheel_y_ = 0.0;                                                                // 轮子的Y坐标
-    double wheel_yaw_ = 0.0;                                                              // 轮子的航向角（弧度）
-    double battery_voltage_ = 24.0;                                                       // 机器人电池电压（单位：伏特）
-    double wheel_diameter_m_ = 0.15;                                                      // 轮子直径（单位：米）
-    double wheel_base_m_ = 0.42;                                                          // 轴距：前后车轴之间的距离
-    double track_width_m_ = 0.43;                                                         // 轮距：左右车轮之间的距离
-    Command cmd_;                                                  // 当前底盘运动指令，包括线速度和角速度
-    Command wheel_odom_command_;                                   // 轮子里程计计算出的运动指令，包括线速度和角速度
-    rclcpp::Time last_update_;                                                            // 上一次更新的时间戳
-    rclcpp::Time last_packet_stamp_;                                                      // 上一次接收到底盘数据包的时间戳
-    rclcpp::Time previous_imu_stamp_;                                                     // 上一次发布IMU数据的时间戳
-    double previous_imu_linear_velocity_ = 0.0;                                           // 上一次发布IMU数据时的线速度
-    bool has_previous_imu_sample_ = false;                                                // 是否已经有过IMU数据样本，用于计算线加速度
-    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_subscription_;                  // 订阅 cmd_vel 话题，用于接收上层发送的底盘运动指令
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr wheel_odom_publisher_;                // 发布轮子里程计话题，用于发布轮子里程计计算出的位姿和速度
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_publisher_;                      // 发布里程计话题，用于发布底盘系统状态计算出的位姿和速度
-    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher_;                         // 发布IMU话题，用于发布合成的IMU数据
-    rclcpp::Publisher<robot_interfaces_core::msg::ChassisState>::SharedPtr state_publisher_;         // 发布底盘状态话题，用于发布底盘系统状态，包括连接状态、电池电压、速度等信息
-    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;                       // 用于发布TF坐标变换，将底盘的位姿信息广播给整个ROS2系统
+    BackendKind backend_kind_ = BackendKind::kMock;                                           // 实际使用的底盘后端类型
+    BackendConfig backend_config_;                                                            // 底盘后端配置，包括串口和UDP的相关参数
+    std::unique_ptr<Adapter> chassis_adapter_;                                                // 底盘系统适配器，用于处理底盘运动指令和读取底盘状态
+    Snapshot system_state_;                                                                   // 当前底盘系统状态，包括位置、速度、轮子转速、电池电压等信息
+    std::string wheel_odom_topic_;                                                            // 轮子里程计话题名称
+    std::string odom_topic_;                                                                  // 里程计话题名称
+    std::string imu_source_;                                                                  // IMU 数据来源，如 "auto"、"synthetic"、"none" 等
+    int io_timeout_ms_;                                                                       // 底盘通信的超时时间，单位为毫秒
+    bool publish_tf_;                                                                         // 是否发布 TF 坐标变换
+    bool publish_odom_;                                                                       // 是否发布里程计数据
+    bool publish_synthetic_imu_ = false;                                                      // 是否发布合成的 IMU 数据
+    bool backend_open_ = false;                                                               // 是否打开了底盘后端
+    bool connected_ = false;                                                                  // 底盘是否已连接
+    double wheel_x_ = 0.0;                                                                    // 轮子的X坐标
+    double wheel_y_ = 0.0;                                                                    // 轮子的Y坐标
+    double wheel_yaw_ = 0.0;                                                                  // 轮子的航向角（弧度）
+    double battery_voltage_ = 24.0;                                                           // 机器人电池电压（单位：伏特）
+    double wheel_diameter_m_ = 0.15;                                                          // 轮子直径（单位：米）
+    double wheel_base_m_ = 0.42;                                                              // 轴距：前后车轴之间的距离
+    double track_width_m_ = 0.43;                                                             // 轮距：左右车轮之间的距离
+    Command cmd_;                                                                             // 当前底盘运动指令，包括线速度和角速度
+    Command wheel_odom_command_;                                                              // 轮子里程计计算出的运动指令，包括线速度和角速度
+    rclcpp::Time last_update_;                                                                // 上一次更新的时间戳
+    rclcpp::Time last_packet_stamp_;                                                          // 上一次接收到底盘数据包的时间戳
+    rclcpp::Time previous_imu_stamp_;                                                         // 上一次发布IMU数据的时间戳
+    double previous_imu_linear_velocity_ = 0.0;                                               // 上一次发布IMU数据时的线速度
+    bool has_previous_imu_sample_ = false;                                                    // 是否已经有过IMU数据样本，用于计算线加速度
+    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_subscription_;             // 订阅 cmd_vel 话题，用于接收上层发送的底盘运动指令
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr wheel_odom_publisher_;              // 发布轮子里程计话题，用于发布轮子里程计计算出的位姿和速度
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_publisher_;                    // 发布里程计话题，用于发布底盘系统状态计算出的位姿和速度
+    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher_;                       // 发布IMU话题，用于发布合成的IMU数据
+    rclcpp::Publisher<robot_interfaces_core::msg::ChassisState>::SharedPtr state_publisher_;  // 发布底盘状态话题，用于发布底盘系统状态，包括连接状态、电池电压、速度等信息
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;                           // 用于发布TF坐标变换，将底盘的位姿信息广播给整个ROS2系统
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr clear_odom_service_;                     // 提供清除里程计服务，用于重置底盘的位姿和速度信息
     rclcpp::Service<robot_interfaces_core::srv::SetChassisMode>::SharedPtr set_mode_service_; // 提供设置底盘模式服务，用于切换底盘的运动学模型和控制模式
-    rclcpp::TimerBase::SharedPtr timer_;                                                  // 定时器，用于周期性调用 OnTimer() 函数，读取底盘状态、积分轮子里程计、发布里程计和IMU数据，以及发布底盘状态
+    rclcpp::TimerBase::SharedPtr timer_;                                                      // 定时器，用于周期性调用 OnTimer() 函数，读取底盘状态、积分轮子里程计、发布里程计和IMU数据，以及发布底盘状态
 };
 
 int main(int argc, char **argv)

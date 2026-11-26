@@ -22,9 +22,11 @@
 
 namespace topics = robot_utils::topics;
 
-class StanleyControllerNode final : public rclcpp::Node {
- public:
-  StanleyControllerNode() : Node("stanley_controller_node") {
+class StanleyControllerNode final : public rclcpp::Node
+{
+public:
+  StanleyControllerNode() : Node("stanley_controller_node")
+  {
     gain_ = declare_parameter<double>("gain", 1.0);
     softening_ = declare_parameter<double>("softening", 0.2);
     target_speed_ = declare_parameter<double>("target_speed", 0.35);
@@ -32,36 +34,43 @@ class StanleyControllerNode final : public rclcpp::Node {
     goal_tolerance_ = std::max(0.0, declare_parameter<double>("goal_tolerance", 0.10));
     max_steer_angle_rad_ = declare_parameter<double>("max_steer_angle_rad", 0.6);
     wheel_base_ = declare_parameter<double>("wheel_base", 0.5);
-    if (!(wheel_base_ > 0.0)) {
+    if (!(wheel_base_ > 0.0))
+    {
       RCLCPP_WARN(get_logger(), "wheel_base must be > 0, using 0.5");
       wheel_base_ = 0.5;
     }
     odom_timeout_ms_ = declare_parameter<int>("odom_timeout_ms", 300);
     odom_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
-        topics::kOdom, 10, [this](nav_msgs::msg::Odometry::SharedPtr msg) {
+        topics::kOdom, 10, [this](nav_msgs::msg::Odometry::SharedPtr msg)
+        {
           odom_ = msg;
           last_odom_stamp_ = now();
-          have_odom_ = true;
-        });
+          have_odom_ = true; });
     path_subscription_ = create_subscription<nav_msgs::msg::Path>(
-        topics::kReferencePath, 1, [this](nav_msgs::msg::Path::SharedPtr msg) { path_ = msg; });
+        topics::kReferencePath, 1, [this](nav_msgs::msg::Path::SharedPtr msg)
+        { path_ = msg; });
     cmd_publisher_ = create_publisher<geometry_msgs::msg::Twist>(topics::kTrackingCmdVel, 10);
     error_publisher_ = create_publisher<robot_interfaces_core::msg::TrackingError>(topics::kTrackingError, 10);
-    timer_ = create_wall_timer(std::chrono::milliseconds(50), [this]() { Tick(); });
+    timer_ = create_wall_timer(std::chrono::milliseconds(50), [this]()
+                               { Tick(); });
   }
 
- private:
-  void Tick() {
-    if (!odom_ || !path_ || path_->poses.size() < 2) {
+private:
+  void Tick()
+  {
+    if (!odom_ || !path_ || path_->poses.size() < 2)
+    {
       return;
     }
-    if (!have_odom_ || (now() - last_odom_stamp_).nanoseconds() / 1000000 > odom_timeout_ms_) {
+    if (!have_odom_ || (now() - last_odom_stamp_).nanoseconds() / 1000000 > odom_timeout_ms_)
+    {
       PublishStop();
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000,
                            "odometry stale (> %d ms); publishing zero velocity", odom_timeout_ms_);
       return;
     }
-    if (!FramesCompatible()) {
+    if (!FramesCompatible())
+    {
       PublishStop();
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000,
                            "path frame '%s' differs from odom frame '%s'; skipping control",
@@ -69,20 +78,21 @@ class StanleyControllerNode final : public rclcpp::Node {
       return;
     }
 
-    const auto& pose = odom_->pose.pose;
+    const auto &pose = odom_->pose.pose;
     const double yaw = tf2::getYaw(pose.orientation);
     const int nearest_index = NearestIndex(pose.position.x, pose.position.y);
-    const auto& nearest = path_->poses[nearest_index].pose;
+    const auto &nearest = path_->poses[nearest_index].pose;
     const double path_yaw = tf2::getYaw(nearest.orientation);
     const double lateral_error =
         robot_path_tracking::SignedLateralError(nearest.position.x, nearest.position.y, path_yaw,
                                                 pose.position.x, pose.position.y);
     const double heading_error = robot_path_tracking::NormalizeAngle(path_yaw - yaw);
-    const auto& goal = path_->poses.back().pose.position;
+    const auto &goal = path_->poses.back().pose.position;
     const double distance_to_goal =
         std::hypot(goal.x - pose.position.x, goal.y - pose.position.y);
     if (robot_path_tracking::IsFinalWaypointReached(
-            nearest_index, path_->poses.size(), distance_to_goal, goal_tolerance_)) {
+            nearest_index, path_->poses.size(), distance_to_goal, goal_tolerance_))
+    {
       cmd_publisher_->publish(geometry_msgs::msg::Twist{});
       PublishError(nearest_index, lateral_error, heading_error, 0.0);
       return;
@@ -106,27 +116,33 @@ class StanleyControllerNode final : public rclcpp::Node {
   }
 
   // 实测速度：取 /odom 的 twist，而不是刚下发的目标速度。
-  double MeasuredSpeed() const {
-    if (!odom_) {
+  double MeasuredSpeed() const
+  {
+    if (!odom_)
+    {
       return 0.0;
     }
     return std::hypot(odom_->twist.twist.linear.x, odom_->twist.twist.linear.y);
   }
 
-  bool FramesCompatible() const {
-    if (!path_ || path_->header.frame_id.empty() || !odom_) {
+  bool FramesCompatible() const
+  {
+    if (!path_ || path_->header.frame_id.empty() || !odom_)
+    {
       return true;
     }
     return path_->header.frame_id == odom_->header.frame_id;
   }
 
-  void PublishStop() {
+  void PublishStop()
+  {
     cmd_publisher_->publish(geometry_msgs::msg::Twist{});
   }
 
   void PublishError(
       const int nearest_index, const double lateral_error, const double heading_error,
-      const double speed) {
+      const double speed)
+  {
     robot_interfaces_core::msg::TrackingError error;
     error.header.stamp = now();
     error.header.frame_id = path_->header.frame_id;
@@ -139,14 +155,17 @@ class StanleyControllerNode final : public rclcpp::Node {
     error_publisher_->publish(error);
   }
 
-  int NearestIndex(const double x, const double y) const {
+  int NearestIndex(const double x, const double y) const
+  {
     int nearest_index = 0;
     double nearest_distance = std::numeric_limits<double>::max();
-    for (size_t i = 0; i < path_->poses.size(); ++i) {
+    for (size_t i = 0; i < path_->poses.size(); ++i)
+    {
       const double dx = path_->poses[i].pose.position.x - x;
       const double dy = path_->poses[i].pose.position.y - y;
       const double distance = std::hypot(dx, dy);
-      if (distance < nearest_distance) {
+      if (distance < nearest_distance)
+      {
         nearest_distance = distance;
         nearest_index = static_cast<int>(i);
       }
@@ -173,7 +192,8 @@ class StanleyControllerNode final : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<StanleyControllerNode>());
   rclcpp::shutdown();

@@ -22,26 +22,31 @@ namespace topics = robot_utils::topics;
 
 using namespace std::chrono_literals;
 
-namespace {
+namespace
+{
 
-geometry_msgs::msg::Quaternion QuaternionFromYaw(const double yaw) {
-  geometry_msgs::msg::Quaternion q;
-  q.z = std::sin(yaw * 0.5);
-  q.w = std::cos(yaw * 0.5);
-  return q;
-}
+  geometry_msgs::msg::Quaternion QuaternionFromYaw(const double yaw)
+  {
+    geometry_msgs::msg::Quaternion q;
+    q.z = std::sin(yaw * 0.5);
+    q.w = std::cos(yaw * 0.5);
+    return q;
+  }
 
-}  // namespace
+} // namespace
 
-class PathPublisherNode final : public rclcpp::Node {
- public:
-  PathPublisherNode() : Node("path_publisher_node") {
+class PathPublisherNode final : public rclcpp::Node
+{
+public:
+  PathPublisherNode() : Node("path_publisher_node")
+  {
     path_file_ = declare_parameter<std::string>("path_file", "");
     frame_id_ = declare_parameter<std::string>("frame_id", "map");
     publish_rate_hz_ = declare_parameter<double>("publish_rate_hz", 2.0);
     // 参数防御：0/负值/非有限值会让定时器周期变成 inf 或 0ms（忙等）。
     if (!std::isfinite(publish_rate_hz_) || publish_rate_hz_ < 0.1 ||
-        publish_rate_hz_ > 100.0) {
+        publish_rate_hz_ > 100.0)
+    {
       RCLCPP_WARN(get_logger(),
                   "publish_rate_hz must be within [0.1, 100.0], got %f; using 2.0",
                   publish_rate_hz_);
@@ -51,13 +56,16 @@ class PathPublisherNode final : public rclcpp::Node {
     publisher_ = create_publisher<nav_msgs::msg::Path>(topics::kReferencePath, 1);
     const auto period = std::chrono::duration<double>(1.0 / publish_rate_hz_);
     timer_ = create_wall_timer(std::chrono::duration_cast<std::chrono::milliseconds>(period),
-                               [this]() { Publish(); });
+                               [this]()
+                               { Publish(); });
   }
 
- private:
-  void LoadPath() {
+private:
+  void LoadPath()
+  {
     path_.header.frame_id = frame_id_;
-    if (path_file_.empty()) {
+    if (path_file_.empty())
+    {
       AddPose(0.0, 0.0, 0.0);
       AddPose(1.0, 0.0, 0.0);
       AddPose(2.0, 0.5, 0.2);
@@ -66,30 +74,38 @@ class PathPublisherNode final : public rclcpp::Node {
     }
 
     std::ifstream file(path_file_);
-    if (!file) {
+    if (!file)
+    {
       throw std::runtime_error("failed to open path file: " + path_file_);
     }
 
     std::string line;
-    while (std::getline(file, line)) {
-      if (line.empty() || line.front() == '#') {
+    while (std::getline(file, line))
+    {
+      if (line.empty() || line.front() == '#')
+      {
         continue;
       }
       std::istringstream stream(line);
       std::vector<double> values;
       double value = 0.0;
-      while (stream >> value) {
+      while (stream >> value)
+      {
         values.push_back(value);
       }
-      if (values.size() == 3) {
+      if (values.size() == 3)
+      {
         AddPose(values[0], values[1], values[2]);
-      } else if (values.size() >= 4) {
+      }
+      else if (values.size() >= 4)
+      {
         AddPose(values[0], values[1], values[3]);
       }
     }
   }
 
-  void AddPose(const double x, const double y, const double yaw) {
+  void AddPose(const double x, const double y, const double yaw)
+  {
     geometry_msgs::msg::PoseStamped pose;
     pose.header.frame_id = frame_id_;
     pose.pose.position.x = x;
@@ -98,9 +114,11 @@ class PathPublisherNode final : public rclcpp::Node {
     path_.poses.push_back(pose);
   }
 
-  void Publish() {
+  void Publish()
+  {
     path_.header.stamp = now();
-    for (auto& pose : path_.poses) {
+    for (auto &pose : path_.poses)
+    {
       pose.header.stamp = path_.header.stamp;
     }
     publisher_->publish(path_);
@@ -114,7 +132,8 @@ class PathPublisherNode final : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<PathPublisherNode>());
   rclcpp::shutdown();

@@ -16,9 +16,7 @@ def _source_directory(variable_name):
         for entry in os.environ.get(variable_name, "").split(os.pathsep)
         if entry
     ]
-    source_directories = sorted(
-        {entry for entry in entries if os.path.isdir(entry)}
-    )
+    source_directories = sorted({entry for entry in entries if os.path.isdir(entry)})
     if len(source_directories) != 1:
         raise RuntimeError(
             f"{variable_name} must contain exactly one existing source directory; "
@@ -142,7 +140,9 @@ def test_sdf_instances_share_geometry_and_keep_topics_isolated(tmp_path):
         base = model.find("./link[@name='base_link']")
         assert base is not None
         _assert_vector(
-            _numbers(base.find("./collision[@name='base_collision']/geometry/box/size").text),
+            _numbers(
+                base.find("./collision[@name='base_collision']/geometry/box/size").text
+            ),
             [
                 geometry["base"]["length_m"],
                 geometry["base"]["width_m"],
@@ -194,8 +194,7 @@ def test_sdf_instances_share_geometry_and_keep_topics_isolated(tmp_path):
         )
         _assert_vector(
             _numbers(imu_sensor.find("pose").text),
-            geometry["sensors"]["imu"]["xyz_m"]
-            + geometry["sensors"]["imu"]["rpy_rad"],
+            geometry["sensors"]["imu"]["xyz_m"] + geometry["sensors"]["imu"]["rpy_rad"],
         )
         _assert_vector(
             _numbers(base.find("./visual[@name='camera_visual']/pose").text),
@@ -254,7 +253,9 @@ def test_use_gazebo_sensor_parameters_come_from_simulation_physics():
         lidar_config["update_rate_hz"],
         abs_tol=1e-9,
     )
-    assert int(lidar.find("./ray/scan/horizontal/samples").text) == lidar_config["samples"]
+    assert (
+        int(lidar.find("./ray/scan/horizontal/samples").text) == lidar_config["samples"]
+    )
     assert math.isclose(
         float(lidar.find("./ray/scan/horizontal/resolution").text),
         lidar_config["angular_resolution"],
@@ -295,7 +296,9 @@ def test_use_gazebo_sensor_parameters_come_from_simulation_physics():
         simulation["sensors"]["imu"]["update_rate_hz"],
         abs_tol=1e-9,
     )
-    assert root.find("./gazebo[@reference='camera_link']/sensor[@name='camera']") is None
+    assert (
+        root.find("./gazebo[@reference='camera_link']/sensor[@name='camera']") is None
+    )
 
 
 def test_camera_enabled_controls_urdf_and_sdf_sensor_generation(tmp_path):
@@ -328,12 +331,14 @@ def test_camera_enabled_controls_urdf_and_sdf_sensor_generation(tmp_path):
         simulation["sensors"]["camera"]["horizontal_fov_rad"],
         abs_tol=1e-9,
     )
-    assert int(urdf_camera.find("./camera/image/width").text) == simulation["sensors"][
-        "camera"
-    ]["image_width_px"]
-    assert int(urdf_camera.find("./camera/image/height").text) == simulation["sensors"][
-        "camera"
-    ]["image_height_px"]
+    assert (
+        int(urdf_camera.find("./camera/image/width").text)
+        == simulation["sensors"]["camera"]["image_width_px"]
+    )
+    assert (
+        int(urdf_camera.find("./camera/image/height").text)
+        == simulation["sensors"]["camera"]["image_height_px"]
+    )
 
     sdf_root = _expand(
         SDF_FILE,
@@ -366,12 +371,14 @@ def test_camera_enabled_controls_urdf_and_sdf_sensor_generation(tmp_path):
             simulation["sensors"]["camera"]["horizontal_fov_rad"],
             abs_tol=1e-9,
         )
-        assert int(camera.find("./camera/image/width").text) == simulation["sensors"][
-            "camera"
-        ]["image_width_px"]
-        assert int(camera.find("./camera/image/height").text) == simulation["sensors"][
-            "camera"
-        ]["image_height_px"]
+        assert (
+            int(camera.find("./camera/image/width").text)
+            == simulation["sensors"]["camera"]["image_width_px"]
+        )
+        assert (
+            int(camera.find("./camera/image/height").text)
+            == simulation["sensors"]["camera"]["image_height_px"]
+        )
 
 
 def test_nav2_footprint_contains_all_reference_collision_extents():
@@ -380,9 +387,9 @@ def test_nav2_footprint_contains_all_reference_collision_extents():
     local_text = footprint_config["local_costmap"]["local_costmap"]["ros__parameters"][
         "footprint"
     ]
-    global_text = footprint_config["global_costmap"]["global_costmap"]["ros__parameters"][
-        "footprint"
-    ]
+    global_text = footprint_config["global_costmap"]["global_costmap"][
+        "ros__parameters"
+    ]["footprint"]
     local_polygon = yaml.safe_load(local_text)
     assert local_polygon == yaml.safe_load(global_text)
     min_x = min(point[0] for point in local_polygon)
@@ -452,7 +459,9 @@ def test_nominal_calibration_matches_reference_wheel_geometry():
 def test_invalid_geometry_is_rejected_during_xacro_expansion(field_path, bad_value):
     geometry = copy.deepcopy(_load_yaml(GEOMETRY_FILE))
     geometry[field_path[0]][field_path[1]] = bad_value
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", encoding="utf-8") as stream:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".yaml", encoding="utf-8"
+    ) as stream:
         yaml.safe_dump(geometry, stream)
         stream.flush()
         with pytest.raises(xacro.XacroException):

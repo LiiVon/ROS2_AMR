@@ -17,9 +17,11 @@
 
 namespace topics = robot_utils::topics;
 
-class GazeboOdomTfNode final : public rclcpp::Node {
- public:
-  GazeboOdomTfNode() : Node("gazebo_odom_tf_node") {
+class GazeboOdomTfNode final : public rclcpp::Node
+{
+public:
+  GazeboOdomTfNode() : Node("gazebo_odom_tf_node")
+  {
     input_topic_ = declare_parameter<std::string>("input_topic", topics::kGazeboOdom);
     output_topic_ = declare_parameter<std::string>("output_topic", topics::kOdom);
     odom_frame_ = declare_parameter<std::string>("odom_frame", "odom");
@@ -28,11 +30,13 @@ class GazeboOdomTfNode final : public rclcpp::Node {
     odom_publisher_ = create_publisher<nav_msgs::msg::Odometry>(output_topic_, 10);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     odom_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
-        input_topic_, 10, [this](nav_msgs::msg::Odometry::SharedPtr msg) { Publish(*msg); });
+        input_topic_, 10, [this](nav_msgs::msg::Odometry::SharedPtr msg)
+        { Publish(*msg); });
   }
 
- private:
-  void Publish(const nav_msgs::msg::Odometry& input) {
+private:
+  void Publish(const nav_msgs::msg::Odometry &input)
+  {
     const auto odom = robot_simulation::ProjectOdometryToPlanarFootprint(
         input, odom_frame_, base_frame_);
     odom_publisher_->publish(odom);
@@ -56,7 +60,8 @@ class GazeboOdomTfNode final : public rclcpp::Node {
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<GazeboOdomTfNode>());
   rclcpp::shutdown();

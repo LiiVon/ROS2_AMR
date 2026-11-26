@@ -15,18 +15,18 @@
 
 namespace robot_hardware::system
 {
+    using kinematics::EstimateWheelSpeeds;
+    using kinematics::IntegratePose;
+    using kinematics::NormalizeModel;
+    using kinematics::Pose2D;
+    using kinematics::WheelSpeeds;
+    using protocol::BinaryPacketStream;
     using protocol::Command;
     using protocol::Packet;
     using protocol::PacketKind;
     using protocol::PacketStream;
-    using protocol::BinaryPacketStream;
     using transport::Backend;
     using transport::BackendConfig;
-    using kinematics::Pose2D;
-    using kinematics::WheelSpeeds;
-    using kinematics::IntegratePose;
-    using kinematics::EstimateWheelSpeeds;
-    using kinematics::NormalizeModel;
 
     // 配置结构体
     /**
@@ -125,11 +125,11 @@ namespace robot_hardware::system
         void RefreshBackendState();
 
         std::unique_ptr<Backend> backend_; // 通信后端
-        Config config_;       // 运行配置
-        Snapshot state_;                // 当前状态
+        Config config_;                    // 运行配置
+        Snapshot state_;                   // 当前状态
         Command command_;                  // 当前指令
 
-        PacketStream text_stream_;      // 文本协议数据流
+        PacketStream text_stream_;         // 文本协议数据流
         BinaryPacketStream binary_stream_; // Mick 二进制数据流
     };
 }

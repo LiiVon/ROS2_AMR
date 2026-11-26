@@ -16,7 +16,6 @@ namespace robot_hardware::kinematics
 {
     using protocol::Command;
 
-
     // 机器人在世界坐标系（例如 odom）中的二维位姿。
     // x、y 的单位是米，yaw 的单位是弧度。
     /**

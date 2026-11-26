@@ -14,145 +14,166 @@
 #include "rclcpp/rclcpp.hpp"
 #include "robot_hardware/ros/hardware_interface.hpp"
 
-namespace robot_hardware {
+namespace robot_hardware
+{
 
-using namespace robot_hardware::protocol;
-using namespace robot_hardware::transport;
-using namespace robot_hardware::kinematics;
-using namespace robot_hardware::system;
-namespace {
+  using namespace robot_hardware::protocol;
+  using namespace robot_hardware::transport;
+  using namespace robot_hardware::kinematics;
+  using namespace robot_hardware::system;
+  namespace
+  {
 
-hardware_interface::InterfaceInfo MakeInterface(const std::string& name) {
-  hardware_interface::InterfaceInfo interface_info{};
-  interface_info.name = name;
-  return interface_info;
-}
-
-hardware_interface::ComponentInfo MakeWheelJoint(const std::string& name) {
-  hardware_interface::ComponentInfo joint{};
-  joint.name = name;
-  joint.type = "joint";
-  joint.command_interfaces.push_back(MakeInterface("velocity"));
-  joint.state_interfaces.push_back(MakeInterface("position"));
-  joint.state_interfaces.push_back(MakeInterface("velocity"));
-  return joint;
-}
-
-hardware_interface::HardwareComponentInterfaceParams MakeParams(
-    const std::optional<std::string>& chassis_type = std::nullopt) {
-  hardware_interface::HardwareComponentInterfaceParams params;
-  auto& info = params.hardware_info;
-  info.name = "MobileBaseSystem";
-  info.type = "system";
-  info.hardware_plugin_name = "robot_hardware/ChassisHardwareInterface";
-  info.rw_rate = 50;
-  info.is_async = false;
-  info.thread_priority = 0;
-  info.hardware_parameters["backend"] = "mock";
-  info.hardware_parameters["wheel_diameter_m"] = "0.15";
-  info.hardware_parameters["wheel_base_m"] = "0.42";
-  info.hardware_parameters["track_width_m"] = "0.43";
-  info.hardware_parameters["calibration_profile"] = "nominal_reference";
-  info.hardware_parameters["left_encoder_scale"] = "1.0";
-  info.hardware_parameters["right_encoder_scale"] = "1.0";
-  info.hardware_parameters["left_direction_sign"] = "1";
-  info.hardware_parameters["right_direction_sign"] = "1";
-  if (chassis_type.has_value()) {
-    info.hardware_parameters["chassis_type"] = *chassis_type;
-  }
-  info.joints.push_back(MakeWheelJoint("left_wheel_joint"));
-  info.joints.push_back(MakeWheelJoint("right_wheel_joint"));
-  return params;
-}
-
-class ChassisHardwareInterfaceTest : public ::testing::Test {
- protected:
-  static void SetUpTestSuite() {
-    if (!rclcpp::ok()) {
-      int argc = 0;
-      rclcpp::init(argc, nullptr);
+    hardware_interface::InterfaceInfo MakeInterface(const std::string &name)
+    {
+      hardware_interface::InterfaceInfo interface_info{};
+      interface_info.name = name;
+      return interface_info;
     }
-  }
 
-  static void TearDownTestSuite() {
-    if (rclcpp::ok()) {
-      rclcpp::shutdown();
+    hardware_interface::ComponentInfo MakeWheelJoint(const std::string &name)
+    {
+      hardware_interface::ComponentInfo joint{};
+      joint.name = name;
+      joint.type = "joint";
+      joint.command_interfaces.push_back(MakeInterface("velocity"));
+      joint.state_interfaces.push_back(MakeInterface("position"));
+      joint.state_interfaces.push_back(MakeInterface("velocity"));
+      return joint;
     }
-  }
-};
 
-TEST_F(ChassisHardwareInterfaceTest, OnInit_MissingChassisType_UsesDiffDriveDefault) {
-  ChassisHardwareInterface hardware;
+    hardware_interface::HardwareComponentInterfaceParams MakeParams(
+        const std::optional<std::string> &chassis_type = std::nullopt)
+    {
+      hardware_interface::HardwareComponentInterfaceParams params;
+      auto &info = params.hardware_info;
+      info.name = "MobileBaseSystem";
+      info.type = "system";
+      info.hardware_plugin_name = "robot_hardware/ChassisHardwareInterface";
+      info.rw_rate = 50;
+      info.is_async = false;
+      info.thread_priority = 0;
+      info.hardware_parameters["backend"] = "mock";
+      info.hardware_parameters["wheel_diameter_m"] = "0.15";
+      info.hardware_parameters["wheel_base_m"] = "0.42";
+      info.hardware_parameters["track_width_m"] = "0.43";
+      info.hardware_parameters["calibration_profile"] = "nominal_reference";
+      info.hardware_parameters["left_encoder_scale"] = "1.0";
+      info.hardware_parameters["right_encoder_scale"] = "1.0";
+      info.hardware_parameters["left_direction_sign"] = "1";
+      info.hardware_parameters["right_direction_sign"] = "1";
+      if (chassis_type.has_value())
+      {
+        info.hardware_parameters["chassis_type"] = *chassis_type;
+      }
+      info.joints.push_back(MakeWheelJoint("left_wheel_joint"));
+      info.joints.push_back(MakeWheelJoint("right_wheel_joint"));
+      return params;
+    }
 
-  EXPECT_EQ(hardware.on_init(MakeParams()), hardware_interface::CallbackReturn::SUCCESS);
-}
+    class ChassisHardwareInterfaceTest : public ::testing::Test
+    {
+    protected:
+      static void SetUpTestSuite()
+      {
+        if (!rclcpp::ok())
+        {
+          int argc = 0;
+          rclcpp::init(argc, nullptr);
+        }
+      }
 
-TEST_F(ChassisHardwareInterfaceTest, OnInit_ExplicitDiffDrive_Succeeds) {
-  ChassisHardwareInterface hardware;
+      static void TearDownTestSuite()
+      {
+        if (rclcpp::ok())
+        {
+          rclcpp::shutdown();
+        }
+      }
+    };
 
-  EXPECT_EQ(
-      hardware.on_init(MakeParams("diff_drive")), hardware_interface::CallbackReturn::SUCCESS);
-}
+    TEST_F(ChassisHardwareInterfaceTest, OnInit_MissingChassisType_UsesDiffDriveDefault)
+    {
+      ChassisHardwareInterface hardware;
 
-class InvalidHardwareParameterTest
-    : public ChassisHardwareInterfaceTest,
-      public ::testing::WithParamInterface<std::pair<std::string, std::string>> {};
+      EXPECT_EQ(hardware.on_init(MakeParams()), hardware_interface::CallbackReturn::SUCCESS);
+    }
 
-TEST_P(InvalidHardwareParameterTest, OnInit_InvalidParameter_ReturnsError) {
-  ChassisHardwareInterface hardware;
-  auto params = MakeParams("diff_drive");
-  params.hardware_info.hardware_parameters[GetParam().first] = GetParam().second;
+    TEST_F(ChassisHardwareInterfaceTest, OnInit_ExplicitDiffDrive_Succeeds)
+    {
+      ChassisHardwareInterface hardware;
 
-  EXPECT_EQ(hardware.on_init(params), hardware_interface::CallbackReturn::ERROR);
-}
+      EXPECT_EQ(
+          hardware.on_init(MakeParams("diff_drive")), hardware_interface::CallbackReturn::SUCCESS);
+    }
 
-INSTANTIATE_TEST_SUITE_P(
-    InvalidParameters, InvalidHardwareParameterTest,
-    ::testing::Values(
-        std::pair<std::string, std::string>{"serial_baud", "115200junk"},
-        std::pair<std::string, std::string>{"udp_port", "9000.5"},
-        std::pair<std::string, std::string>{"wheel_diameter_m", "0"},
-        std::pair<std::string, std::string>{"wheel_base_m", "-0.42"},
-        std::pair<std::string, std::string>{"track_width_m", "nan"},
-        std::pair<std::string, std::string>{"left_encoder_scale", "1.0junk"},
-        std::pair<std::string, std::string>{"right_encoder_scale", "-1"},
-        std::pair<std::string, std::string>{"left_direction_sign", "0"},
-        std::pair<std::string, std::string>{"left_direction_sign", "not-an-int"},
-        std::pair<std::string, std::string>{"right_direction_sign", "2"},
-        std::pair<std::string, std::string>{"left_direction_sign", "-1"},
-        std::pair<std::string, std::string>{"calibration_profile", ""}));
+    class InvalidHardwareParameterTest
+        : public ChassisHardwareInterfaceTest,
+          public ::testing::WithParamInterface<std::pair<std::string, std::string>>
+    {
+    };
 
-class UnsupportedChassisTypeTest
-    : public ChassisHardwareInterfaceTest,
-      public ::testing::WithParamInterface<std::string> {};
+    TEST_P(InvalidHardwareParameterTest, OnInit_InvalidParameter_ReturnsError)
+    {
+      ChassisHardwareInterface hardware;
+      auto params = MakeParams("diff_drive");
+      params.hardware_info.hardware_parameters[GetParam().first] = GetParam().second;
 
-TEST_P(UnsupportedChassisTypeTest, OnInit_UnsupportedType_ReturnsError) {
-  ChassisHardwareInterface hardware;
+      EXPECT_EQ(hardware.on_init(params), hardware_interface::CallbackReturn::ERROR);
+    }
 
-  EXPECT_EQ(hardware.on_init(MakeParams(GetParam())), hardware_interface::CallbackReturn::ERROR);
-}
+    INSTANTIATE_TEST_SUITE_P(
+        InvalidParameters, InvalidHardwareParameterTest,
+        ::testing::Values(
+            std::pair<std::string, std::string>{"serial_baud", "115200junk"},
+            std::pair<std::string, std::string>{"udp_port", "9000.5"},
+            std::pair<std::string, std::string>{"wheel_diameter_m", "0"},
+            std::pair<std::string, std::string>{"wheel_base_m", "-0.42"},
+            std::pair<std::string, std::string>{"track_width_m", "nan"},
+            std::pair<std::string, std::string>{"left_encoder_scale", "1.0junk"},
+            std::pair<std::string, std::string>{"right_encoder_scale", "-1"},
+            std::pair<std::string, std::string>{"left_direction_sign", "0"},
+            std::pair<std::string, std::string>{"left_direction_sign", "not-an-int"},
+            std::pair<std::string, std::string>{"right_direction_sign", "2"},
+            std::pair<std::string, std::string>{"left_direction_sign", "-1"},
+            std::pair<std::string, std::string>{"calibration_profile", ""}));
 
-INSTANTIATE_TEST_SUITE_P(
-    UnsupportedTypes, UnsupportedChassisTypeTest,
-    ::testing::Values(
-        "mecanum", "omni", "ackermann", "acker", "four_ws4wd", "4ws4wd",
-        "four_wheel_steer", "unsupported", "Diff_Drive", " diff_drive", "diff_drive ", ""));
+    class UnsupportedChassisTypeTest
+        : public ChassisHardwareInterfaceTest,
+          public ::testing::WithParamInterface<std::string>
+    {
+    };
 
-TEST_F(ChassisHardwareInterfaceTest, OnInit_MissingWheelJoint_ReturnsError) {
-  ChassisHardwareInterface hardware;
-  auto params = MakeParams("diff_drive");
-  params.hardware_info.joints.pop_back();
+    TEST_P(UnsupportedChassisTypeTest, OnInit_UnsupportedType_ReturnsError)
+    {
+      ChassisHardwareInterface hardware;
 
-  EXPECT_EQ(hardware.on_init(params), hardware_interface::CallbackReturn::ERROR);
-}
+      EXPECT_EQ(hardware.on_init(MakeParams(GetParam())), hardware_interface::CallbackReturn::ERROR);
+    }
 
-TEST_F(ChassisHardwareInterfaceTest, OnInit_ReversedWheelJointOrder_ReturnsError) {
-  ChassisHardwareInterface hardware;
-  auto params = MakeParams("diff_drive");
-  std::swap(params.hardware_info.joints[0], params.hardware_info.joints[1]);
+    INSTANTIATE_TEST_SUITE_P(
+        UnsupportedTypes, UnsupportedChassisTypeTest,
+        ::testing::Values(
+            "mecanum", "omni", "ackermann", "acker", "four_ws4wd", "4ws4wd",
+            "four_wheel_steer", "unsupported", "Diff_Drive", " diff_drive", "diff_drive ", ""));
 
-  EXPECT_EQ(hardware.on_init(params), hardware_interface::CallbackReturn::ERROR);
-}
+    TEST_F(ChassisHardwareInterfaceTest, OnInit_MissingWheelJoint_ReturnsError)
+    {
+      ChassisHardwareInterface hardware;
+      auto params = MakeParams("diff_drive");
+      params.hardware_info.joints.pop_back();
 
-}  // namespace
-}  // namespace robot_hardware
+      EXPECT_EQ(hardware.on_init(params), hardware_interface::CallbackReturn::ERROR);
+    }
+
+    TEST_F(ChassisHardwareInterfaceTest, OnInit_ReversedWheelJointOrder_ReturnsError)
+    {
+      ChassisHardwareInterface hardware;
+      auto params = MakeParams("diff_drive");
+      std::swap(params.hardware_info.joints[0], params.hardware_info.joints[1]);
+
+      EXPECT_EQ(hardware.on_init(params), hardware_interface::CallbackReturn::ERROR);
+    }
+
+  } // namespace
+} // namespace robot_hardware

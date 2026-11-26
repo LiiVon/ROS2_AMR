@@ -19,9 +19,11 @@
 
 namespace topics = robot_utils::topics;
 
-class LaserFilterNode final : public rclcpp::Node {
- public:
-  LaserFilterNode() : Node("laser_filter_node"), diagnostics_(this) {
+class LaserFilterNode final : public rclcpp::Node
+{
+public:
+  LaserFilterNode() : Node("laser_filter_node"), diagnostics_(this)
+  {
     input_topic_ = declare_parameter<std::string>("input_topic", topics::kSimScan);
     output_topic_ = declare_parameter<std::string>("output_topic", topics::kScan);
     frame_id_ = declare_parameter<std::string>("frame_id", "lidar_link");
@@ -33,24 +35,27 @@ class LaserFilterNode final : public rclcpp::Node {
     invalid_range_as_inf_ = declare_parameter<bool>("invalid_range_as_inf", true);
     enable_builtin_filter_ = declare_parameter<bool>("enable_builtin_filter", true);
     subscription_ = create_subscription<sensor_msgs::msg::LaserScan>(
-        input_topic_, 10, [this](sensor_msgs::msg::LaserScan::SharedPtr msg) { Filter(*msg); });
+        input_topic_, 10, [this](sensor_msgs::msg::LaserScan::SharedPtr msg)
+        { Filter(*msg); });
     publisher_ = create_publisher<sensor_msgs::msg::LaserScan>(output_topic_, 10);
     diagnostics_.setHardwareID(frame_id_);
-    diagnostics_.add("laser_filter", [this](diagnostic_updater::DiagnosticStatusWrapper& stat) {
+    diagnostics_.add("laser_filter", [this](diagnostic_updater::DiagnosticStatusWrapper &stat)
+                     {
       stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "scan normalized");
       stat.add("input_topic", input_topic_);
       stat.add("output_topic", output_topic_);
       stat.add("invalid_ranges", last_invalid_count_);
-      stat.add("builtin_filter_enabled", enable_builtin_filter_ ? "true" : "false");
-    });
+      stat.add("builtin_filter_enabled", enable_builtin_filter_ ? "true" : "false"); });
   }
 
- private:
-  void Filter(sensor_msgs::msg::LaserScan scan) {
+private:
+  void Filter(sensor_msgs::msg::LaserScan scan)
+  {
     scan.header.frame_id = frame_id_;
     scan.range_min = range_min_;
     scan.range_max = range_max_;
-    if (clockwise_) {
+    if (clockwise_)
+    {
       // 反转数据的同时必须重写角度元数据，否则每个点的角度仍按下标递增，
       // 整幅扫描会被镜像（障碍物左右颠倒）。
       //
@@ -66,7 +71,8 @@ class LaserFilterNode final : public rclcpp::Node {
           count == 0U ? old_angle_min
                       : old_angle_min + old_increment * static_cast<double>(count - 1U);
       std::reverse(scan.ranges.begin(), scan.ranges.end());
-      if (scan.intensities.size() == count) {
+      if (scan.intensities.size() == count)
+      {
         std::reverse(scan.intensities.begin(), scan.intensities.end());
       }
       scan.angle_min = -old_angle_max;
@@ -74,14 +80,17 @@ class LaserFilterNode final : public rclcpp::Node {
       scan.angle_max = -old_angle_min;
     }
     int invalid_count = 0;
-    for (std::size_t i = 0; i < scan.ranges.size(); ++i) {
-      auto& range = scan.ranges[i];
+    for (std::size_t i = 0; i < scan.ranges.size(); ++i)
+    {
+      auto &range = scan.ranges[i];
       const double angle = scan.angle_min + static_cast<double>(i) * scan.angle_increment;
       const bool angle_rejected = angle < angle_min_ || angle > angle_max_;
       const bool range_rejected = !std::isfinite(range) || range < range_min_ || range > range_max_;
-      if (enable_builtin_filter_ && (range_rejected || angle_rejected)) {
+      if (enable_builtin_filter_ && (range_rejected || angle_rejected))
+      {
         range = invalid_range_as_inf_ ? std::numeric_limits<float>::infinity() : 0.0F;
-        if (i < scan.intensities.size()) {
+        if (i < scan.intensities.size())
+        {
           scan.intensities[i] = 0.0F;
         }
         ++invalid_count;
@@ -108,7 +117,8 @@ class LaserFilterNode final : public rclcpp::Node {
   diagnostic_updater::Updater diagnostics_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<LaserFilterNode>());
   rclcpp::shutdown();

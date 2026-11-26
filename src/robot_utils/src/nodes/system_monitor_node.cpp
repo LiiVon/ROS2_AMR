@@ -45,32 +45,35 @@ namespace topics = robot_utils::topics;
 
 using namespace std::chrono_literals;
 
-namespace {
+namespace
+{
 
-/**
- * @brief 构造一个诊断键值对（DiagnosticStatus.values 的元素）。
- * @param key 键名（诊断面板显示）
- * @param value 值（已转成字符串）
- * @return KeyValue 消息
- */
-diagnostic_msgs::msg::KeyValue MakeKeyValue(const std::string& key, const std::string& value) {
-  diagnostic_msgs::msg::KeyValue item;
-  item.key = key;
-  item.value = value;
-  return item;
-}
+  /**
+   * @brief 构造一个诊断键值对（DiagnosticStatus.values 的元素）。
+   * @param key 键名（诊断面板显示）
+   * @param value 值（已转成字符串）
+   * @return KeyValue 消息
+   */
+  diagnostic_msgs::msg::KeyValue MakeKeyValue(const std::string &key, const std::string &value)
+  {
+    diagnostic_msgs::msg::KeyValue item;
+    item.key = key;
+    item.value = value;
+    return item;
+  }
 
-/**
- * @brief 布尔值转诊断面板可读字符串。
- * @param value 布尔值
- * @return "true" 或 "false"
- */
-std::string BoolString(const bool value) { return value ? "true" : "false"; }
+  /**
+   * @brief 布尔值转诊断面板可读字符串。
+   * @param value 布尔值
+   * @return "true" 或 "false"
+   */
+  std::string BoolString(const bool value) { return value ? "true" : "false"; }
 
-}  // namespace
+} // namespace
 
-class SystemMonitorNode final : public rclcpp::Node {
- public:
+class SystemMonitorNode final : public rclcpp::Node
+{
+public:
   /**
    * @brief 构造节点：声明参数、注册 6 个诊断项、建立订阅与发布、启动周期定时器。
    * @details 参数：
@@ -80,7 +83,8 @@ class SystemMonitorNode final : public rclcpp::Node {
    *          publish_period_ms         /system/health 与诊断项的发布周期（毫秒，默认 200，
    *                                    下限 50，避免把 diagnostics 打爆）
    */
-  SystemMonitorNode() : Node("system_monitor_node"), diagnostics_(this) {
+  SystemMonitorNode() : Node("system_monitor_node"), diagnostics_(this)
+  {
     stale_timeout_ms_ = declare_parameter<int>("stale_timeout_ms", 1000);
     low_battery_voltage_ = declare_parameter<double>("low_battery_voltage", 22.0);
     critical_battery_voltage_ = declare_parameter<double>("critical_battery_voltage", 20.0);
@@ -88,60 +92,55 @@ class SystemMonitorNode final : public rclcpp::Node {
 
     diagnostics_.setHardwareID("robot");
     diagnostics_.setPeriod(static_cast<double>(std::max(50, publish_period_ms_)) / 1000.0);
-    diagnostics_.add("system/chassis", [this](diagnostic_updater::DiagnosticStatusWrapper& stat) {
-      FillDiagnosticStatus(CheckChassis(), stat);
-    });
-    diagnostics_.add("system/battery", [this](diagnostic_updater::DiagnosticStatusWrapper& stat) {
-      FillDiagnosticStatus(CheckBattery(), stat);
-    });
+    diagnostics_.add("system/chassis", [this](diagnostic_updater::DiagnosticStatusWrapper &stat)
+                     { FillDiagnosticStatus(CheckChassis(), stat); });
+    diagnostics_.add("system/battery", [this](diagnostic_updater::DiagnosticStatusWrapper &stat)
+                     { FillDiagnosticStatus(CheckBattery(), stat); });
     diagnostics_.add(
-        "system/emergency_stop", [this](diagnostic_updater::DiagnosticStatusWrapper& stat) {
-          FillDiagnosticStatus(CheckEmergencyStop(), stat);
-        });
-    diagnostics_.add("system/scan", [this](diagnostic_updater::DiagnosticStatusWrapper& stat) {
-      FillDiagnosticStatus(CheckTopicFreshness("system/scan", scan_seen_, scan_stamp_), stat);
-    });
-    diagnostics_.add("system/imu", [this](diagnostic_updater::DiagnosticStatusWrapper& stat) {
-      FillDiagnosticStatus(CheckTopicFreshness("system/imu", imu_seen_, imu_stamp_), stat);
-    });
-    diagnostics_.add("system/odom", [this](diagnostic_updater::DiagnosticStatusWrapper& stat) {
-      FillDiagnosticStatus(CheckTopicFreshness("system/odom", odom_seen_, odom_stamp_), stat);
-    });
+        "system/emergency_stop", [this](diagnostic_updater::DiagnosticStatusWrapper &stat)
+        { FillDiagnosticStatus(CheckEmergencyStop(), stat); });
+    diagnostics_.add("system/scan", [this](diagnostic_updater::DiagnosticStatusWrapper &stat)
+                     { FillDiagnosticStatus(CheckTopicFreshness("system/scan", scan_seen_, scan_stamp_), stat); });
+    diagnostics_.add("system/imu", [this](diagnostic_updater::DiagnosticStatusWrapper &stat)
+                     { FillDiagnosticStatus(CheckTopicFreshness("system/imu", imu_seen_, imu_stamp_), stat); });
+    diagnostics_.add("system/odom", [this](diagnostic_updater::DiagnosticStatusWrapper &stat)
+                     { FillDiagnosticStatus(CheckTopicFreshness("system/odom", odom_seen_, odom_stamp_), stat); });
     health_publisher_ = create_publisher<robot_interfaces_core::msg::RobotState>(topics::kSystemHealth, 10);
 
     chassis_subscription_ = create_subscription<robot_interfaces_core::msg::ChassisState>(
-        topics::kChassisState, 10, [this](robot_interfaces_core::msg::ChassisState::SharedPtr msg) {
+        topics::kChassisState, 10, [this](robot_interfaces_core::msg::ChassisState::SharedPtr msg)
+        {
           chassis_state_ = *msg;
           chassis_seen_ = true;
-          chassis_stamp_ = now();
-        });
+          chassis_stamp_ = now(); });
     emergency_subscription_ = create_subscription<std_msgs::msg::Bool>(
-        topics::kSystemEmergencyStop, 10, [this](std_msgs::msg::Bool::SharedPtr msg) {
+        topics::kSystemEmergencyStop, 10, [this](std_msgs::msg::Bool::SharedPtr msg)
+        {
           emergency_stop_ = msg->data;
           emergency_seen_ = true;
-          emergency_stamp_ = now();
-        });
+          emergency_stamp_ = now(); });
     scan_subscription_ = create_subscription<sensor_msgs::msg::LaserScan>(
-        topics::kScan, 10, [this](sensor_msgs::msg::LaserScan::SharedPtr) {
+        topics::kScan, 10, [this](sensor_msgs::msg::LaserScan::SharedPtr)
+        {
           scan_seen_ = true;
-          scan_stamp_ = now();
-        });
+          scan_stamp_ = now(); });
     imu_subscription_ = create_subscription<sensor_msgs::msg::Imu>(
-        topics::kImu, 10, [this](sensor_msgs::msg::Imu::SharedPtr) {
+        topics::kImu, 10, [this](sensor_msgs::msg::Imu::SharedPtr)
+        {
           imu_seen_ = true;
-          imu_stamp_ = now();
-        });
+          imu_stamp_ = now(); });
     odom_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
-        topics::kOdom, 10, [this](nav_msgs::msg::Odometry::SharedPtr) {
+        topics::kOdom, 10, [this](nav_msgs::msg::Odometry::SharedPtr)
+        {
           odom_seen_ = true;
-          odom_stamp_ = now();
-        });
+          odom_stamp_ = now(); });
 
     const auto period = std::chrono::milliseconds(std::max(50, publish_period_ms_));
-    timer_ = create_wall_timer(period, [this]() { PublishHealth(); });
+    timer_ = create_wall_timer(period, [this]()
+                               { PublishHealth(); });
   }
 
- private:
+private:
   /**
    * @brief 判断某路数据是否“新鲜”。
    * @param seen 是否至少收到过一次
@@ -149,8 +148,10 @@ class SystemMonitorNode final : public rclcpp::Node {
    * @return 收到过且距今未超过 stale_timeout_ms_ 时返回 true
    * @note 从未收到也返回 false（启动阶段会把相关项标为 STALE/ERROR，属预期行为）。
    */
-  bool IsFresh(const bool seen, const rclcpp::Time& stamp) const {
-    if (!seen) {
+  bool IsFresh(const bool seen, const rclcpp::Time &stamp) const
+  {
+    if (!seen)
+    {
       return false;
     }
     return ((now() - stamp).nanoseconds() / 1000000) <= stale_timeout_ms_;
@@ -165,8 +166,9 @@ class SystemMonitorNode final : public rclcpp::Node {
    * @return DiagnosticStatus 消息，hardware_id 固定为 "robot"
    */
   diagnostic_msgs::msg::DiagnosticStatus MakeStatus(
-      const std::string& name, const uint8_t level, const std::string& message,
-      const std::vector<diagnostic_msgs::msg::KeyValue>& values = {}) const {
+      const std::string &name, const uint8_t level, const std::string &message,
+      const std::vector<diagnostic_msgs::msg::KeyValue> &values = {}) const
+  {
     diagnostic_msgs::msg::DiagnosticStatus status;
     status.name = name;
     status.hardware_id = "robot";
@@ -182,8 +184,10 @@ class SystemMonitorNode final : public rclcpp::Node {
    *         否则 OK，并附 backend / connected / status 三个键值
    * @details 超时与“连上但报错”是两类问题，message 里可区分，便于运维定位。
    */
-  diagnostic_msgs::msg::DiagnosticStatus CheckChassis() const {
-    if (!IsFresh(chassis_seen_, chassis_stamp_)) {
+  diagnostic_msgs::msg::DiagnosticStatus CheckChassis() const
+  {
+    if (!IsFresh(chassis_seen_, chassis_stamp_))
+    {
       return MakeStatus(
           "system/chassis", diagnostic_msgs::msg::DiagnosticStatus::ERROR,
           "chassis state timeout");
@@ -206,18 +210,23 @@ class SystemMonitorNode final : public rclcpp::Node {
    * @note 阈值语义：WARN 表示“该回桩/找机会充电”，ERROR 表示“必须立即停”。
    *       若底盘不上报电压（值恒为 0），会一直判 ERROR，接入新底盘时需同步确认该项。
    */
-  diagnostic_msgs::msg::DiagnosticStatus CheckBattery() const {
-    if (!IsFresh(chassis_seen_, chassis_stamp_)) {
+  diagnostic_msgs::msg::DiagnosticStatus CheckBattery() const
+  {
+    if (!IsFresh(chassis_seen_, chassis_stamp_))
+    {
       return MakeStatus(
           "system/battery", diagnostic_msgs::msg::DiagnosticStatus::STALE,
           "battery unavailable");
     }
     uint8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     std::string message = "battery normal";
-    if (chassis_state_.battery_voltage <= critical_battery_voltage_) {
+    if (chassis_state_.battery_voltage <= critical_battery_voltage_)
+    {
       level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
       message = "battery critical";
-    } else if (chassis_state_.battery_voltage <= low_battery_voltage_) {
+    }
+    else if (chassis_state_.battery_voltage <= low_battery_voltage_)
+    {
       level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
       message = "battery low";
     }
@@ -231,8 +240,10 @@ class SystemMonitorNode final : public rclcpp::Node {
    * @return 急停状态超时 → STALE；急停激活 → WARN（可用但受限）；否则 OK
    * @note 急停激活本身不是故障，所以用 WARN；STALE 才说明“谁在管急停”这件事失联了。
    */
-  diagnostic_msgs::msg::DiagnosticStatus CheckEmergencyStop() const {
-    if (!IsFresh(emergency_seen_, emergency_stamp_)) {
+  diagnostic_msgs::msg::DiagnosticStatus CheckEmergencyStop() const
+  {
+    if (!IsFresh(emergency_seen_, emergency_stamp_))
+    {
       return MakeStatus(
           "system/emergency_stop", diagnostic_msgs::msg::DiagnosticStatus::STALE,
           "emergency stop state timeout");
@@ -254,11 +265,11 @@ class SystemMonitorNode final : public rclcpp::Node {
    *          与“硬件报错”区分开，诊断面板上一眼能看出来。
    */
   diagnostic_msgs::msg::DiagnosticStatus CheckTopicFreshness(
-      const std::string& name, const bool seen, const rclcpp::Time& stamp) const {
+      const std::string &name, const bool seen, const rclcpp::Time &stamp) const
+  {
     const bool fresh = IsFresh(seen, stamp);
     return MakeStatus(
-        name, fresh ? diagnostic_msgs::msg::DiagnosticStatus::OK
-                    : diagnostic_msgs::msg::DiagnosticStatus::STALE,
+        name, fresh ? diagnostic_msgs::msg::DiagnosticStatus::OK : diagnostic_msgs::msg::DiagnosticStatus::STALE,
         fresh ? "fresh" : "stale");
   }
 
@@ -267,7 +278,8 @@ class SystemMonitorNode final : public rclcpp::Node {
    * @return 顺序固定为 chassis、battery、emergency_stop、scan、imu、odom
    * @note 顺序只影响诊断面板显示，不影响结论合成（结论取最坏项）。
    */
-  std::vector<diagnostic_msgs::msg::DiagnosticStatus> BuildStatuses() const {
+  std::vector<diagnostic_msgs::msg::DiagnosticStatus> BuildStatuses() const
+  {
     return {
         CheckChassis(),
         CheckBattery(),
@@ -285,10 +297,12 @@ class SystemMonitorNode final : public rclcpp::Node {
    * @details 只做“拷贝 + summary”，不在回调里做任何计算，保证诊断发布周期稳定。
    */
   void FillDiagnosticStatus(
-      const diagnostic_msgs::msg::DiagnosticStatus& status,
-      diagnostic_updater::DiagnosticStatusWrapper& wrapper) const {
+      const diagnostic_msgs::msg::DiagnosticStatus &status,
+      diagnostic_updater::DiagnosticStatusWrapper &wrapper) const
+  {
     wrapper.summary(status.level, status.message);
-    for (const auto& value : status.values) {
+    for (const auto &value : status.values)
+    {
       wrapper.add(value.key, value.value);
     }
   }
@@ -306,14 +320,17 @@ class SystemMonitorNode final : public rclcpp::Node {
    *       （上游节点恢复发布即自动恢复）。这是刻意保留的行为，改动前请同步
    *       fault_supervisor 的判定逻辑。
    */
-  void PublishHealth() {
+  void PublishHealth()
+  {
     const auto statuses = BuildStatuses();
 
     uint8_t worst_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     std::vector<std::string> issues;
-    for (const auto& status : statuses) {
+    for (const auto &status : statuses)
+    {
       worst_level = std::max(worst_level, status.level);
-      if (status.level != diagnostic_msgs::msg::DiagnosticStatus::OK) {
+      if (status.level != diagnostic_msgs::msg::DiagnosticStatus::OK)
+      {
         issues.push_back(status.name + "=" + status.message);
       }
     }
@@ -323,13 +340,18 @@ class SystemMonitorNode final : public rclcpp::Node {
     health.previous_state = previous_state_;
     health.active_goal_id = "";
     health.recoverable = worst_level != diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-    if (worst_level == diagnostic_msgs::msg::DiagnosticStatus::OK) {
+    if (worst_level == diagnostic_msgs::msg::DiagnosticStatus::OK)
+    {
       health.state = "OK";
       health.message = "all monitored systems nominal";
-    } else if (worst_level == diagnostic_msgs::msg::DiagnosticStatus::WARN) {
+    }
+    else if (worst_level == diagnostic_msgs::msg::DiagnosticStatus::WARN)
+    {
       health.state = "WARN";
       health.message = JoinIssues(issues);
-    } else {
+    }
+    else
+    {
       health.state = "ERROR";
       health.message = JoinIssues(issues);
     }
@@ -344,10 +366,13 @@ class SystemMonitorNode final : public rclcpp::Node {
    * @param issues 形如 "system/scan=stale" 的字符串列表
    * @return 以 "; " 分隔的文本
    */
-  std::string JoinIssues(const std::vector<std::string>& issues) const {
+  std::string JoinIssues(const std::vector<std::string> &issues) const
+  {
     std::ostringstream out;
-    for (std::size_t i = 0; i < issues.size(); ++i) {
-      if (i > 0) {
+    for (std::size_t i = 0; i < issues.size(); ++i)
+    {
+      if (i > 0)
+      {
         out << "; ";
       }
       out << issues[i];
@@ -385,7 +410,8 @@ class SystemMonitorNode final : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<SystemMonitorNode>());
   rclcpp::shutdown();

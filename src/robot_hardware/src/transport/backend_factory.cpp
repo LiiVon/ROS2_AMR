@@ -16,7 +16,6 @@
 namespace robot_hardware::transport
 {
 
-
     std::unique_ptr<Backend> CreateBackend(
         const std::string &backend,
         const BackendConfig &config)

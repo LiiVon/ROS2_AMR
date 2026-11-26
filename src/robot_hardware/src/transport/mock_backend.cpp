@@ -23,7 +23,7 @@ namespace robot_hardware::transport
     bool MockBackend::Open(std::string *error)
     {
         open_ = true;
-        if(error)
+        if (error)
         {
             *error = "";
         }

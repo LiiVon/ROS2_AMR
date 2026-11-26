@@ -15,7 +15,6 @@
 namespace robot_hardware::transport
 {
 
-
     // 创建底盘通信后端。
     // 支持的类型：mock、serial、udp。
     // 不支持的类型会抛出 std::invalid_argument。

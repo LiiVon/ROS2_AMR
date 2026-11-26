@@ -14,18 +14,18 @@
 
 namespace robot_hardware::system
 {
+    using kinematics::EstimateWheelSpeeds;
+    using kinematics::IntegratePose;
+    using kinematics::NormalizeModel;
+    using kinematics::Pose2D;
+    using kinematics::WheelSpeeds;
+    using protocol::BinaryPacketStream;
     using protocol::Command;
     using protocol::Packet;
     using protocol::PacketKind;
     using protocol::PacketStream;
-    using protocol::BinaryPacketStream;
     using transport::Backend;
     using transport::BackendKind;
-    using kinematics::Pose2D;
-    using kinematics::WheelSpeeds;
-    using kinematics::IntegratePose;
-    using kinematics::EstimateWheelSpeeds;
-    using kinematics::NormalizeModel;
 
     // 配置校验
     bool ValidateConfig(const Config &config, std::string *error)
@@ -151,7 +151,8 @@ namespace robot_hardware::system
         // 非有限指令（NaN/Inf）必须在入口被拦住：
         // 否则它会进入 command_，在下一个周期被 IntegratePose/EstimateWheelSpeeds
         // 抛出 invalid_argument，导致驱动节点直接退出。
-        const auto finite = [](const double value) { return std::isfinite(value); };
+        const auto finite = [](const double value)
+        { return std::isfinite(value); };
         if (!finite(command.linear_x_mps) || !finite(command.linear_y_mps) ||
             !finite(command.angular_z_radps))
         {

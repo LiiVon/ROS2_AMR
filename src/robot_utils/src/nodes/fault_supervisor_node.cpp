@@ -37,8 +37,9 @@ namespace topics = robot_utils::topics;
 
 using namespace std::chrono_literals;
 
-class FaultSupervisorNode final : public rclcpp::Node {
- public:
+class FaultSupervisorNode final : public rclcpp::Node
+{
+public:
   /**
    * @brief 构造节点：声明参数、建立发布/订阅与服务客户端、启动 100 ms 监督定时器。
    * @details 参数：
@@ -46,12 +47,14 @@ class FaultSupervisorNode final : public rclcpp::Node {
    *          command_cooldown_ms  两次急停/解除命令之间的最小间隔（毫秒，默认 500）
    *          startup_grace_ms     启动宽限期（毫秒，默认 2000），期间 ERROR 不触发急停
    */
-  FaultSupervisorNode() : Node("fault_supervisor_node") {
+  FaultSupervisorNode() : Node("fault_supervisor_node")
+  {
     auto_clear_ = declare_parameter<bool>("auto_clear", true);
     command_cooldown_ms_ = declare_parameter<int>("command_cooldown_ms", 500);
     startup_grace_ms_ = declare_parameter<int>("startup_grace_ms", 2000);
     health_timeout_ms_ = declare_parameter<int>("health_timeout_ms", 2000);
-    if (health_timeout_ms_ <= 0) {
+    if (health_timeout_ms_ <= 0)
+    {
       RCLCPP_WARN(get_logger(), "health_timeout_ms must be > 0, using 2000");
       health_timeout_ms_ = 2000;
     }
@@ -59,25 +62,28 @@ class FaultSupervisorNode final : public rclcpp::Node {
 
     state_publisher_ = create_publisher<robot_interfaces_core::msg::RobotState>(topics::kSystemFaultState, 10);
     health_subscription_ = create_subscription<robot_interfaces_core::msg::RobotState>(
-        topics::kSystemHealth, 10, [this](robot_interfaces_core::msg::RobotState::SharedPtr msg) {
+        topics::kSystemHealth, 10, [this](robot_interfaces_core::msg::RobotState::SharedPtr msg)
+        {
           last_health_ = *msg;
           health_seen_ = true;
-          last_health_stamp_ = now();
-        });
+          last_health_stamp_ = now(); });
     enable_estop_client_ =
         create_client<std_srvs::srv::SetBool>("/teleop/enable_emergency_stop");
     clear_estop_client_ =
         create_client<std_srvs::srv::SetBool>("/teleop/clear_emergency_stop");
-    timer_ = create_wall_timer(100ms, [this]() { Tick(); });
+    timer_ = create_wall_timer(100ms, [this]()
+                               { Tick(); });
   }
 
- private:
+private:
   /**
    * @brief 冷却是否结束（可否再发一次急停/解除命令）。
    * @return 从未发过命令，或距上次命令已超过 command_cooldown_ms_ 时返回 true
    */
-  bool CooldownReady() const {
-    if (last_command_stamp_.nanoseconds() == 0) {
+  bool CooldownReady() const
+  {
+    if (last_command_stamp_.nanoseconds() == 0)
+    {
       return true;
     }
     return ((now() - last_command_stamp_).nanoseconds() / 1000000) >= command_cooldown_ms_;
@@ -88,19 +94,24 @@ class FaultSupervisorNode final : public rclcpp::Node {
    * @details 判定顺序很重要：未收到健康 → 启动宽限 → ERROR → 已故障且可清除 → 正常。
    *          顺序颠倒会出现“启动瞬态直接急停”或“刚恢复又被判故障”的抖动。
    */
-  void Tick() {
-    if (!health_seen_) {
+  void Tick()
+  {
+    if (!health_seen_)
+    {
       SetState("WAITING", "waiting for /system/health", true);
       return;
     }
-    if (InStartupGrace() && (last_health_.state == "ERROR" || HealthStale())) {
+    if (InStartupGrace() && (last_health_.state == "ERROR" || HealthStale()))
+    {
       SetState("ARMING", "startup grace active: " + last_health_.message, true);
       return;
     }
-    if (HealthStale()) {
+    if (HealthStale())
+    {
       // 监控节点死亡 / 断流：宁可急停，也不能把“没有结论”当成“健康”。
       fault_active_ = true;
-      if (!emergency_stop_requested_ && CooldownReady()) {
+      if (!emergency_stop_requested_ && CooldownReady())
+      {
         RequestEmergencyStop();
       }
       SetState("FAULT",
@@ -109,16 +120,20 @@ class FaultSupervisorNode final : public rclcpp::Node {
                false);
       return;
     }
-    if (last_health_.state == "ERROR") {
+    if (last_health_.state == "ERROR")
+    {
       fault_active_ = true;
-      if (!emergency_stop_requested_ && CooldownReady()) {
+      if (!emergency_stop_requested_ && CooldownReady())
+      {
         RequestEmergencyStop();
       }
       SetState("FAULT", "emergency stop requested: " + last_health_.message, false);
       return;
     }
-    if (fault_active_ && auto_clear_ && HealthAllowsClear()) {
-      if (emergency_stop_requested_ && CooldownReady()) {
+    if (fault_active_ && auto_clear_ && HealthAllowsClear())
+    {
+      if (emergency_stop_requested_ && CooldownReady())
+      {
         RequestEmergencyClear();
       }
       SetState("RECOVERING", "system health allows emergency stop clear", true);
@@ -134,8 +149,10 @@ class FaultSupervisorNode final : public rclcpp::Node {
    * @note 这里不等待响应结果（fire and forget）：急停是安全动作，
    *       重复下发比“等确认再发”更安全。
    */
-  void RequestEmergencyStop() {
-    if (!enable_estop_client_->service_is_ready()) {
+  void RequestEmergencyStop()
+  {
+    if (!enable_estop_client_->service_is_ready())
+    {
       SetState("WAITING", "waiting for /teleop/enable_emergency_stop", true);
       return;
     }
@@ -151,8 +168,10 @@ class FaultSupervisorNode final : public rclcpp::Node {
    * @details clear 服务只接受 data=true（安全闸门做严格校验），这里固定传 true。
    *          成功后清空 fault_active_，允许回到 CLEAR。
    */
-  void RequestEmergencyClear() {
-    if (!clear_estop_client_->service_is_ready()) {
+  void RequestEmergencyClear()
+  {
+    if (!clear_estop_client_->service_is_ready())
+    {
       SetState("WAITING", "waiting for /teleop/clear_emergency_stop", true);
       return;
     }
@@ -170,7 +189,8 @@ class FaultSupervisorNode final : public rclcpp::Node {
    * @details 启动瞬间各节点尚未发布数据，健康结论可能是 ERROR；
    *          宽限期内只报 ARMING，不真的拉急停。
    */
-  bool InStartupGrace() const {
+  bool InStartupGrace() const
+  {
     return ((now() - started_stamp_).nanoseconds() / 1000000) < startup_grace_ms_;
   }
 
@@ -179,8 +199,10 @@ class FaultSupervisorNode final : public rclcpp::Node {
    * @return 已收到过健康消息且超过 health_timeout_ms_ 未更新时返回 true
    * @details 从未收到过返回 false：启动阶段由 WAITING 负责，不把“尚未开始”当成“断流”。
    */
-  bool HealthStale() const {
-    if (!health_seen_) {
+  bool HealthStale() const
+  {
+    if (!health_seen_)
+    {
       return false;
     }
     const auto age_ms = (now() - last_health_stamp_).nanoseconds() / 1000000;
@@ -194,8 +216,10 @@ class FaultSupervisorNode final : public rclcpp::Node {
    *          若不排除这一点，解除急停后又被判“可清除”的条件永远无法满足，
    *          会卡在 FAULT 里出不来。
    */
-  bool HealthAllowsClear() const {
-    if (last_health_.state == "OK") {
+  bool HealthAllowsClear() const
+  {
+    if (last_health_.state == "OK")
+    {
       return true;
     }
     return last_health_.state == "WARN" &&
@@ -208,7 +232,8 @@ class FaultSupervisorNode final : public rclcpp::Node {
    * @param message 人类可读原因（含触发该项的健康摘要）
    * @param recoverable 是否可自动恢复
    */
-  void SetState(const std::string& state, const std::string& message, const bool recoverable) {
+  void SetState(const std::string &state, const std::string &message, const bool recoverable)
+  {
     current_state_ = state;
     current_message_ = message;
     recoverable_ = recoverable;
@@ -220,7 +245,8 @@ class FaultSupervisorNode final : public rclcpp::Node {
    * @details active_goal_id 恒为空（监督器不承载任务）；previous_state 记录上一拍状态，
    *          便于用 topic echo 观察状态跳变。
    */
-  void PublishState() {
+  void PublishState()
+  {
     robot_interfaces_core::msg::RobotState state;
     state.header.stamp = now();
     state.state = current_state_;
@@ -257,7 +283,8 @@ class FaultSupervisorNode final : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<FaultSupervisorNode>());
   rclcpp::shutdown();

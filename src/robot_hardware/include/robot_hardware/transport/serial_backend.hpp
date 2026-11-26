@@ -14,7 +14,6 @@ namespace robot_hardware::transport
 {
     using protocol::Command;
 
-
     /**
      * @brief 串口后端（SerialBackend）
      */

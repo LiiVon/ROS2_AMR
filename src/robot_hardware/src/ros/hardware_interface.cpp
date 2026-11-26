@@ -18,14 +18,14 @@
 
 namespace robot_hardware
 {
+    using kinematics::EstimateChassisCommand;
+    using kinematics::WheelSpeeds;
     using protocol::Command;
-    using transport::BackendConfig;
-    using transport::CreateBackend;
     using system::Adapter;
     using system::Config;
     using system::Snapshot;
-    using kinematics::WheelSpeeds;
-    using kinematics::EstimateChassisCommand;
+    using transport::BackendConfig;
+    using transport::CreateBackend;
 
     namespace
     {

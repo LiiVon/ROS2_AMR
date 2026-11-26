@@ -73,7 +73,7 @@ namespace robot_hardware::transport
             fd_ = -1;
         }
     }
-    
+
     bool UdpBackend::IsOpen() const
     {
         return fd_ >= 0;

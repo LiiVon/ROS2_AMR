@@ -26,7 +26,6 @@ using namespace std::chrono_literals;
 using namespace robot_hardware::protocol;
 using namespace robot_hardware::kinematics;
 
-
 namespace
 {
     // 接收缓冲区超时时间，单位为秒
@@ -208,18 +207,18 @@ private:
     }
 
 private:
-    std::string bind_host_;                  // UDP 绑定的主机地址
-    int port_ = 9000;                        // UDP 绑定的端口号
-    int fd_ = -1;                            // UDP 套接字文件描述符
-    sockaddr_in remote_addr_{};              // 远程主机的 UDP 地址
-    bool has_remote_ = false;                // 是否已经接收到远程主机的 UDP 数据
-    std::string rx_buffer_;                  // 接收缓冲区，用于存储接收到的 UDP 数据
-    Pose2D pose_;        // 机器人在平面上的位姿，包括 x、y 坐标和航向角
-    double battery_voltage_ = 24.0;          // 机器人电池电压（单位：伏特）
-    Command command_; // 当前的底盘运动指令，包括线速度和角速度
-    rclcpp::Time last_update_;               // 上一次更新的时间戳
-    rclcpp::Time last_rx_buffer_update_;     // 上一次接收到 UDP 数据的时间戳
-    rclcpp::TimerBase::SharedPtr timer_;     // 定时器，用于周期性地调用 OnTimer() 函数
+    std::string bind_host_;              // UDP 绑定的主机地址
+    int port_ = 9000;                    // UDP 绑定的端口号
+    int fd_ = -1;                        // UDP 套接字文件描述符
+    sockaddr_in remote_addr_{};          // 远程主机的 UDP 地址
+    bool has_remote_ = false;            // 是否已经接收到远程主机的 UDP 数据
+    std::string rx_buffer_;              // 接收缓冲区，用于存储接收到的 UDP 数据
+    Pose2D pose_;                        // 机器人在平面上的位姿，包括 x、y 坐标和航向角
+    double battery_voltage_ = 24.0;      // 机器人电池电压（单位：伏特）
+    Command command_;                    // 当前的底盘运动指令，包括线速度和角速度
+    rclcpp::Time last_update_;           // 上一次更新的时间戳
+    rclcpp::Time last_rx_buffer_update_; // 上一次接收到 UDP 数据的时间戳
+    rclcpp::TimerBase::SharedPtr timer_; // 定时器，用于周期性地调用 OnTimer() 函数
 };
 
 int main(int argc, char **argv)

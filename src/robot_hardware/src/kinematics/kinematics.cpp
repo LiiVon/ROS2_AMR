@@ -15,7 +15,6 @@ namespace robot_hardware::kinematics
 {
     using protocol::Command;
 
-
     namespace
     {
 
